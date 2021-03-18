@@ -165,7 +165,7 @@ function calculateProductPrices(basket : Basket)
 {
 	// get total quantities for all products contained in the basket
 	var productQuantities : HashMap = basket.getProductQuantities();
-	
+	var flag = true;
 	// get product prices for the accumulated product quantities
 	var products : Iterator = productQuantities.keySet().iterator();
 	var productPrices : HashMap = new HashMap();
