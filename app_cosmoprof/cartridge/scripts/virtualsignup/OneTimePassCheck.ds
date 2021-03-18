@@ -1,0 +1,28 @@
+/**
+* 
+*	@input CurrentCustomer : dw.customer.Customer
+*   @input Basket : dw.order.Basket
+*/
+importPackage( dw.system );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try{
+		if(pdict.CurrentCustomer.profile.custom.profilestatustype && !empty(pdict.CurrentCustomer.profile.custom.profilestatustype.value) && pdict.CurrentCustomer.profile.custom.profilestatustype.value !=null && pdict.CurrentCustomer.profile.custom.profilestatustype.value != 'accepted'){
+			if((pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending') && (pdict.CurrentCustomer.profile.custom.onetimepass && pdict.CurrentCustomer.profile.custom.onetimepass == true) && (pdict.Basket.totalGrossPrice.value <= dw.system.Site.getCurrent().getCustomPreferenceValue('orderlimit').toFixed(2))){
+				return PIPELET_NEXT;
+			}else if(pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'denied'){
+				return PIPELET_ERROR;
+			}else{
+				return PIPELET_ERROR;
+			}
+			
+		}else{
+			return PIPELET_NEXT;
+		}
+	}catch(e){
+		return PIPELET_NEXT;
+		
+	}
+	
+}

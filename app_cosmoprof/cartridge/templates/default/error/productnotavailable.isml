@@ -1,0 +1,10 @@
+<!--- TEMPLATENAME: productnotavailable.isml --->
+<iscomment>
+	This template is used to render a 'Product not Available' message in the quick view
+	dialog box in the event an error occurs upon attempting to retrieve a product from BM using the GetProduct Pipelet.
+</iscomment>
+<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+
+<isdecorate template="${DecoratorTemplate}">
+	<p class="product-not-available-error"><isprint value="${Resource.msg('productnotavailable.thisproductisnotavailable', 'error', null)}"/></p>
+</isdecorate>

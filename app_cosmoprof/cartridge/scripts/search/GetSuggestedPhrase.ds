@@ -1,0 +1,49 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input SearchPhrase : String
+*   @output AutoCorrectSearchPhrase : String
+*
+*/
+
+importPackage( dw.system );
+importPackage( dw.suggest );
+importPackage( dw.catalog );
+importPackage( dw.util);
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+	//Get the Search Phrase
+	var searchPhrase = args.SearchPhrase;
+	var sf = searchPhrase;
+
+    var newSearchPhrase = '';
+    var suggestModel = new SuggestModel();
+    suggestModel.setSearchPhrase(sf);
+    if(suggestModel){
+        var productSuggestions = suggestModel.getProductSuggestions();
+        if (productSuggestions != null) {
+	        var suggestedPhrases = productSuggestions.getSuggestedPhrases();        
+	        while(suggestedPhrases.hasNext()){
+	            newSearchPhrase = suggestedPhrases.next().getPhrase();
+	            break;
+	        }
+        }
+    }
+    newSearchPhrase = !empty(newSearchPhrase)?newSearchPhrase:sf;	
+	args.AutoCorrectSearchPhrase = newSearchPhrase; 
+   return PIPELET_NEXT;
+}

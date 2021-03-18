@@ -1,0 +1,210 @@
+<isinclude template="util/modules"/>
+<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">
+
+	<isimagesizes />
+	
+	<iscomment>calculated correct index position to separate the result columns</iscomment>
+	<iscomment> CP- 422 View More Button is not required.
+		<isset name="displayAll" value="${(pdict.CurrentHttpParameterMap.isParameterSubmitted('all') && pdict.CurrentHttpParameterMap.all =='true' ) ? true : false}" scope="page"/>
+	</iscomment>
+	<isset name="displayArchive" value="${pdict.ContentSearchResult.folder.displayName.lastIndexOf('Archive') > 0 ? true : false}" scope="page"/>
+	<isset name="articlesCount" value="${('articlesCount' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.articlesCount != null) ? dw.system.Site.current.preferences.custom.articlesCount : 0}" scope="page"/>
+	<isset name="isblogsearch" value="${pdict.CurrentHttpParameterMap.isblogsearch.value == 'true'}" scope="page"/>
+
+	<iscomment>
+		When filters are applied, the refinedByAttribute property of the ContentSearchResult Object is true.
+		Check the refinedByAttribute, and if true, pull the contents of the search result from the content attribute of 
+		the ContentSearchResult object.
+		
+		e.g. "ContentSearchResult.content"
+		
+		When no filter is applied, thus refinedByAttribute is false, retrieve the content results from the content object
+		from the FOLDER attribute of the ContentSearchResult object.
+		
+		e.g. "ContentSearchResult.folder.content"
+		
+		These values are assigned to the 'contentToDisplay' variable and passed further down for rendering onto the
+		blog page.
+		
+		Reference JIRA Ticket: CPS-1233
+	</iscomment>
+	<isset name="gotoURL" value="${pdict.CurrentRequest.getHttpURL().toString()}" scope="session"/>
+	<isset name="listView" value="${false}" scope="page"/>
+	<isif condition="${pdict.ContentSearchResult.refinedByAttribute}">
+		<isset name="contentToDisplay" value="${pdict.ContentSearchResult.getContent()}" scope="page"/>
+		<isset name="listView" value="${true}" scope="page"/>
+	<iselseif condition="${isblogsearch}"/>
+		<isset name="contentToDisplay" value="${pdict.ContentSearchResult.getContent()}" scope="page"/>
+		<isset name="listView" value="${true}" scope="page"/>
+	<iselse/>
+		<isset name="contentToDisplay" value="${pdict.ContentSearchResult.getFolder().getContent()}" scope="page"/>
+	</isif> 
+	<isscript>
+		var SortedContentlist : ArrayList = new dw.util.ArrayList(contentToDisplay);
+	</isscript>
+	
+	<isif condition="${!empty(SortedContentlist)}">
+		<isset name="contentToDisplay" value="${SortedContentlist}" scope="page"/>
+	</isif>
+	
+	<isscript>
+		importScript( "util/ViewHelpers.ds" );
+		
+		var count = pdict.ContentSearchResult.refinedByAttribute || isblogsearch ? pdict.ContentSearchResult.count : pdict.ContentSearchResult.getFolder().getContent().length;
+		
+		if(displayAll)
+		{
+			count = pdict.ContentSearchResult.refinedByAttribute || isblogsearch ? pdict.ContentSearchResult.count : pdict.ContentSearchResult.getFolder().getContent().length;
+		}
+		else if(count > articlesCount)
+		{
+			count = articlesCount;
+		}
+	</isscript>
+	<isset name="contentCount" value="${0}" scope="page"/>
+	<isset name="featuredAssetID" value="" scope="page"/>
+
+	<isset name="contentCountRefine" value="${0}" scope="page"/>
+	<isloop items="${contentToDisplay}" var="folderContent" status="loopstate">
+		<isif condition="${!displayArchive && !isblogsearch}">	
+			<isif condition="${checkIfOnlineFromTo(folderContent.custom.onlineFrom,folderContent.custom.onlineTo)}">
+				<isset name="contentCountRefine" value="${contentCountRefine+1}" scope="page"/>
+			</isif>
+		<iselse>	
+			<isset name="contentCountRefine" value="${contentCountRefine+1}" scope="page"/>
+		</isif>
+	</isloop> 
+	
+	<isset name="showResults" value="${false}" scope="page"/>
+	<isset name="showNoResults" value="${false}" scope="page"/>
+	
+	<isif condition="${pdict.ContentSearchResult.refinedByAttribute && contentCountRefine > 0}">
+		<isset name="showResults" value="${true}" scope="page"/>
+		<isset name="showNoResults" value="${false}" scope="page"/>
+	<iselseif condition="${pdict.ContentSearchResult.refinedByAttribute && contentCountRefine == 0}"/>
+		<isset name="showResults" value="${false}" scope="page"/>
+		<isset name="showNoResults" value="${true}" scope="page"/>
+	<iselseif condition="${contentToDisplay.length > 0 && isblogsearch}">
+		<isset name="showResults" value="${true}" scope="page"/>
+		<isset name="showNoResults" value="${false}" scope="page"/>
+	<iselseif condition="${contentToDisplay.length == 0 && isblogsearch}">
+		<isset name="showResults" value="${false}" scope="page"/>
+		<isset name="showNoResults" value="${true}" scope="page"/>
+	</isif>
+
+	<div class="Article-left">
+		<div class="result-messages">
+			<span class="search-results-text" <isif condition="${showResults}"> style='display:block' <iselse> style='display:none' </isif> >
+				<isprint value="${Resource.msg('account.blogresults','account',null)}"/>
+			</span>
+			<span class="no-search-results-text" <isif condition="${showNoResults}">  style='display:block' <iselse> style='display:none' </isif> >
+				<isprint value="${Resource.msg('account.noblogresults','account',null)}"/>
+			</span>
+		</div>
+		<div class="article-left-content"> 
+			<iscomment> CP-1647 Comment the featured article section Removed the Feature Section</iscomment>
+			<div class="left">
+				<ul class="Article-folder-content-list">
+					<isloop items="${contentToDisplay}" var="folderContent" status="loopstate">
+						<isif condition="${!displayArchive && !isblogsearch}">  
+							<isif condition="${(!folderContent.custom.isFeatured || (folderContent.custom.isFeatured && (folderContent.ID != featuredAssetID))) && checkIfOnlineFromTo(folderContent.custom.onlineFrom,folderContent.custom.onlineTo)}">								
+								<isset name="contentCount" value="${contentCount+1}" scope="page"  formatter="00" />
+								 
+								<li class="list-<isprint name="contentCount" value="${contentCount}" scope="page"  formatter="0" /> ${contentCount < 7 ? 'mainArticles' : (displayAll ? '' : 'hide')}">
+									<div class="listArticle">
+										<div class="listArticle-left">
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}">
+												<img class="contentThumbnail" src="${folderContent.custom.thumbnailImage.getAbsURL()}"/> 
+											</a>
+										</div>
+										<div class="listArticle-right">
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}">
+												<h3>
+													<isprint value="${folderContent.custom.title}"/>
+												</h3>
+											</a>
+											<p class="description"><isprint value="${folderContent.description}"/></p>
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}" class="readmore">
+												<isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" />
+											</a>
+										</div>
+									</div>
+								</li>
+							</isif>	
+						<iselse>	
+							<isif condition="${!folderContent.custom.isFeatured}">
+								<isset name="contentCount" value="${contentCount+1}" scope="page"/>
+								<li>
+									<div class="listArticle">
+			 						<span class="views"> <isinclude url="${URLUtils.url('Search-ViewCount','folderID', folderContent.ID)}" /> ${Resource.msg('topcontenthits.views','search',null)}</span>
+										<div class="listArticle-left">
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}">
+												<img class="contentThumbnail" src="${folderContent.custom.thumbnailImage.getAbsURL()}"/> 
+											</a>
+										</div>
+										<div class="listArticle-right">
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}">
+												<h3>
+													<isprint value="${folderContent.custom.title}"/>
+												</h3>
+											</a>
+											<p class="description"><isprint value="${folderContent.description}"/><p>
+											<a href="${URLUtils.url('Page-Show','cid', folderContent.ID)}" class="readmore">
+												<isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" />
+											</a>
+										</div>
+									</div>
+								</li>
+							</isif>	
+						</isif>	
+					</isloop>
+				</ul>
+			</div>
+
+			<isset name="destinationURL" value="${pdict.CurrentRequest.httpURL.toString()}" scope="page"/>
+			<isif condition="${pdict.CurrentRequest.httpQueryString.indexOf('all=true') > -1}">
+				<isset name="destinationURL" value="${pdict.CurrentRequest.httpURL.toString().replace('&all=true','')}" scope="page"/>
+			<iselseif condition="${pdict.CurrentRequest.httpQueryString.indexOf('all=false') > -1}"/>
+				<isset name="destinationURL" value="${pdict.CurrentRequest.httpURL.toString().replace('&all=false','&all=true')}" scope="page"/>
+			</isif>
+			<div class="socialPreview mobileOnly">
+				<isslot id="blog-social-preview" context="global" description="Blog Social Preview"/>
+			</div>
+		</div>
+	</div>
+	<div class="Article-right">
+		<div class="refinmentSection">
+			<iscomment>Blog search form</iscomment>
+				<div class="blog-search">
+					<form role="blogSearch" action="${URLUtils.url('Search-ShowContent')}" method="get" name="bolgSearchForm" id="bolgSearch">
+						<fieldset>
+							<div class="row">
+							<input autocomplete="off" type="text" id="q" name="q" value="" class="search-attr" placeholder="${Resource.msg('simplesearch.blogsearch','search',null)}" maxlength="25" />
+							<button class="blogSearchBtn" type="submit" value="${Resource.msg('global.goblog','locale',null)}" name="simplesearch">
+								${Resource.msg('global.goblog','locale',null)}
+							</button>
+							</div>
+							<div class="box">
+								<div id="suggesstion-box"></div>
+							</div>
+							<input type="hidden" id="chainCode" name="chainCode" value="${cCode}"/>
+							<isif condition="${!empty(displayArchive) && displayArchive}">
+								<input type="hidden" id="blogFolderID" name="blogFolderID" value="blog-archive-${cCode}"/>
+							<iselse/>
+								<input type="hidden" id="blogFolderID" name="blogFolderID" value="blog-${cCode}"/>	
+							</isif>
+						</fieldset>
+					</form>
+				</div>
+				<isinclude template="search/components/contentsearchrefinebar"/>
+		</div>
+		<div class="socialPreview desktopOnly">
+			<isslot id="blog-social-preview" context="global" description="Blog Social Preview"/>
+		</div>
+		<iscomment> 
+		<div class="blog-right-nav">
+			<isinclude template="components/blogrightnav"/>
+		</div>
+		</iscomment>
+	</div>	
+</isif>

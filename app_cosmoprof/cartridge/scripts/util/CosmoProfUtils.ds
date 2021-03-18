@@ -1,0 +1,140 @@
+importPackage( dw.system );
+importPackage( dw.catalog );
+importPackage( dw.campaign );
+importPackage( dw.util );
+importPackage( dw.value );
+importPackage( dw.web );
+
+var su = require('dw/util').StringUtils;
+var PDSUtils = require("bc_pdsutils/cartridge/scripts/PDSUtils").PDSUtils;
+
+function sanitize(inS : String) {
+	return inS.replace(/\W/g,'');
+}
+
+function unsanitizeOR( anURL ) {
+	return anURL.toString().replace('%7c','|','g');	
+}
+
+function CosmoProfUtils () {}
+
+/*********************************************************************************************************************
+*	This function executes a binary search for the 3 input parameters customer number, portal code and the zip code
+**********************************************************************************************************************/
+
+CosmoProfUtils.execBinarySearch = function(customerNumber, consolidationCode, selectedAddress, locale) {
+	
+	var site = dw.system.Site.getCurrent(),
+		stringToSearch,
+		customerExclusionVal = null,
+		consolidationExclusionVal = null,
+		zipExclusionVal = null,
+		vocExclusionVal = null;
+	
+	//****Consolidation EXCLUDES****
+	if(!empty(consolidationCode)){
+		var consolidationCode = (new Number(consolidationCode)).toString(16);
+		while(consolidationCode.length < 3){
+			consolidationCode = "0"+consolidationCode;
+		}
+		consolidationExclusionVal = su.format("P{0}",consolidationCode);
+	}
+	
+	//Check for ****ZIPCODE EXCLUDES****
+	//Sample US exclude site pref id: USA_excl_txt_0
+	//Sample CA exclude site pref id: CAN_excl_txt_A0
+	if(!empty(selectedAddress) && !empty(selectedAddress.postalCode)){
+		var zipCode = selectedAddress.postalCode,
+			zipCodeInput = zipCode.replace(/[^a-zA-Z\d:]/g,""),
+			zipSearchString = zipCodeInput.substr(1),
+			zipStartCharacter = null,
+			exclusionCountryCode,
+			zipSitePrefID;
+			
+		if(locale != "USA"){
+			zipStartCharacter = zipCodeInput.substring(0,2);
+			//use the entire zipcode after the first 2 characters
+			zipSearchString = zipCodeInput.substr(2);
+		}else{
+			zipStartCharacter = zipCodeInput.charAt(0);
+			//make it a length of 4, to avoid issues with zipcodes like 12345-0987
+			zipSearchString = zipCodeInput.substr(1,4);
+		}
+		
+		exclusionCountryCode = (locale != null ? locale : "USA");
+		zipSitePrefID = su.format("{0}_excl_txt_{1}",exclusionCountryCode,zipStartCharacter);
+		
+		stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData",zipSitePrefID);
+		
+		if(stringToSearch != null){
+			stringToSearch = stringToSearch.custom.binarySearchString
+			zipExclusionVal = PDSUtils.binarySearch(stringToSearch,zipSearchString,4,8);
+		}
+	}
+	
+	//Check for ****VOC EXCLUDES****
+	// VOC excludes are state based exclusions, which are the result of laws regarding the ozone % allowed in a product
+	if(!empty(selectedAddress)){
+		var countryCode = selectedAddress.countryCode.value,
+			state = selectedAddress.stateCode;
+			
+		vocExclusionVal = su.format("V{0}{1}", countryCode.toLowerCase(), state.toLowerCase());
+	}
+	
+	//****CUSTOMER EXCLUDES****
+	//CXE_excl_txt
+	if(!empty(customerNumber)){
+		while(customerNumber.length < 7){
+			customerNumber = "0"+customerNumber;
+		}
+		stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData","CXE_excl_txt").custom.binarySearchString;
+		customerExclusionVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,11);
+		
+		//****CUSTOMER INCLUDES****
+		//0325004I001
+		//CXI_txt - 0016836I001
+		stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData","CXI_txt").custom.binarySearchString;
+		var includeRecordVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,11);
+		
+		//*****REPLACEMENTS FOR INCLUDES*****
+		//Replacements_I001 - P016P103
+		if(!empty(includeRecordVal)){
+			var replacementStringPrefVal = su.format("Replacements_{0}",includeRecordVal);
+		
+			stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData",replacementStringPrefVal).custom.binarySearchString;
+			
+			var replacementzipExclusionVal = PDSUtils.binarySearch(stringToSearch,zipExclusionVal,4,8);
+			if(replacementzipExclusionVal != null){
+				zipExclusionVal = replacementzipExclusionVal;
+			}
+			
+			var replacementCustomerExclusionVal = PDSUtils.binarySearch(stringToSearch,customerExclusionVal,4,8);
+			if(replacementCustomerExclusionVal != null){
+				customerExclusionVal = replacementCustomerExclusionVal;
+			}
+		}
+	}
+	
+	var exclusionObj = {
+		"customerExclusionVal" : 		customerExclusionVal,
+		"consolidationExclusionVal" :	consolidationExclusionVal,
+		"zipExclusionVal" :				zipExclusionVal,
+		"vocExclusionVal" :				vocExclusionVal
+	}
+	
+	return exclusionObj;
+}
+
+CosmoProfUtils.getDefaultConsolidationCode = function(chainCode){
+	var co,code;
+	if(!empty(chainCode)){
+		co = dw.object.CustomObjectMgr.getCustomObject("DefaultConsolidationCodes",chainCode);
+		code = co != null ? co.custom.defaultConsolidationCode : null;
+		//code = dw.util.MappingMgr.getFirst('DefaultConsolidationCodes',customer.profile.custom.portalCode);
+	}else{
+		code = null;
+	}
+	return code;
+}
+
+exports.CosmoProfUtils = CosmoProfUtils;

@@ -1,0 +1,28 @@
+<isscript>importScript("checkout/Utils.ds");</isscript>
+<isif condition="${!empty(pdict.SortedAddress)}"> 
+<isset name="preferredaddress" value="${customer.profile.addressBook.getPreferredAddress()}" scope="PAGE" />
+<isset name="p_listaddresses" value="${pdict.SortedAddress}" scope="PAGE" />
+	<select id="order-ship-addr-ID" name="order-ship-addr" class="input-select">
+		<option value="">${Resource.msg('forms.address.list.select','forms',null)}</option>
+		<isset name="jsonPrefAddr" value="${AddressInJSONObj(preferredaddress)}" scope="PAGE" />
+		<option value="${preferredaddress.ID}" ${pdict.CurrentHttpParameterMap.isParameterSubmitted('shipId') && !empty(pdict.CurrentHttpParameterMap.shipId.stringValue) && pdict.CurrentHttpParameterMap.shipId.value== jsonPrefAddr.ID ? "selected='selected'":""} data-address='<isprint value="${JSON.stringify(jsonPrefAddr).replace("'","^")}" encoding="off"/>'>
+			${Resource.msg('manageusers.adddefault','account',null)} <isprint value="${preferredaddress.custom.addressLabel}"/> <isprint value="${preferredaddress.address1}"/>, <isprint value="${preferredaddress.city}"/>, <isprint value="${preferredaddress.stateCode}"/>, <isprint value="${preferredaddress.postalCode}"/>
+		</option>
+		<isloop items="${p_listaddresses.entrySet().iterator()}" var="address">
+			<isset name="jsonAddr" value="${AddressInJSONObj(address.value)}" scope="PAGE" />
+			<isset name="aid" value="${!empty(address.value.ID) ? address.value.ID : address.value.key}" scope="page"/>
+			<isset name="addrLabel" value="${'addressLabel' in  address.value.custom && !empty(address.value.custom.addressLabel) ? address.value.custom.addressLabel + ':' : ''}" scope="page"/>	
+			<isif condition="${preferredaddress.ID != aid}">
+				<isif condition="${pdict.p_onlyshippingaddr == 'true' && aid == '-1'}">
+					<iscontinue/>
+				<iselse>
+					<option value="${aid}" ${pdict.CurrentHttpParameterMap.isParameterSubmitted('shipId') && !empty(pdict.CurrentHttpParameterMap.shipId.value) && pdict.CurrentHttpParameterMap.shipId.value== aid ? "selected='selected'":""} data-address='<isprint value="${JSON.stringify(jsonAddr).replace("'","^")}" encoding="off"/>'>
+						(${aid.substring(0,10)}) <isprint value="${addrLabel}"/> <isprint value="${address.value.address1}"/>, <isprint value="${address.value.city}"/>, <isprint value="${address.value.stateCode}"/>, <isprint value="${address.value.postalCode}"/>
+					</option>
+				</isif>
+							
+			 </isif>
+		</isloop>
+	</select>
+	
+</isif>

@@ -1,0 +1,41 @@
+/**
+* PAVCheckSingle.ds
+*
+*-Description - Run a product availability check to see if the current customer can purchase the given products
+*
+*	@input prod : dw.catalog.Product
+*
+*   @output isValid : Boolean
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		if(pdict.prod == null)
+		{
+			return PIPELET_ERROR;
+		}
+		
+		var isProdValid = ProductUtils.getAvailability(pdict.prod, false);
+		
+		if(isProdValid)
+		{
+			isProdValid = isProdValid.inStock;
+		}
+
+		pdict.isValid = isProdValid;
+	}
+	catch(e)
+	{
+		Logger.error('PAVCheckSingle has failed with the following error: ' + e);
+		return PIPELET_ERROR;
+	}
+	
+    return PIPELET_NEXT;
+}

@@ -1,0 +1,42 @@
+<isinclude template="util/modules" />
+<h2>${Resource.msg('reviews.writereview','product',null)}</h2>
+
+<form action="${URLUtils.url('Product-WriteReview')}" name="${pdict.CurrentForms.review.htmlName}" method="post" id="ReviewForm">
+	<div class="required-header">${Resource.msg('review.required','forms',null)}</div>
+	<fieldset>
+		<div class="rating">
+			<div class="nickname">
+				<isinputfield formfield="${pdict.CurrentForms.review.nickname}" type="input" xhtmlclass="reomvespecialchar reviewnickname" />
+			</div>
+			
+			<div class="rating-stars">
+			<label for="dwfrm_review_rating">
+				<span>${Resource.msg('review.rating','forms',null)}</span>
+				<span class="required-indicator">&#42;</span>
+			</label>
+				<div class="stars js-bvratings">
+					<input type="radio" name="rating" class="star-1" id="star-1" value="1"><label class="star-1" for="star-1">1</label>
+					<input type="radio" name="rating" class="star-2" id="star-2" value="2"><label class="star-2" for="star-2">2</label>
+					<input type="radio" name="rating" class="star-3" id="star-3" value="3"><label class="star-3" for="star-3">3</label>
+					<input type="radio" name="rating" class="star-4" id="star-4" value="4"><label class="star-4" for="star-4">4</label>
+					<input type="radio" name="rating" class="star-5" id="star-5" value="5"><label class="star-5" for="star-5">5</label>
+					<span></span>
+				</div>
+			</div>
+			
+			<input type="hidden" id="${pdict.CurrentForms.review.rating.htmlName}" name="${pdict.CurrentForms.review.rating.htmlName}" value=""/>
+			
+			<isinputfield formfield="${pdict.CurrentForms.review.title}" type="input" xhtmlclass="reomvespecialchar reviewtitle" />			
+			
+			<isinputfield attribute1="rows" value1="8" attribute2="cols" value2="60" formfield="${pdict.CurrentForms.review.text}" type="textarea" xhtmlclass="reomvespecialchar reviewcomments" />
+			
+			<input type="hidden" value="${pdict.Product.ID}" name="pid" id="pid" />
+		</div>
+		<div class="form-row pre-reg-button">
+			<button class="primaryButtn js-bvreviewsubmit" type="button" value="submit" name="${pdict.CurrentForms.review.submit.htmlName}" >
+				${Resource.msg('global.submitreview','locale',null)}
+			</button>
+			<div class="start-error-message error"></div>
+		</div>
+	</fieldset>	
+</form>

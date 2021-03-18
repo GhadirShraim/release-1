@@ -1,0 +1,65 @@
+/**
+* Contact Us Email
+* Outputs an email address based on multiple parameters
+*
+*   @input customer : dw.customer.Customer
+*	@input TOI : String
+*
+*   @output emailAddr : String
+*   @output ChosenTopicOfInterest : String
+*
+*/
+importPackage( dw.system );
+importPackage( dw.object );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		var toi : String = pdict.TOI;
+		var cust : dw.customer.Customer = pdict.customer;
+		var email : String = '';
+		var obj : Object;
+		var customObj  : CustomObject = CustomObjectMgr.getCustomObject("TopicOfInterest", toi);
+		if (toi != null)
+		{
+			obj = customObj;
+			email = (obj != null && 'email' in obj.custom ? obj.custom.email : '');
+		}
+		
+		if (email != null && (cust.profile != null || ('tempChainCode' in session.custom && session.custom.tempChainCode != null)))
+		{
+			var emails = JSON.parse(dw.system.Site.getCurrent().getCustomPreferenceValue('contactUsEmailsByChainCode'));
+			var cc = cust.profile != null && 'chainCode' in cust.profile.custom ? cust.profile.custom.chainCode : session.custom.tempChainCode.replace('C','');
+		
+			if (cc != null && !empty(cc))
+			{
+				//set the radix to 10 to remove the leading zeros
+				email = emails[parseInt(cc, '10')];
+			}
+		}
+		
+		if (empty(email))
+		{
+			//default to the customer service site specific email address if all other conditionals fail
+			email = dw.system.Site.current.preferences.custom.customerServiceEmail;
+		}	
+		
+		//output the email address for contact us
+		pdict.emailAddr = email;
+		
+		// Output the selected topic of interest which will be rendered in the e-mail.
+		// If empty, the user is a portal user and no Topic of Interest drop-down is available. 
+		// Thus display 'Online Customer Request' as the standard message for portal users.
+		pdict.ChosenTopicOfInterest = (!empty(obj) && 'key' in obj.custom) ? obj.custom.key : 'Online Customer Request';
+	}
+	catch(e)
+	{
+		//If the script fails, default to the customer service site specific email address
+		pdict.emailAddr = dw.system.Site.current.preferences.custom.customerServiceEmail;
+		Logger.error("ContactUsEmail.ds has failed with the following error: " + e);
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

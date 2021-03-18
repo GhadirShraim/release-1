@@ -1,0 +1,51 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+<head>
+
+	<isscript>var pageContext={title:'Virtual Signup',type:'virtualsignup',ns:'virtualsignup', vsustep: !empty(pdict.VSUStep) ? pdict.VSUStep : null};</isscript>
+	<isinclude template="util/modules"/>
+
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="content/home/pt_storefront_UI"/> 
+
+	<iscomment>Add page specific header information here.</iscomment>
+	<script src='https://www.google.com/recaptcha/api.js'></script>
+</head>
+<body>
+	<isinclude template="gtm/bodytrackingcode" />
+	<div id="wrapper" class="pt_storefront vsu_signup">
+	
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		
+		<div id="main" role="main">
+			<isinclude template="components/browsertoolscheck"/>
+			<isif condition="${!empty(pdict.SalonCons) && pdict.SalonCons}"> 
+				<h1 class="request-heading"> <isprint value="${Resource.msg('salon.requestsalonconsultant', 'forms', null)}" /> </h1>
+			<iselse>
+				<isif condition="${!empty(pdict.bctext2)}">
+						<isif condition="${empty(pdict.Action) || pdict.Action != 'prereg'}">
+							<isbreadcrumbs bcurl1="${URLUtils.https('Account-Show')}" bctext1="${Resource.msg('account.signup','account',null)}" bctext2="${pdict.bctext2}"/>
+						</isif>
+					<iselse>
+						<isif condition="${empty(pdict.Action) || pdict.Action != 'prereg'}">
+							<isbreadcrumbs bcurl1="${URLUtils.https('Account-Show')}" bctext1="${Resource.msg('account.signup','account',null)}"/>
+						</isif>
+					</isif>
+			</isif>
+			<isreplace/>
+			
+		</div>
+
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="content/home/pt_storefront_VARS"/>
+
+	</div><!--  /wrapper -->
+	
+</body>
+</html>

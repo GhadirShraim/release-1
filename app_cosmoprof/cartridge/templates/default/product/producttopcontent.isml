@@ -1,0 +1,263 @@
+<iscomment>In the product pipeline, if a product was not found for the selected attributes, we need to refresh the ProductVariationModel using the default selected variant</iscomment>
+
+<isset name="isQuickView" value="${pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist'}" scope="page"/>
+
+<isset name="productUrl" value="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}" scope="page" />
+<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid')}">
+	<isset name="productUrl" value="${productUrl.append('cgid',pdict.CurrentHttpParameterMap.cgid)}" scope="page" />
+</isif>
+
+
+<!-- dwMarker="product" dwContentID="${pdict.Product.UUID}" -->
+<div class="product-col-wrapper">
+	<isif condition="${!isQuickView}">
+		<isinclude template="components/productbreadcrumbs"/>
+	</isif>
+	
+<div class="product-col-1 product-image-container">
+	<isinclude template="product/components/productimages"/>
+	<isimagesizes /> 
+	<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getAbsImageURL(imageConfig.pdpImage != null ? imageConfig.pdpImage : imageConfig)}" scope="page"/>
+	<isif condition="${!isQuickView}">
+	    <isif condition="${! empty(pdict.Product.custom['featuredVideo'])}" >
+			<div class="vedio-content-wrapper show-on-desktop ">
+				<span class="vedio-content-heading"><isprint value="${Resource.msg('product.featurevideo','product',null)}" /></span>
+				<div class="vedio-content">
+				<iframe width="100%" height="100%" src="<isprint  value="${pdict.Product.custom.featuredVideo}" />"></iframe>	
+				</div> 	
+			</div>
+		</isif>
+	</isif>
+	<isif condition="${! empty(pdict.Product.custom['videoLink']) && pdict.Product.custom['videoLink'].length > 0}">
+		<div class="awards_sec ">
+			<div class="awards_header">${Resource.msg('product.featurevideo','product',null)}</div>
+		</div>
+		<isscript>
+			var videoArray = [];
+			
+			if('videoLink' in pdict.Product.custom)
+			{
+				var videoLinks = pdict.Product.custom.videoLink;
+				
+				for each( var v in videoLinks)
+				{
+					videoArray.push(v);
+				}
+			}
+		</isscript>
+				
+		<isset name="videoimageUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+		<div  class="tab-content video-container">
+				<isloop items="${videoArray}" var="video" status="videoStatus">
+						<isprint value="${video}" encoding="off"/>
+				</isloop>	
+		</div>
+	</isif>
+	<isif condition="${isQuickView && pdict.Product.master}" >
+		<isset name="sddEnabled" value="${false}" scope="page" />
+		<isif condition="${'SDDAvailable' in pdict.Product.custom && pdict.Product.custom.SDDAvailable == true}">
+			<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+				<isset name="sddEnabled" value="${true}" scope="page" />
+			</isif>	
+		</isif>
+		<isif condition="${!pdict.CurrentSession.custom.isPortalUser}">
+			<div class="eligible-sdd-quickview ${sddEnabled == true?'ShowSDDMessage':'HideSDDMessage'}">${Resource.msg('global.pdpsddmessage','sdd',null)}</div>
+		</isif>
+	</isif>
+</div>
+
+<div class="product-col-2  product-detail">
+	<isif condition="${isQuickView}">
+		<div class="QuickViewFull">
+			<a href="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}" title="${pdict.Product.name}" data-prodid="${pdict.Product.ID}"  >${Resource.msg('product.viewdetails','product',null)}</a>
+		</div>
+	</isif>
+	<div class="product-review-ratings">
+		<isif condition="${!isQuickView}">
+			<div class="col2-bv">
+				<isinclude template="product/components/reviews-stars"/>
+				<isif condition="${pdict.CurrentCustomer.authenticated}">
+					<iscomment>
+						<a id="ShowReviewsLink" href="#reviewsec">${Resource.msg('global.writeareview','locale',null)}</a>
+					 </iscomment>	
+				</isif>
+			</div>
+		</isif>
+	</div>
+	<div class="product-brand-name-section">
+		<div class="product-brand" itemprop="name"><isprint value="${pdict.Product.brand}"/></div>
+		<div class="product-name-review-ratings">
+			<div class="product-name" itemprop="name">
+				<isif condition="${!pdict.Product.master && pdict.Product.hasOwnProperty('masterProduct')}">
+					<a href="${productUrl}" title="${pdict.Product.masterProduct.name}"><isprint value="${pdict.Product.masterProduct.name}"/></a> 
+				<iselse/>
+					<a href="${productUrl}" title="${pdict.Product.name}"><isprint value="${pdict.Product.name}"/></a>					
+				</isif>
+			</div> 
+		</div>
+	</div>	
+	<div id="product-content" class="product-content-sku">
+		<isinclude template="product/productcontent"/>
+	</div>
+	<isif condition="${!isQuickView}">
+		<isif condition="${! empty(pdict.Product.custom['featuredVideo'])}" >
+			<div class="vedio-content-wrapper show-on-mobile ">
+				<span class="vedio-content-heading"><isprint value="${Resource.msg('product.featurevideo','product',null)}" /></span>
+				<div class="vedio-content">
+				<iframe width="100%" height="100%" src="<isprint  value="${pdict.Product.custom.featuredVideo}" />"></iframe>	
+				</div> 	
+			</div>
+		</isif>
+	</isif>
+</div>
+
+<isif condition="${isQuickView && !pdict.Product.master}">
+	<isinclude url="${URLUtils.url('SDD-SddBadges','view','QUICKVIEW','productid', pdict.Product.ID)}"/>
+</isif>
+
+	<isif condition="${!isQuickView}">
+		<div class="add-this-social-section">
+			<div class="addthis_toolbox addthis_default_style socialiconspdp" data-produrl="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}"></div>
+			<div class="PDPinstagram"><a href=" https://www.instagram.com/cosmoprofbeauty/" class="icon" target="_blank"></a></div>
+		</div>
+		<div class="product-tabs" >
+			<h2 class="visually-hidden">Additional Information</h2>
+			<isset name="pam" value="${pdict.Product.getAttributeModel()}" scope="page"/>
+			<isset name="vags" value="${pam.getVisibleAttributeGroups()}" scope="page"/>
+			<isset name="showAttributes" value="${false}" scope="page"/>
+			<isloop items="${vags}" var="AttributeGroup" status="loopstatus">
+				<isif condition="${AttributeGroup.ID != 'mainAttributes'}">
+					<isset name="showAttributes" value="${true}" scope="page"/>
+				</isif>
+			</isloop>
+
+			<ul class="tabs-menu">
+				<isif condition="${! empty(pdict.Product.custom['alsoincludes']) && pdict.Product.custom['alsoincludes'].markup.length > 0}">
+					<li class="accordionPDP"><span>${Resource.msg('product.also.includes','product',null)}</span></li>
+					<isif condition="${! empty(pdict.Product.custom['alsoincludes']) && pdict.Product.custom['alsoincludes'].markup.length > 0}">
+						<div id="tab0" class="tab-content panel" collapsible="true">
+							
+							<isprint value="${pdict.Product.custom['alsoincludes']}" encoding="off"/>
+						</div>
+					</isif>	
+				</isif>	
+				<isif condition="${! empty(pdict.Product.longDescription) && pdict.Product.longDescription.markup.length > 0}">
+					<li class="accordionPDP"><span>${Resource.msg('product.tab1','product',null)}</span></li>
+					<isif condition="${! empty(pdict.Product.longDescription) && pdict.Product.longDescription.markup.length > 0}">
+						<div id="tab1" class="tab-content panel">
+							<isprint value="${pdict.Product.longDescription}" encoding="off"/>
+						</div>
+					</isif>	
+				</isif>	
+			
+				<iscomment>
+				<isif condition="${showAttributes}">
+					<li><a href="#tab3">${Resource.msg('product.tab3new','product',null)}</a></li>
+				</isif>	
+				</iscomment>
+				
+				<isif condition="${! empty(pdict.Product.custom.directions) && pdict.Product.custom.directions.markup.length > 0}">
+					<li class="accordionPDP"><span>${Resource.msg('product.tab3new','product',null)}</span></li>
+					<isif condition="${! empty(pdict.Product.custom.directions) && pdict.Product.custom.directions.markup.length > 0}">
+						<div id="tab3" class="tab-content panel" itemprop="directions">
+							<isprint value="${pdict.Product.custom.directions}" encoding="off"/>
+						</div>
+					</isif>	
+				</isif>
+				<isif condition="${! empty(pdict.Product.custom.features_benefits) && pdict.Product.custom.features_benefits.markup.length > 0}">
+					<li class="accordionPDP"><span>${Resource.msg('product.tab5new','product',null)}</span></li>
+					<isif condition="${! empty(pdict.Product.custom.features_benefits) && pdict.Product.custom.features_benefits.markup.length > 0}">
+						<div id="tab4" class="tab-content panel" itemprop="features">
+							<isprint value="${pdict.Product.custom.features_benefits}" encoding="off"/>
+						</div>
+					</isif>	
+				</isif>
+				<isif condition="${! empty(pdict.Product.custom.ingredients) && pdict.Product.custom.ingredients.markup.length > 0}">
+					<li class="accordionPDP"><span>${Resource.msg('product.tab5','product',null)}</span></li>
+					<isif condition="${! empty(pdict.Product.custom.ingredients) && pdict.Product.custom.ingredients.markup.length > 0}">
+						<div id="tab5" class="tab-content panel" itemprop="ingredients">
+							<isprint value="${pdict.Product.custom.ingredients}" encoding="off"/>
+						</div>
+					</isif>	
+				</isif>	
+				<iscomment> redesign		
+				<li class="accordionPDP"><span>${Resource.msg('product.tab6','product',null)}</span></li>
+				<div id="tab6" class="tab-content panel" ondragstart="ondragstart	">
+					<div class="tab-content-review1">
+						<isinclude template="product/writereview" />
+					</div>
+					
+					<div class="tab-content-review2">
+						<isinclude url="${URLUtils.url('Product-GetReviews', 'pid', pdict.Product.ID)}"/>
+					</div>
+					<div style="clear:both;"></div>
+				</div>
+				 </iscomment>
+				
+				
+				<iscomment>
+					<isif condition="${! empty(pdict.Product.custom['videoLink']) && pdict.Product.custom['videoLink'].length > 0}">
+						<li><a href="#tab8">${Resource.msg('product.video','product',null)}</a></li>
+					
+						# SAL-657 - Display Product Awards on the PDP, within their own tab.
+					
+					</isif>
+				</iscomment>
+			</ul>
+			<isif condition="${! empty(pdict.Product.custom['productAwards']) && pdict.Product.custom['productAwards'].length > 0}">
+				<div class="awards_sec">
+					<div class="awards_header">${Resource.msg('product.awards','product',null)}</div>
+					<isif condition="${! empty(pdict.Product.custom['productAwards']) && pdict.Product.custom['productAwards'].length > 0}">
+						<div  class="award_descri">
+							<isloop iterator="${pdict.Product.custom['productAwards']}" alias="award">
+								<div class="award">
+									<iscontentasset aid="${award}"/>
+								</div>
+							</isloop>
+						</div>
+					</isif>
+				</div>
+			</isif>
+		<iscomment>
+			<isif condition="${showAttributes}">
+				<div id="tab3" class="tab-content">
+					
+					<isloop items="${vags}" var="AttributeGroup" status="loopstatus">
+						<isif condition="${AttributeGroup.ID != 'mainAttributes' && AttributeGroup.ID != 'Presentation' }">
+							<isset name="group" value="${AttributeGroup}" scope="page"/>
+							<h3><isprint value="${group.getDisplayName()}"/></h3>
+							<isinclude template="product/components/group"/>
+						</isif>
+					</isloop>
+				</div>
+			</isif>
+		 </iscomment>
+			<iscomment>
+				<isscript>
+					var videoArray = [];
+					
+					if('videoLink' in pdict.Product.custom)
+					{
+						var videoLinks = pdict.Product.custom.videoLink;
+						
+						for each( var v in videoLinks)
+						{
+							videoArray.push(v);
+						}
+					}
+				</isscript>
+				
+				<isset name="videoimageUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+	
+				<isif condition="${! empty(pdict.Product.custom['videoLink']) && pdict.Product.custom['videoLink'].length > 0}">
+					<div id="tab8" class=" video-container-tab">
+							<isloop items="${videoArray}" var="video" status="videoStatus">
+									<isprint value="${video}" encoding="off"/>
+							</isloop>	
+					</div>
+				</isif>
+			</iscomment>
+		</div>
+	</isif>
+</div>
+ 

@@ -1,0 +1,38 @@
+<isset name="isAjax" value="${(pdict.CurrentHttpParameterMap.format.stringValue == 'ajax')}" scope="page"/>
+<isif condition="${empty(pdict.CurrentSession.custom.isPortalUser)}">
+	<isinclude template="util/modules"/>
+	<div class="welcome-return-customer hide-mobile">
+		<isprint value="${Resource.msg('global.home.header.login.msg','locale',null)}" />
+	</div>
+	<isif condition="${!empty(pdict.showAddressSelection) && pdict.showAddressSelection}">
+		<a href="${URLUtils.url('LoginBarrier-SelectShippingAddress')}" id="barrier-address-trigger-link" class="dialogify" data-dlg-options='{"dialogClass":"close","closeOnEscape":"false" }' ></a>
+		<isif condition="${!empty(pdict.CurrentUser) && pdict.CurrentUser.authenticated}">
+   			<div class="header-login-box">
+	   			  <div class="login-box-content returning-customers clearfix">
+	   			  	  <div class="customerid hide">${pdict.CurrentUser.ID}</div>
+	   			  </div>
+   			</div>
+   		</isif>
+	<iselse>
+		<iscomment>TODO:  Make resource for title and other text</iscomment>
+		<isset name="isMObile" value="${false}" scope="Page" />
+		<isif condition="${!empty(pdict.CurrentHttpParameterMap.isMobile.value) && pdict.CurrentHttpParameterMap.isMobile.value == 'true'}">
+			<isset name="isMObile" value="${true}" scope="Page" />
+		 </isif>
+		<div>
+			<isinclude template="account/login/loginincludefromheader"/>
+		</div>
+		
+	</isif>
+</isif>
+
+<isif condition="${isAjax}">
+	<script type="text/javascript">
+		app.storefront.init();
+	</script>
+</isif>
+
+<script type="text/javascript">
+	//app.urls.pageRetention = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+	app.pageRetentionURL = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+</script>

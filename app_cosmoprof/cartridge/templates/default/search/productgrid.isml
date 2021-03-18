@@ -1,0 +1,93 @@
+<isinclude template="util/modules"/>
+<isscript>
+	importScript('search/ProductGridUtils.ds');
+	importScript("util/ViewHelpers.ds");
+	
+	// Check if the Banner Slot needs to be displayed if we are in Category page.
+	
+	if(!empty(pdict.category)) {
+		// Check the displayBanner flag
+		
+		if ('displayBanner' in pdict.category.custom && pdict.category.custom.displayBanner ) {
+			// get the slot Position
+			var position = pdict.category.custom.bannerTilePosition;
+			if (!empty(position)) {
+				//Get the Tile Position
+				var tilePos = position.split('|');
+			}
+		}
+	}
+	var newPhrase = pdict.phrase;
+	if(!empty(pdict.phrase) && pdict.phrase.indexOf('-') > -1) {
+		newPhrase = pdict.phrase.substring(0, (pdict.phrase.indexOf('-'))-1);
+	}
+	
+</isscript>
+<iscomment><!--Display the remaining products as list--></iscomment>
+<isif condition="${pdict.category.displayName != null}">
+	<isset name="gtmCatName"  value="${pdict.category.displayName}" scope="page"/>
+<iselse>
+	<isset name="gtmCatName"  value="" scope="page"/>
+</isif>
+
+<isset name="checkInWishList" value="${false}" scope="Page" />
+<isif condition="${!empty(pdict.wishlistitems) && customer.authenticated}">
+	<isset name="checkInWishList" value="${true}" scope="Page" />		
+</isif>
+<isif condition="${pdict.pagingmodel.start == 0 && !empty(pdict.category) && ViewHelpers.checkIfEligibleForPLPBanner(pdict.productsearchmodel, pdict.category)}">
+	<isset name="sortedGridElement" value="${ProductGridUtils.sortPLPPage(pdict.pagingmodel.pageElements, customer, tilePos)}" scope="Page" />
+<iselseif condition="${pdict.pagingmodel.start == 0 && !pdict.productsearchmodel.categorySearch && !empty(newPhrase) && ViewHelpers.checkIfEligibleForSearchPLPBanner(pdict.productsearchmodel, newPhrase)}" >
+	<isscript>
+		try {
+			var assetContent  = dw.content.ContentMgr.getContent("searchPagePLPBannerConfigAssets");
+			var assetConfig = assetContent.custom.plpBannerContentConfig;
+			var config = !empty(assetConfig) ? JSON.parse(assetConfig) : '';
+			
+			// Get config for current query
+			var position = !empty(config) && !empty(config[newPhrase]) && !empty(config[newPhrase].position) ? config[newPhrase].position : [];
+			if (!empty(position)) {
+				//Get the Tile Position
+				var tilePos = position.split('|');
+			}
+			//get current Config
+			var currConfig = config[newPhrase];
+		} catch(e) {
+			dw.system.Logger.error("productgrid.isml [Error] occured while executing search page banner on PLP.")
+		}
+	</isscript>
+	<isset name="sortedGridElement" value="${ProductGridUtils.sortPLPPage(pdict.pagingmodel.pageElements, customer, tilePos, currConfig)}" scope="Page" />
+<iselse>
+	<isset name="sortedGridElement" value="${ProductGridUtils.sortPLPPage(pdict.pagingmodel.pageElements, customer)}" scope="Page" />
+</isif>
+<ul id="search-result-items" data-catname="${gtmCatName}" class="search-result-items tiles-container clearfix ${ProductGridUtils.getCompareClass(pdict.category)} ${!empty(pdict.CurrentHttpParameterMap.format.value) ? (pdict.CurrentHttpParameterMap.format.value) : ''}">
+	<isloop items="${sortedGridElement}" var="LoopProductHit" status="loopstate">
+		<isif condition="${!empty(LoopProductHit) && typeof(LoopProductHit) == 'object' && 'slotPos' in LoopProductHit && !empty(LoopProductHit.slotPos)}">
+			<isset name="bannerTilePosition" value="${(LoopProductHit.slotPos + 1).toString()}" scope="Page" />
+			<li class="grid-tile ${(loopstate.index % 4 == 0) ? 'new-row' : ''}"  data-colors-to-show="${ProductGridUtils.getRepresentedVariationValueIDs(LoopProductHit,'color').join(',')}">
+				<isinclude template="search/plpbannerslots"/>
+			</li>
+		<iselseif condition="${!empty(LoopProductHit) && typeof(LoopProductHit) == 'object' && 'assetsID' in LoopProductHit && !empty(LoopProductHit.assetsID)}" >
+			<li class="grid-tile ${(loopstate.index % 4 == 0) ? 'new-row' : ''}"  data-colors-to-show="${ProductGridUtils.getRepresentedVariationValueIDs(LoopProductHit,'color').join(',')}">
+				<iscontentasset aid="${LoopProductHit.assetsID}" />
+			</li>
+		<iselse>
+			<li class="grid-tile ${(loopstate.index % 4 == 0) ? 'new-row' : ''}"  data-colors-to-show="${ProductGridUtils.getRepresentedVariationValueIDs(LoopProductHit,'color').join(',')}">
+				<isset name="addedToWishList" value="${false}" scope="Page" />
+				<isif condition="${checkInWishList}">
+					<isset name="addedToWishList" value="${ProductGridUtils.checkIfAddedInWishList(pdict.wishlistitems, LoopProductHit.product.ID)}" scope="Page" />
+				</isif>
+				<iscomment><!--display a tile per product--></iscomment>
+				<isobject object="${LoopProductHit}" view="searchhit">
+					<iscomment><!-- Self contained product information. Can be cached separately even if search finds this product in different categories or positions within the grid  --></iscomment>
+					<isinclude url="${ProductGridUtils.buildHitTileURL(LoopProductHit, pdict.CurrentHttpParameterMap.cgid.value, addedToWishList)}"/>
+				</isobject>
+			</li>
+		</isif>
+		
+	</isloop>
+</ul>
+<isif condition="${dw.system.Site.getCurrent().getCustomPreferenceValue('enableInfiniteScroll')}">
+	<isif condition="${pdict.pagingmodel.currentPage != pdict.pagingmodel.maxPage }">
+		<div class="infinite-scroll-placeholder" data-loading-state="unloaded" data-grid-url="${decodeURI(pdict.pagingmodel.appendPaging ( pdict.ProductSearchResult.url('Search-Show'), (pdict.pagingmodel.currentPage + 1) * pdict.pagingmodel.pageSize).append('format','page-element'))}" ></div>
+	</isif>
+</isif>

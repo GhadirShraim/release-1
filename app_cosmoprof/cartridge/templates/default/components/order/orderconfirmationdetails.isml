@@ -1,0 +1,238 @@
+<iscomment>
+	Grab Site Preference value for Order Status. The value is used to distinguish between store purchases and all other orders (Web, etc).
+</iscomment>
+<isinclude template="util/modules.isml"/>
+
+<div class="order-left-wrapper cart-items-details">
+		<isset name="Order" value="${pdict.order}" scope="page"/>
+		<div class="order-details">
+			<div class="item-list">		
+				<div class="first-row-orderinfo orderconfirmation">
+					<div class="order-information">
+					
+						<div class="head-label">${Resource.msg('orderdetails.ordersummary','components',null)}</div>
+						<div class="order-date ">
+							<isset name="ordercreation" value="${new dw.util.Calendar(Order.creationDate)}" scope="Page" />
+							<isset name="ordercreationTZ" value="${ordercreation.setTimeZone('CST')}" scope="Page" />
+							<isset name="ordercreationdate" value="${dw.util.StringUtils.formatCalendar(ordercreation, "MM/dd/yyyy")}" scope="PAGE" />
+							<isset name="ordercreationtime" value="${dw.util.StringUtils.formatCalendar(ordercreation, "HH:mm a")}" scope="PAGE" />
+							<isset name="ordercreationzone" value="${ordercreation.getTimeZone()}" scope="PAGE" />
+							<span class="label"><isprint value="${Resource.msg('orderdetails.orderplaceddate','components',null)}" /></span>
+							<span class="value"><isprint value="${ordercreationdate}" /></span>
+							<span class="timezone"><isprint value="${ordercreationtime}" /> <isprint value="${ordercreationzone}"/></span>
+						</div>
+						
+						<isif condition="${!empty(Order.orderNo)}"> 
+							<div class="order-number">
+								<span class="label"><isprint value="${Resource.msg('orderdetails.ordernumber','components',null)}" /></span>
+								<span class="value">
+									<isprint value="${Order.orderNo}"/>
+								</span>
+							</div>
+						</isif>
+						<isif condition="${!empty(Order.custom) && Order.custom.commentText && Order.custom.commentText != ''}">
+							<div class="order-commenttext">
+								<span class="label"><isprint value="${Resource.msg('orderdetails.ordernotes','components',null)}"/></span>
+								<span class="value"><isprint value="${Order.custom.commentText}"/></span>
+							</div>
+						</isif>
+						
+						<isif condition="${!empty(Order.custom) && Order.custom.po && Order.custom.po != ''}">
+							<div class="order-po">
+								<span class="label"><isprint value="${Resource.msg('orderdetails.ponumber','components',null)}"/></span>
+								<span class="value"><isprint value="${Order.custom.po}"/></span>
+							</div>
+						</isif>
+						
+					</div>
+				</div><!-- End of first-row-orderinfo -->
+				<div class="second-row-orderinfo">
+					<div class="order-payment-instruments">
+						<div class="head-label">
+							<isif condition="${!empty(Order.paymentInstruments) && Order.paymentInstruments.length == 1}">
+								${Resource.msg('orderdetails.paymentmethod','components',null)}
+							<iselse>
+								${Resource.msg('orderdetails.paymentmethods','components',null)}
+							</isif>
+						</div>
+						
+						<iscomment>Render online purchase payment method information.
+							<isloop items="${Order.getPaymentInstruments()}" var="paymentInstr" status="piloopstate">
+								<isif condition="${dw.order.PaymentInstrument.METHOD_GIFT_CERTIFICATE.equals(paymentInstr.paymentMethod)}">
+								   <div class="orderpaymentinstrumentsgc">
+										   <span class="label"><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></span>
+								           <span class="value"><isprint value="${paymentInstr.maskedGiftCertificateCode}"/></span>
+								           <span class="payment-amount">
+								              <span class="label"><isprint value="${Resource.msg('global.amount','locale',null)}" />:</span>
+								              <span class="value"><isprint value="${paymentInstr.paymentTransaction.amount}"/></span>
+								           </span>
+								    </div> 
+								<iselse> 
+									<div class="payment-type hide"><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></div>         
+									<span class="cardno-label"><isprint value="${Resource.msg('confirmation.CCNumber','checkout',null)}" /></span><isminicreditcard p_card="${paymentInstr}" p_show_expiration="${false}" p_show_onlyspecificinfo="0"/><br />					
+									<div class="payment-amount" style="display:none">
+										<span class="label"><isprint value="${Resource.msg('global.amount','locale',null)}"/>:</span>
+										<span class="value"><isprint value="${paymentInstr.paymentTransaction.amount}"/></span>
+									</div><!-- END: payment-amount -->
+								</isif>
+							</isloop>
+						 </iscomment>
+						 
+						 <isset name="orderPaymentInstrumentMethod" value="" scope="page"/>
+						 <isloop items="${Order.getPaymentInstruments()}" var="paymentInstr" status="piloopstate">
+						 	<isif condition="${dw.order.PaymentInstrument.METHOD_CREDIT_CARD.equals(paymentInstr.paymentMethod)}">
+						 		<span class="cardno-label"><isprint value="${Resource.msg('confirmation.CCNumber','checkout',null)}" /></span>
+						 		<isminicreditcard p_card="${paymentInstr}" p_show_expiration="${false}" p_show_onlyspecificinfo="0" isorderconfirmationpage="true"/><br />
+						 	</isif>
+						 	<isif condition="${empty(orderPaymentInstrumentMethod)}">
+						 		<isset name="orderPaymentInstrumentMethod" value="${paymentInstr.paymentMethod}" scope="page"/>
+						 	</isif>
+						 </isloop>
+						 
+						 <iscomment>
+							 <isif condition="${!empty(pdict.PaymentInstrument.creditCardNumber)}"> 
+								<span class="cardno-label"><isprint value="${Resource.msg('confirmation.CCNumber','checkout',null)}" /></span><isminicreditcard p_card="${pdict.PaymentInstrument}" p_show_expiration="${false}" p_show_onlyspecificinfo="0"/><br />
+							 </isif>
+						 </iscomment>
+						 
+						 <isif condition="${!empty(orderPaymentInstrumentMethod) && orderPaymentInstrumentMethod  == 'ON_ACCOUNT'}">
+						 		<span class="cardno-label"><isprint value="${Resource.msg('confirmation.onaccount','checkout',null)}" /></span><br/>
+						 <iselseif condition="${!empty(orderPaymentInstrumentMethod) && orderPaymentInstrumentMethod == 'PayPal'}">
+								<span class="cardno-label"><isprint value="${Resource.msg('minibillinginfo.paypal','checkout',null)}" /></span><br/>
+						 <iselseif condition="${!empty(orderPaymentInstrumentMethod) && orderPaymentInstrumentMethod == 'BML'}">
+								<span class="cardno-label"><isprint value="${Resource.msg('minibillinginfo.paypalCredit','checkout',null)}" /></span><br/>
+						  </isif>
+					</div>
+					<div class="order-billing">
+						<isset name="billAddr" value="${Order.billingAddress}" scope="page"/>
+						<div class="mini-address-companyname">
+							<isprint value="${billAddr.companyName}" />
+						</div>
+						<div class="mini-address-name">
+							<isprint value="${billAddr.firstName}"/>
+							<isprint value="${billAddr.lastName}"/>
+						</div>
+					
+						<div class="mini-address-location">
+								<iscomment>Render online purchase address order details.</iscomment>
+								<isprint value="${billAddr.address1}"/>
+								<isif condition="${!empty(billAddr.address2)}">
+									<br/><isprint value="${billAddr.address2}"/>
+								</isif>
+								<isif condition="${billAddr.city != null}">
+									<br/><isprint value="${billAddr.city}"/>
+								</isif>
+								<isif condition="${!empty(billAddr.city) && !empty(billAddr.stateCode)}">
+									<isprint value="${Resource.msg('global.comma', 'locale', null)}"/>
+								</isif>
+								<isprint value="${billAddr.stateCode}"/>
+								<isprint value="${billAddr.postalCode}"/><br/>
+								
+								<iscomment>
+								<isprint value="${billAddr.countryCode}"/>
+									<br/><isprint value="${Resource.msg('miniaddress.phone','account',null)}"/>
+									<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+										<isprint value="${'-'}"/>
+									<iselse>
+										<isprint value="${billAddr.phone}"/>
+									</isif>
+									<br/><isprint value="${Order.customerEmail}"/>
+								</iscomment>
+						</div>
+					</div><!-- End of order-billing -->
+				</div><!-- End of second-row-orderinfo -->
+			</div>
+
+		<isloop items="${Order.shipments}" var="shipment" status="shipmentloopstate">
+	
+			<isif condition="${!empty(shipment.productLineItems) && shipment.productLineItems.size() > 0}">
+						
+				<iscomment>Shipment items table</iscomment>
+				<isif condition="${empty(Order.custom.preferredDeliveryTime) && Order.custom.isSDDBasket == false}">
+					<div class="head-label your-purchase">${Resource.msg('orderdetails.yourpurchases','components',null)}</div>	
+				</isif>
+				
+				<isset name="sddEnabled" value="${false}" scope="page" />
+				<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+					<isset name="sddEnabled" value="${true}" scope="page" />
+				</isif>	
+				
+				<isif condition="${sddEnabled == true && !empty(Order.custom.preferredDeliveryTime) && Order.custom.isSDDBasket == true}">
+					<div class="head-label your-purchase">${Resource.msg('orderdetails.deliveryMethods','components',null)}</div>
+					<isset name="currCalader" value="${dw.util.StringUtils.formatCalendar(new dw.util.Calendar(), 'EEEE, MM/dd')}" scope="Page" />
+					<isset name="sddTime" value="${Order.custom.preferredDeliveryTime}" scope="page" />
+					<isset name="preferredSddTime" value="${sddTime.split('T')}" scope="page" />
+					<isset name="sddDate" value="${preferredSddTime[0].split('-')}" scope="page" />
+					<isset name="dateInstance" value="${new Date(sddDate[0], sddDate[1] - 1, sddDate[2])}" scope="page" />
+					<isscript>
+						var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+						var sddDayName = days[dateInstance.getDay()];
+					</isscript>								
+					<isset name="sddDeliveryDay" value="${sddDayName+','+(new Number(dateInstance.getMonth())+1)+'-'+dateInstance.getDate()+'-'+dateInstance.getFullYear()}" scope="page" />				
+					<isset name="sddPreferredDeliveryTime" value="${sddDeliveryDay+' '+preferredSddTime[1]}" scope="page" />
+					<div class="sdd-order-message"><isprint value="${Resource.msg('orderconfirmations.delivery.message','components',null) +" "+ sddPreferredDeliveryTime}"/></div>					
+			    </isif>
+				<div class="receipt-order-shipment-table item-list">
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${sddEnabled == true && productLineItem.custom.sddOpted == true && !empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'SDD'}">
+							<isinclude template="components/order/orderconfirmationsproductshow"/>
+						</isif>
+					</isloop>
+					
+					<isset name="itemcount" value="${new Number(0)}" scope="Page" />
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && 'SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true}">
+							<isif condition="${itemcount == 0}">
+								<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+							</isif>
+							<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+							<isinclude template="components/order/orderconfirmationsproductshow"/>
+						</isif>
+					</isloop>
+					
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && !('SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true)}">
+							<isif condition="${itemcount == 0}">
+								<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+							</isif>
+							<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+							<isinclude template="components/order/orderconfirmationsproductshow"/>
+						</isif>
+					</isloop>
+					
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${empty(productLineItem.custom.deliveryMethod)}">
+							<isif condition="${itemcount == 0}">
+								<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+							</isif>
+							<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+							<isinclude template="components/order/orderconfirmationsproductshow"/>
+						</isif>
+					</isloop>
+				</div><!-- End of receipt-order-shipment-table -->
+			</isif>
+		</isloop>
+	</div>
+	
+	<div class="actions show-on-desktop">
+		<a href="${URLUtils.http('Home-Show')}" class="continue button chechout-button">${Resource.msg('confirmation.continueshopping','checkout',null)}</a>
+	</div>
+</div> <!-- end of order-left-wrapper -->
+
+<iscomment>Order confirmation Right Page </iscomment>
+<div class="order-right-wrapper">
+	<div class="show-only-tablet">
+		<a href="${URLUtils.https('Home-Show')}" class="continue button chechout-button">${Resource.msg('confirmation.continueshopping','checkout',null)}</a>
+	</div>
+	<div class="right-cart-summary">
+		<isordertotals p_lineitemctnr="${pdict.Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${true}" p_totallabel="${Resource.msg('global.total','locale',null)}"  p_heading="${Resource.msg('ordersummary.summary','components',null)}"/>
+		
+	</div>
+	<div class="actions show-on-mobile">
+		<a href="${URLUtils.http('Home-Show')}" class="continue button chechout-button">${Resource.msg('confirmation.continueshopping','checkout',null)}</a>
+	</div>
+
+	<div class="needassist-cart-summary">
+		<iscontentasset aid="needassist-cart-summary" encoding="off"/>
+	</div>
+</div>

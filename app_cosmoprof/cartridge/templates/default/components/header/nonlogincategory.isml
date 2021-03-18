@@ -1,0 +1,48 @@
+<iscache type="relative" hour="24" varyby="price_promotion"/>
+<isinclude template="util/modules"/>
+<isset name="isNonLoginPortal" value="${'isNonLoginPortalUser' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.isNonLoginPortalUser) ? true : false }" scope="page" />
+<isset name="cCode" value="${'tempChainCode' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.tempChainCode) ? pdict.CurrentSession.custom.tempChainCode.replace('C', '') : ''}" scope="page"/>
+<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}"> 
+	<isscript>
+		importScript( "util/ViewHelpers.ds" );
+		
+		if('unclickableCaregoryId' in dw.system.Site.getCurrent().preferences.custom && !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('unclickableCaregoryId'))) {
+			var unclkblecat : dw.util.ArrayList = new dw.util.ArrayList(dw.system.Site.getCurrent().getCustomPreferenceValue('unclickableCaregoryId'));
+		}
+		
+		var topLevel = getTopLevelCategory(); 
+		var conCode = '';
+	</isscript>
+	<isif condition="${topLevel}">
+		<ul class="menu-category level-1 clearfix">
+			<isloop items="${getSubcategoriesInMenuForCategory(topLevel)}" var="topCat" status="catstatus">
+				<isif condition="${Boolean(topCat.custom.isNonLoginPortalCat) === true && !checkIfExcluded('',cCode,topCat)}">
+					<li  ${'categoryClass' in topCat.getCustom() && topCat.getCustom().categoryClass != null ? 'class=' + topCat.getCustom().categoryClass : ''} ${catstatus.first ? 'class=first' : ''} ${catstatus.last ? 'class=last' : ''}>
+						<isif condition="${!empty(unclkblecat) && unclkblecat.contains(topCat.getID()) } "> 
+							<a href="javascript:void(0)"  class="level-1">
+								<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+							</a>
+							<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+						<iselse>
+							<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest) && !empty(topCat.custom.app_alternative_url)}">
+								<a href="${topCat.custom.app_alternative_url}"  class="level-1 noUpperCase">
+									<isprint value="${topCat.getDisplayName()}"/>
+								</a>
+							<iselseif condition="${!empty(topCat.custom.alternativeUrl)}">
+								<a href="${topCat.custom.alternativeUrl}"  class="level-1 noUpperCase">
+									<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+								</a>
+							<iselse>
+								<a href="${URLUtils.https('Search-Show','cgid',topCat.getID())}"  class="level-1">
+									<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+								</a>
+							 </isif>
+							
+							<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+						</isif>
+					</li>
+				</isif>
+			</isloop>
+		</ul>
+	</isif>
+</isif>

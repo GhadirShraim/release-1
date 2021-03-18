@@ -1,0 +1,34 @@
+/**
+* 	The following script checks if the current http host is a portal site or not
+*  	@output ChainCode : String
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	
+	var ChainCodeName;
+	var ChainCode = '777'; // assigning the default portal code if none of the entry matches, else this will be overrided with actual default value below.
+	try
+	{
+		 var defaultChainCode =  JSON.parse(dw.system.Site.getCurrent().getCustomPreferenceValue('portalRelationalTable'));
+		 for (var key in defaultChainCode) {
+			 ChainCodeName = defaultChainCode[key];
+			if(ChainCodeName == 'default'){
+				ChainCode = key;
+				break;
+			}
+ 		}
+		
+	}
+	catch(e)
+	{	
+		pdict.ChainCode = ChainCode;
+		return PIPELET_NEXT;
+	}
+	
+	pdict.ChainCode = ChainCode;
+	return PIPELET_NEXT;
+}

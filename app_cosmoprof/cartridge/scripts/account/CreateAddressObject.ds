@@ -1,0 +1,52 @@
+ /**
+* # SAL-649
+* AddressObject.ds - Creates an address object to feed to the DAV process,
+* So as not to create an address unless otherwise authorized.
+*
+*	@input Form : dw.web.FormGroup - The Profile Address Form Group to create the address object from
+*	@input Checkout : Boolean - Flag to Check whether this is checkout flow.
+*	@input Customer : dw.customer.Customer   - Getting the Current Customer email.
+*	@output AddressObject : Object - The object to hold the necessary address info
+*	@output addressChangedEdit : Boolean
+*/
+var Logger : Logger = require("dw/system").Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		var obj : Object = new Object();
+    	var customer : Customer = args.Customer;
+	    var addressBook : AddressBook = customer.profile.addressBook;
+    	var addressChangedEdit = true;
+		
+		//CP-1220 address regression issue
+		
+		obj.companyName =  'companyName' in args.Form && !empty(args.Form.companyName.value) ? args.Form.companyName.value : 'companyname' in args.Form && !empty(args.Form.companyname.value) ? args.Form.companyname.value : "";
+		obj.firstName = args.Checkout ? args.Form.firstName.value : args.Form.firstname.value;
+		obj.lastName = args.Checkout ? args.Form.lastName.value : args.Form.lastname.value;
+		obj.address1 = args.Form.address1.value;
+		obj.address2 = args.Form.address2.value;
+		obj.city = args.Form.city.value;
+		obj.stateCode = args.Form.states.state.value;
+		obj.postalCode = args.Form.zip.value;
+		obj.countryCode = args.Form.country.value;
+		obj.phone = args.Form.phone.value;
+		obj.email = args.Customer.profile.email;
+
+		if (!empty(addressBook.getPreferredAddress()) && obj.address1 == addressBook.getPreferredAddress().address1
+									&& obj.address2 == addressBook.getPreferredAddress().address2
+									&& obj.city == addressBook.getPreferredAddress().city
+									&& obj.stateCode == addressBook.getPreferredAddress().stateCode
+									&& obj.postalCode == addressBook.getPreferredAddress().postalCode ) {
+			addressChangedEdit =  false;
+		}
+		
+		args.AddressObject = obj;
+		args.addressChangedEdit = addressChangedEdit;		
+
+		return PIPELET_NEXT;
+	} catch ( e ) {
+		Logger.error("AddressObject.ds error: " + e);
+		return PIPELET_ERROR;
+	}
+}

@@ -1,0 +1,156 @@
+<isinclude template="util/modules"/>
+<isinclude template="util/functions"/>
+<isscript>
+	importScript('product/ProductUtils.ds');
+	importScript('category/CategoryUtils.ds');
+</isscript>
+
+<iscomment>NOTE: Removes Refinements if NO Products are found</iscomment>
+<isif condition="${pdict.ProductSearchResult}">
+	<div id="top-content">
+		<div class="filter-header">
+			<isinclude template="search/components/productsearchbreadcrumbs"/>
+			<div class="product-filters">
+				<ul class="filter-menu">
+					<li class="filter-by"><a class="filter-btn back" href="${'#'}">REFINE RESULTS</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<iscomment>Fetches refinement options for easier handling in the template</iscomment>
+	<isset name="Refinements" value="${pdict.ProductSearchResult.refinements}" scope="page"/>
+
+	<iscomment>Process refinement options based on configured refinement definitions</iscomment>
+	<isif condition="${Refinements != null && Refinements.refinementDefinitions.size() > 0}">
+		
+		<h2 class="visually-hidden">${Resource.msg('searchrefinebar.refineresults','search',null)}</h2>
+	
+		<iscomment>If we have a category context, we build a path from the root to the category</iscomment>
+		<isscript>
+			var cat = pdict.ProductSearchResult.category;
+			var path = new dw.util.ArrayList();
+			var count = 0;
+			
+			while( cat != null && cat.parent != null )
+			{
+				if( !cat.online )
+				{
+					cat = cat.parent;
+					continue;
+				}
+				path.addAt( 0, cat );
+				cat = cat.parent;
+			}
+		</isscript>	
+		
+		<div class="refinement-container">
+			<div class="refinement-row">
+				<div class="refinement-type">
+					SORT BY
+				</div>
+				<div class="refinement-value">
+					<isproductsortingoptions productsearchmodel="${pdict.ProductSearchResult}" pagingmodel="${pdict.ProductPagingModel}" uniqueid="grid-sort-header"/>
+				</div>
+			</div>
+			
+			<isloop items="${Refinements.refinementDefinitions}" var="RefinementDefinition" status="refinementsLoopState">
+			
+				<iscomment>CATEGORY REFINEMENTS</iscomment>
+				<isif condition="${RefinementDefinition.isCategoryRefinement()}">
+					<iscategoryrefinementdropdown searchmodel="${pdict.ProductSearchResult}" category="${path.get(path.size() - 1)}" categorypath="${path}" categorylevel="1" uniqueid="grid-category-header"/>
+				</isif>
+						
+				<iscomment>ATTRIBUTE REFINEMENTS</iscomment>
+				<isif condition="${RefinementDefinition.isAttributeRefinement()}">
+					<div class="refinement-row">
+						<div class="refinement-type">
+							<isprint value="${RefinementDefinition.getDisplayName()}"/>
+						</div>
+						<div class="refinement-value">
+							<iscomment>Special handling for color and size refinement selection</iscomment>
+					
+							<iscomment>render the actual swatches</iscomment>
+							<isscript>
+								importScript('app_fnp_core:sceneseven/libScene7Asset.ds');
+							</isscript>
+							<ul class="form-row checkbox swatches <isprint value="${RefinementDefinition.getDisplayName()}"/>">
+								<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue">
+									<isif condition="${'Scene7Helper' in pdict && pdict.Scene7Helper.isEnabled()}">
+										<isset name="s7Asset" value="${new Scene7Asset(pdict.Scene7Helper, 'refinement', RefinementValue.getDisplayValue().toString().toLowerCase())}" scope="page" />
+										<isset name="swatchUrl" value="${s7Asset.setTemplate('default').setPreset('sg2ColorSwatchRef').http()}" scope="page"/>
+									</isif>
+								
+									<isset name="swatchID" value="${'swatch-' + cleanupID(RefinementValue.getDisplayValue())}" scope="page"/>
+									<isif condition="${RefinementDefinition.attributeID.equals('refinementColor')}">
+										<isset name="swatchID" value="${'swatch-' + cleanupID(RefinementValue.getPresentationID())}" scope="page"/>
+									</isif>
+									
+									<isif condition="${pdict.ProductSearchResult.isRefinedByAttributeValue(RefinementDefinition.attributeID,RefinementValue.value)}">
+										<li class="selected-value"><a class="active" id="${swatchID}" href="${pdict.ProductSearchResult.urlRelaxAttributeValue('Search-Show',RefinementValue.getID(),RefinementValue.getValue())}" title="${RefinementValue.getDisplayValue()}">
+											<isif condition="${RefinementDefinition.attributeID.equals('color')}">
+												<img src="${swatchUrl}"/>
+											<iselse/>
+												<isprint value="${RefinementValue.getDisplayValue()}">
+											</isif>
+										</a></li>
+									<iselseif condition="${RefinementValue.hitCount == 0}"/>
+										<li><a class="unselectable" id="${swatchID}" title="${RefinementValue.getDisplayValue()}">
+											<isif condition="${RefinementDefinition.attributeID.equals('color')}">
+												<img src="${swatchUrl}"/>
+											<iselse>
+												<isprint value="${RefinementValue.getDisplayValue()}"/>
+											</isif>
+										</a></li>
+									<iselse/>
+										<li class="swatch_refinement_${RefinementValue.getDisplayValue().toString().toLowerCase()}"><a id="${swatchID}" href="${pdict.ProductSearchResult.urlRefineAttributeValue('Search-Show',RefinementValue.getID(),RefinementValue.getValue())}" title="${RefinementValue.getDisplayValue()}">
+											<isif condition="${RefinementDefinition.attributeID.equals('color')}">
+												<img src="${swatchUrl}"/>
+											<iselse/>
+												<isprint value="${RefinementValue.getDisplayValue()}"/>
+											</isif>	
+										</a></li>
+									</isif>
+								</isloop>
+							</ul>
+						</div>
+					</div>
+				</isif>
+				
+				<iscomment>PRICE REFINEMENTS</iscomment>
+				<isif condition="${RefinementDefinition.isPriceRefinement()}">
+					<div class="refinement-row">
+						<div class="refinement-type">
+							<isprint value="${RefinementDefinition.getDisplayName()}"/>
+						</div>
+						<div class="refinement-value">
+							<ul class="form-row checkbox swatches <isprint value="${RefinementDefinition.getDisplayName()}"/>">
+								<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue">
+									<isif condition="${pdict.ProductSearchResult.isRefinedByPriceRange(RefinementValue.valueFrom,RefinementValue.valueTo)}">
+										<li class="selected-value"><a class="active refinement-link" title="${Resource.msg('global.remove','locale',null)} ${RefinementValue.getDisplayValue()}" href="${pdict.ProductSearchResult.urlRelaxPrice('Search-Show')}">
+											&#36;<isprint value="${RefinementValue.getValueFrom().toFixed()}"/>-<isprint value="${RefinementValue.getValueTo().toFixed()}"/>
+										</a></li>
+									<iselse/>
+										<li class="emptyswatch"><a class="refinement-link" title="${RefinementValue.getDisplayValue()}" href="${pdict.ProductSearchResult.urlRefinePrice('Search-Show',RefinementValue.getValueFrom(),RefinementValue.getValueTo())}">
+											&#36;<isprint value="${RefinementValue.getValueFrom().toFixed()}"/>-<isprint value="${RefinementValue.getValueTo().toFixed()}"/>
+										</a></li>
+									</isif>
+								</isloop>
+							</ul>
+						</div>
+					</div>
+					
+				</isif>
+				
+			</isloop>
+			<div class="refinement-row">
+				<div class="refinement-type">
+				</div>
+				<div class="refinement-value">
+					<a class="removeallfilters" href="${URLUtils.url('mSearch-Show', 'cgid', pdict.ProductSearchResult.category.ID)}">(CLEAR REFINEMENTS)</a>
+				</div>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</isif>
+</isif>

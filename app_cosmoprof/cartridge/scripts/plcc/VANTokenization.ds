@@ -1,0 +1,90 @@
+/**
+*VAN Tokenization
+*/
+importPackage(dw.system);
+importPackage(dw.crypto);
+importPackage(dw.customer);
+importPackage(dw.util);
+
+importScript('int_cybersource:cybersource/libNewCybersource.ds');
+importScript('int_cybersource:cybersource/Cybersource_PurchaseTotals_Object.ds');
+importScript('int_cybersource:cybersource/Cybersource_BillTo_Object.ds');
+var dwsvc = require("dw/svc");
+
+function vanTokenization(customerProfile,cardObject,basketInfo) {
+	
+	var purchaseObject: PurchaseTotals_Object = new PurchaseTotals_Object();
+    if(dw.system.Site.getCurrent().ID == "CosmoProf"){
+    	purchaseObject.setCurrency("USD");
+    }else{
+    	purchaseObject.setCurrency("CAD");
+    }
+    
+    var amount: Number = new Number(basketInfo.totalGrossPrice);
+    var billingAddress;
+    purchaseObject.setGrandTotalAmount(StringUtils.formatNumber(amount.valueOf(), "000000.00", "en_US"));
+    if (customerProfile.addressBook.addresses.length > 0) {
+        billingAddress = customerProfile.addressBook.getAddress("-1");
+    } else {
+        billingAddress = "";
+    }
+    
+    var customerAddress = JSON.parse(('customerAddressJson' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.customerAddressJson)) ? dw.system.Site.current.preferences.custom.customerAddressJson : '""');
+    
+    var billToObject: BillTo_Object = new BillTo_Object();
+    
+    billToObject.setFirstName(billingAddress.firstName ? billingAddress.firstName : customerAddress.firstName);
+    billToObject.setLastName(billingAddress.lastName ? billingAddress.lastName : customerAddress.lastName);
+    billToObject.setStreet1(billingAddress.address1 ? billingAddress.address1 : customerAddress.street1);
+    billToObject.setCity(billingAddress.city ? billingAddress.city : customerAddress.city);
+    billToObject.setState(billingAddress.stateCode ? billingAddress.stateCode : customerAddress.state);
+    billToObject.setPostalCode(billingAddress.postalCode ? billingAddress.postalCode : customerAddress.postalCode);
+    billToObject.setCountry(billingAddress.countryCode ? billingAddress.countryCode : customerAddress.countryCode);
+    billToObject.setPhoneNumber(billingAddress.phone ? billingAddress.phone : customerAddress.phone);
+    billToObject.setEmail(!empty(customerProfile.profile.email) ? customerProfile.profile.email  : customerProfile.profile.credentials.login);
+    var failedTokenization: Boolean = false;
+    
+    
+    
+    var CybersourceHelper = getCybersourceHelper();
+    var csReference: WebReference = webreferences.CyberSourceTransaction;
+
+    var request = new csReference.RequestMessage();
+    CybersourceHelper.addTokenizationPaySubscriptionCreateService(request, billToObject, purchaseObject, cardObject, "test");
+    
+    var response = null;
+    var tokenValue = '';
+    //send request
+    try {
+    	var service: dwsvc.Service = dwsvc.ServiceRegistry.get("cybersource.soap.transactionprocessor.generic");
+        response = service.call(request);
+    } catch (e) {
+    	Logger.error("[libCybersource.ds] Error in subscription request ( {0} )", e.message);
+     	return PIPELET_ERROR;
+    }
+
+    if (empty(response) || response.status != "OK") {
+    	Logger.error("[response status ( {0} )", response.status);
+     } else {
+        response = response.object;
+        if (response.decision != null && !empty(response) && response.decision == "ACCEPT" && null != response.paySubscriptionCreateReply) {
+        	tokenValue = response.paySubscriptionCreateReply.subscriptionID;
+		} else {
+            failedTokenization = true;
+            Logger.error("[Tokenization.ds] Failed Profile Email ( {0} )", profile.email);
+            Logger.error("[Tokenization.ds] Failed CustomerID ( {0} )", profile.customerNo);
+            Logger.error("[Tokenization.ds] Failed Credit Card Number ( {0} )", creditCard.getCreditCardNumber());
+            Logger.error("[Tokenization.ds] Decision ( {0} )", response.decision);
+            Logger.error("[Tokenization.ds] Invalid Field ( {0} )", response.invalidField);
+            Logger.error("[Tokenization.ds] Missing Field ( {0} )", response.missingField);
+            Logger.error("[Tokenization.ds] Reason Code ( {0} )", response.reasonCode);
+            Logger.error("[Tokenization.ds] RequestID ( {0} )", response.requestID);
+            Logger.error("[Tokenization.ds] Request Token ( {0} )", response.requestToken);
+        }
+     }
+    return tokenValue;
+}
+
+module.exports = {
+	vanTokenization: vanTokenization
+};

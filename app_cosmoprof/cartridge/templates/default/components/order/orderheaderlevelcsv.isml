@@ -1,0 +1,133 @@
+ 
+	<a href="#" id="orderHistoryDownload" class="buttonstyle order-history-download"><isprint value="${Resource.msg('orders.download','account',null)}" /></a>
+ 
+<isif condition="${'orderStatusSP' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.orderStatusSP)}">
+	<isset name="orderStatusSP" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('orderStatusSP').toUpperCase()}" scope="page"/>
+<iselse>
+	<isset name="orderStatusSP" value="STORE PURCHASE" scope="page"/>
+</isif>
+
+<table id="projectSpreadsheet" class="fixed_headers hide">
+				<thead> 
+					<tr> 
+					    <th>Order Date</th> 
+					    <th>Web Order ${'#'} - Only for web order</th> 
+					    <th>BSG Invoice ${'#'}</th>
+					    <th>Channel including store ${'#'}</th> 
+					    <th>Status</th> 
+					    <th>Placed By</th> 
+					 	 <th>Store ${'#'}</th>
+					 	 <th>Taxable Merchandise</th>
+					 	 <th>Non-Taxable Merchandise</th>
+					 	 <th>Total Tax</th>
+					    <th>Order Total</th> 
+					</tr> 
+				</thead> 	
+				<tbody id="tbodyid"> 
+				<isset name="totalTaxableMerchandise" value="${Number('0')}" scope="Page" />
+				<isset name="totalnonTaxableMerchandise" value="${Number('0')}" scope="Page" />
+				<isset name="totaltax" value="${Number('0')}" scope="Page" />
+				<isset name="totalorderTotal" value="${Number('0')}" scope="Page" />
+					<isloop items="${pdict.orderHeaders}" var="order" status="orderloopstate">
+					
+						<isset name="orderChannel" value="${order.orderChannel.toLowerCase()}" scope="page" />
+						<isif condition="${orderChannel.search('store') > -1}">
+							<isset name="orderChannel" value="${'Store'}" scope="page" />
+						</isif>
+						<isif condition="${orderChannel.search('web') > -1 || !empty(order.webOrderNumber)}">
+							<isset name="orderChannel" value="${'Web'}" scope="page" />
+						</isif>
+						<isif condition="${empty(orderChannel)&& order.orderStatus.toLowerCase() !='return' }">
+							<isset name="orderChannel" value="${'Sales Person'}" scope="page" />
+						</isif>
+						 
+						<isset name="shipToFirstName" value="${order.shipToFirstName}" scope="page" /> 
+						<isif condition="${!empty(order.webOrderNumber)}" > 
+							<isset name="shipToFirstName" value="${pdict.CurrentCustomer.profile.email}" scope="page" />					
+						</isif>
+						
+							<isif condition="${order.orderStatus != "cancelled"}"> 
+								<tr>
+									<td><isprint value="${order.orderDate}"/></td>
+									<isif condition="${!empty(order.webOrderNumber)}"> 
+										<td><isprint value="${order.webOrderNumber}"/></td>
+									<iselse>
+										<td></td>
+									</isif>
+									
+									<td><isprint value="${order.cosmoProfInvoiceNumber}"/></td>
+									<td><isprint value="${orderChannel}"/></td>
+									<td><isprint value="${order.orderStatus}"/></td>
+									<td><isprint value="${shipToFirstName}"/></td>
+									<isif condition="${orderStatusSP == order.orderStatus.toUpperCase()}"> 
+										<td><isprint value="${order.orderChannel.toString().split(' ')[1]}"/></td>
+									<iselse>
+										<td></td>
+									</isif>
+									<isif condition="${!empty(order.taxableMerchandise)}">
+										<isif condition="${order.taxableMerchandise.search('-') > -1}">
+											<isset name="returnTaxableMerchandise" value="${order.taxableMerchandise.replace('-','')}" scope="Page" />
+											<isset name="totalTaxableMerchandise" value="${totalTaxableMerchandise - Number(returnTaxableMerchandise)}" scope="Page" />
+										<iselse>
+											<isset name="totalTaxableMerchandise" value="${totalTaxableMerchandise + Number(order.taxableMerchandise)}" scope="Page" />
+										 </isif>
+										
+										<td>$<isprint value="${order.taxableMerchandise}"/></td>
+									<iselse>
+										<td></td>
+									</isif>
+									<isif condition="${!empty(order.nonTaxableMerchandise)}">
+										<isif condition="${order.nonTaxableMerchandise.search('-') > -1}">
+											<isset name="returnnonTaxableMerchandise" value="${order.nonTaxableMerchandise.replace('-','')}" scope="Page" />
+											<isset name="totalnonTaxableMerchandise" value="${totalnonTaxableMerchandise - Number(returnnonTaxableMerchandise)}" scope="Page" />
+										<iselse>
+											<isset name="totalnonTaxableMerchandise" value="${totalnonTaxableMerchandise + Number(order.nonTaxableMerchandise)}" scope="Page" />
+										 </isif>
+										
+										<td>$<isprint value="${order.nonTaxableMerchandise}" /></td>
+									<iselse>
+										<td></td>
+									</isif>
+									<isif condition="${!empty(order.tax)}">
+										<isif condition="${order.tax.search('-') > -1}">
+											<isset name="returntax" value="${order.tax.replace('-','')}" scope="Page" />
+											<isset name="totaltax" value="${totaltax - Number(returntax)}" scope="Page" />
+										<iselse>
+											<isset name="totaltax" value="${totaltax + Number(order.tax)}" scope="Page" />
+										</isif>
+										<td>$<isprint value="${order.tax}" /></td>
+									<iselse>
+										<td></td>
+									</isif>
+									
+									<isif condition="${order.orderTotal.search('-') > -1}">
+										<isset name="returnordertotal" value="${order.orderTotal.replace('-','')}" scope="Page" />
+										<isset name="totalorderTotal" value="${totalorderTotal - Number(returnordertotal)}" scope="Page" />
+									<iselse>
+										<isset name="totalorderTotal" value="${totalorderTotal + Number(order.orderTotal)}" scope="Page" />
+									 </isif>
+									
+									<td>$<isprint value="${order.orderTotal}"/></td>
+								</tr>
+							</isif>
+					</isloop>
+						<tr>
+						<isif condition="${!empty(pdict.orderHeaders)}">
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td>$<isprint value="${totalTaxableMerchandise}" />  </td>
+							<td>$<isprint value="${totalnonTaxableMerchandise}" /></td>
+							<td>$<isprint value="${totaltax}" /></td>
+							<td>$<isprint value="${totalorderTotal}" /></td>
+						 </isif>
+					</tr>
+				</tbody>
+</table>
+                       
+
+

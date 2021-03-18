@@ -1,0 +1,48 @@
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+
+<isif condition="${!empty(customer.getProductLists(dw.customer.ProductList.TYPE_GIFT_REGISTRY))}"> 
+	<iscomment>Get the Store Shopping list</iscomment>
+	
+	<isif condition="${isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+		<isset name="slUUID" value="${pdict.CurrentCustomer.profile.custom.shoppingListUUID}" scope="page" />
+		<li><a class="orderhistory" title="${Resource.msg('store.pickup.storelist','account',null)}" href="${URLUtils.https('ShoppingList-Start')}"><isprint value="${Resource.msg('store.pickup.storelist','account',null)}" /></a></li>
+		<isset name="counter" value="${0}" scope="page" />
+       	<isloop items="${customer.getProductLists(dw.customer.ProductList.TYPE_GIFT_REGISTRY)}" var="item" >
+			<isif condition="${empty(slUUID) || slUUID != item.UUID}">
+				<isset name="counter" value="${counter + 1}" scope="page" />
+				<li><a class="orderhistory" title="${item.object.name}" href="${URLUtils.https('GiftRegistry-ShowRegistryByID','ProductListID', item.UUID)}"><isprint value="${item.name}"/></a></li>
+			</isif>
+   			<isif condition="${counter.toFixed() > 2}">
+   				<isbreak>
+   			</isif>
+   		</isloop>
+	<iselse>
+		<isset name="slUUID" value="${pdict.CurrentCustomer.profile.custom.shoppingListUUID}" scope="page" />
+		 <isloop items="${customer.getProductLists(dw.customer.ProductList.TYPE_GIFT_REGISTRY)}" var="item" begin="0" end="2" >
+		 	<isif condition="${empty(slUUID) || slUUID != item.UUID}">
+				<li><a class="orderhistory" title="${item.object.name}" href="${URLUtils.https('GiftRegistry-ShowRegistryByID','ProductListID', item.UUID)}"><isprint value="${item.name}"/></a></li>
+			<iselse>
+				<iscontinue />
+			</isif>
+		 	
+		 </isloop>
+	 </isif>
+	   
+<iselse>
+	<li>
+		<form action="${URLUtils.https('GiftRegistry-CreateOne')}" method="post" id="${pdict.CurrentForms.giftregistry.htmlName}" class="createnew">	
+			<fieldset>
+				<div class="form-row create-new-registry">
+					<button type="submit" class="dialogify create-new-button" value="${Resource.msg('registrylist.newregistry','account',null)}"  name="${pdict.CurrentForms.giftregistry.create.htmlName}" data-dlg-action='{"isForm": true}' data-dlg-options='{"width":"auto","title":"${Resource.msg('registrylist.createnewlist','account',null)}", "dialogClass":"createnewlistdialog" }'>
+					 <isprint value="${Resource.msg('registrylist.newregistry','account',null)}" />	
+					</button>
+				</div>
+			</fieldset>
+		</form>
+	</li>
+</isif>
+<isif condition="${!empty(customer.getProductLists(dw.customer.ProductList.TYPE_GIFT_REGISTRY))}">
+	<li><a href="${URLUtils.https('GiftRegistry-Start')}" title="${Resource.msg('headercustomerinfo.seealllist','components',null)}">${Resource.msg('headercustomerinfo.seealllist','components',null)}</a></li>
+ 
+</isif>

@@ -1,0 +1,40 @@
+/**
+*	CheckIfExistingProClubMember.ds
+*
+*	This script file is used to determine whether the current customer is an existing CosmoProf Pro Club Member.
+*	
+*	@input CardNumber : String
+*	@input CardType : String
+*	@output ExistingProClubMember : Boolean
+*/
+
+var Site : dw.system.Site = require('dw/system').Site;
+var Logger : dw.system.Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try 
+	{
+		var cardNumber : String = args.CardNumber,
+		reprintRequestNumber : String = Site.current.getCustomPreferenceValue('vsuReprintRequestNumber'),
+		existingProClubMember : Boolean = false;
+		var cardType : String = args.CardType;
+		session.custom.existingCardNumber = args.CardNumber;
+		//get Last two digit to check weather card is student card or professional card
+		var lastTwoDigit : String =  !empty(cardNumber) ? cardNumber.substr(cardNumber.length - 2, cardNumber.length) : "" ;
+		var professionalCard : Boolean = lastTwoDigit != "" ? lastTwoDigit.equals(reprintRequestNumber) : false ;
+		//check if they even input a value
+		if (!empty(cardNumber) && professionalCard && cardType == "Cosmoprof")
+		{
+			existingProClubMember = true;
+		}
+		
+		args.ExistingProClubMember = existingProClubMember;
+		return PIPELET_NEXT;
+	}
+	catch (e) 
+	{
+		Logger.error('[CheckIfExistingProClubMember.ds] An error occurred when checking if ProClubMember: {0}', e);
+		return PIPELET_ERROR;
+	}
+}

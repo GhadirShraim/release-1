@@ -1,0 +1,101 @@
+<isdecorate template="account/pt_account" />
+<isinclude template="util/modules" />
+<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+
+<div class="cp_MyaccSettings">
+<div class="navgroup">
+
+<isset name="accountValue" value="${pdict.manageOutPut}" scope="page" />
+<iscomment>CP-558 </iscomment>
+<isset name="disallowcardsaving" value="${false}" scope="Page" />
+<isset name="custConsCode" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}" scope="Page" />
+<isif condition="${!empty(custConsCode)}">
+	<isset name="DisallowConsCodes" value="${dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard}" scope="Page" />
+	<isloop items="${DisallowConsCodes}" var="conscode" > 
+		<isif condition="${conscode == custConsCode }">
+			<isset name="disallowcardsaving" value="${true}" scope="Page" />
+			<isbreak>
+		 </isif>
+	</isloop>
+ </isif>
+
+<isif condition="${!empty(accountValue) && accountValue.equals("accountmanagement")}">
+ 
+<h1 class=" title h1"><isprint value="${Resource.msg('account.accountsettings','account',null)}" /></h1>
+<div class="backlink">
+		<a href="${URLUtils.url("Account-Show")}"><isprint value="${Resource.msg('account.backtomyaccount','account',null)}" /></a>
+</div>
+  
+	<div class="Column">
+	<div>
+		<a href="${URLUtils.https('Account-ViewProfile')}">
+		<div class="icon"><img src="${URLUtils.staticURL('/images/myInfo.png')}" /></div>
+		</a>
+		<div class="navtitle"><isprint value="${Resource.msg('account.myinformation','account',null)}" /></div>
+        <div class="btn"><a href="${URLUtils.url('Account-EditProfile')}"
+		title="${Resource.msg('account.editsettings','account',null)}" 
+		class=" primaryButtn">
+		<isprint value="${Resource.msg('account.editsettings','account',null)}" /></a></div>
+	</div>	
+	</div>
+	<div class="Column"> 
+	<div>
+		<a href="${URLUtils.url('Address-List')}">
+		<div class="icon"><img src="${URLUtils.staticURL('/images/address.png')}" /></div>
+		</a>
+		<div class="navtitle"><isprint value="${Resource.msg('account.address','account',null)}" /></div>
+		<div class="btn"><a href="${URLUtils.url('Address-List')}"
+		title="${Resource.msg('account.editsettings','account',null)}"
+		class=" primaryButtn"><isprint value="${Resource.msg('account.editsettings','account',null)}" /> </a></div>
+	</div>	
+	</div>
+	<isif condition="${!disallowcardsaving}"> 
+		<div class="Column">
+			<div>
+				<a href="${URLUtils.url('PaymentInstruments-List')}">
+				<div class="icon"><img src="${URLUtils.staticURL('/images/paySettng.png')}" /></div>
+				</a>
+				<div class="navtitle"><isprint value="${Resource.msg('account.paymentsettings','account',null)}" /></div>
+				<div class="btn"><a href="${URLUtils.url('PaymentInstruments-List')}"
+				title="${Resource.msg('account.editsettings','account',null)}"
+				class="primaryButtn"><isprint value="${Resource.msg('account.editsettings','account',null)}" /> </a></div>
+			</div>	
+		</div>
+	</isif>
+	<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.isAccountOwner) && pdict.CurrentCustomer.profile.custom.isAccountOwner}">
+	<div class="Column">
+	<div>
+		<a href="${URLUtils.https('ManageUsers-Show')}">
+		<div class="icon"><img src="${URLUtils.staticURL('/images/mangUsers.png')}" /></div>
+		</a>		
+		<div class="navtitle"><isprint value="${Resource.msg('account.manageusers','account',null)}" /></div>
+		<div class="btn"><a href="${URLUtils.https('ManageUsers-Show')}" 
+		title="${Resource.msg('account.editsettings','account',null)}"
+		class="primaryButtn"><isprint value="${Resource.msg('account.editsettings','account',null)}" /></a></div>
+	</div>	
+	</div>
+	</isif>	
+	</isif>
+	<isif condition="${!empty(accountValue) && accountValue.equals("mylists")}">
+	<h1 class="italic"><isprint value=" ${Resource.msg('account.mylists','account',null)}" /></h1>
+	<div>
+	<span class="navtitle">My Favorites</span>
+	<div class="btn"><a href="${URLUtils.url('Wishlist-Show')}"
+		title="${Resource.msg('account.managelists','account',null)}"
+		class="buttonstyle"><isprint value="${Resource.msg('account.managelists','account',null)}" /></a></div>
+	</diV>	
+	</isif>
+	<div class="Column">
+	<div>
+		<a href="${URLUtils.https('Account-ChangePassword')}">
+		<div class="icon"><img src="${URLUtils.staticURL('/images/changPsswrd.png')}" /></div>
+		</a>	
+		<div class="navtitle"><isprint value="${Resource.msg('account.changepassword','account',null)}" /></div>
+		<div class="btn"><a href="${URLUtils.https('Account-ChangePassword')}" 
+		title="${Resource.msg('account.editsettings','account',null)}"
+		class="primaryButtn"><isprint value="${Resource.msg('account.editsettings','account',null)}" /></a></div>
+	</div>	
+	</div>
+</div>
+</div>
+</isdecorate>

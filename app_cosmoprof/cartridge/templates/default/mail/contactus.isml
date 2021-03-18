@@ -1,0 +1,65 @@
+<iscontent type="text/html" charset="UTF-8"/>
+<isinclude template="util/modules"/>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+ 
+<subject><isprint value="${pdict.chosenTopicOfInterest}"/></subject>
+ 
+<head>
+ 
+</head>
+
+<TO>${pdict.emailAddr}</TO>
+
+<body>
+
+	<table width="100%" cellpadding="0" cellspacing="0">
+		<tr>
+			<td align="center" style="${Resource.msg('email.backgroundcell','email',null)}">
+				<center>
+					<table  style="${Resource.msg('email.containertable','email',null)}">
+						<tr>
+							<td style="${Resource.msg('email.tablecell','email',null)}">
+							
+								<p style="font-family:georgia;font-size:20px;">
+									<isif condition="${pdict.CurrentCustomer.profile.custom.chainCode}">
+										<iscomment> using the regular iscontentasset will NOT pull in the content asset in an email </iscomment>
+										<isprint value="${dw.content.ContentMgr.getContent('portal_' + pdict.CurrentCustomer.profile.custom.chainCode.substring(2) + '_logo').custom.body}" encoding="off"/>
+									<iselse/>
+										<isprint value="${dw.content.ContentMgr.getContent('portal_cosmo').custom.body}" encoding="off"/>
+									</isif>
+								</p>
+								
+								<p>${Resource.msg('contactus.name','email',null)} <isprint value="${pdict.CurrentForms.contactus.firstname.value}"/> <isprint value="${pdict.CurrentForms.contactus.lastname.value}"/></p>
+								
+								<p>${Resource.msg('contactus.email','email',null)} <isprint value="${pdict.CurrentForms.contactus.email.value}"/></p>	
+								
+								<isif condition="${pdict.CurrentForms.contactus.accountnumber.value != '' && !pdict.CurrentSession.custom.isPortalUser}">
+									<p>${Resource.msg('contactus.accountnumber','email',null)} <isprint value="${pdict.CurrentForms.contactus.accountnumber.value}"/></p>	
+								</isif>
+								
+								<isif condition="${pdict.CurrentForms.contactus.cardnumber.value != '' && !pdict.CurrentSession.custom.isPortalUser}">
+									<p>${Resource.msg('contactus.cardnumber','email',null)} <isprint value="${pdict.CurrentForms.contactus.cardnumber.value}"/></p>	
+								</isif>
+								
+								<isif condition="${pdict.CurrentForms.contactus.accountorcardnumber.value != '' && !pdict.CurrentSession.custom.isPortalUser}">
+									<p>${Resource.msg('contactus.accountorcardnumber','email',null)} <isprint value="${pdict.CurrentForms.contactus.accountorcardnumber.value}"/></p>	
+								</isif>
+								
+								<p>${Resource.msg('contactus.states','email',null)} <isprint value="${pdict.CurrentForms.contactus.states.state.value}"/></p>
+									
+								<isif condition="${!empty(pdict.chosenTopicOfInterest)}">
+									<p>${Resource.msg('contactus.topicofinterest','email',null)} <isprint value="${pdict.chosenTopicOfInterest}"/></p>
+								</isif>
+								
+								<p>${Resource.msg('contactus.comment','email',null)} <isprint value="${pdict.CurrentForms.contactus.comment.value}"/></p>
+	
+							</td>
+						</tr>
+					</table>						
+				</center>
+			</td>
+		</tr>
+	</table>
+
+</body>
+</html>

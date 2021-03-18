@@ -1,0 +1,135 @@
+/**
+ * SetDefaultAddress.ds
+ *
+ * This script sets the default address for the customer addressbook.
+ *
+ * @input CustomerAddress : dw.customer.CustomerAddress
+ * @input CurrentCustomer : dw.customer.Customer
+ * @input Basket : dw.order.LineItemCtnr
+ */
+importPackage( dw.customer );
+importPackage( dw.system );
+importPackage( dw.util);
+var addressAsurance = require('int_same_day_delivery/cartridge/scripts/deliveryAssurance/addressAsurance');
+var regExp = new RegExp('/\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|[\u0080-\u00ff]');
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	var customerAddress : CustomerAddress = pdict.CustomerAddress;
+	var customer : Customer = pdict.CurrentCustomer;
+	var addressBook : AddressBook = customer.profile.addressBook;
+	
+		
+	if (dw.system.Site.current.ID == 'CosmoProf-CA' && customerAddress.postalCode.toString().indexOf(' ') == -1) {
+		customerAddress.postalCode = customerAddress.postalCode.toString().replace(/(.{3})/g, '$1 ').trim();
+	}
+	var addressChanged = true;
+	if (!empty(addressBook.getPreferredAddress()) && customerAddress.address1 == addressBook.getPreferredAddress().address1
+								&& customerAddress.address2 == addressBook.getPreferredAddress().address2
+								&& customerAddress.city == addressBook.getPreferredAddress().city
+								&& customerAddress.stateCode == addressBook.getPreferredAddress().stateCode
+								&& customerAddress.postalCode == addressBook.getPreferredAddress().postalCode ) {
+		addressChanged =  false;
+	}
+
+	if ('isDefaultAddress' in pdict.CurrentHttpParameterMap && pdict.CurrentHttpParameterMap.isDefaultAddress.value == 'true') {
+		addressChanged =  true;
+	}
+	customerAddress.firstName = replaceSpecialChar(customerAddress.firstName); 
+	customerAddress.lastName = replaceSpecialChar(customerAddress.lastName); 
+	customerAddress.address1 = replaceSpecialChar(customerAddress.address1); 
+	customerAddress.address2 = replaceSpecialChar(customerAddress.address2); 
+	customerAddress.city = replaceSpecialChar(customerAddress.city);
+	customerAddress.companyName = replaceSpecialChar(customerAddress.companyName);
+	customer.profile.firstName = replaceSpecialChar(customer.profile.firstName);
+	customer.profile.lastName = replaceSpecialChar(customer.profile.lastName);
+
+	addressBook.setPreferredAddress(customerAddress);
+	customer.profile.custom.activeShipAddressID = customerAddress.ID;
+	
+	var newInventoryLogicEnabled : Boolean = dw.system.Site.getCurrent().getCustomPreferenceValue("newInventoryLogicEnabled");
+	
+	if(newInventoryLogicEnabled) {
+		
+		var inventoryListData = dw.system.Site.getCurrent().getCustomPreferenceValue('inventoryListID_Mapping');
+		
+		if(inventoryListData) {
+			
+			var inventoryMap = JSON.parse(inventoryListData);
+			var inventoryListID = '';
+			
+			if (inventoryMap[customerAddress.stateCode]) {
+				inventoryListID = inventoryMap[customerAddress.stateCode];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && inventoryMap[customerAddress.countryCode.value]) {
+				inventoryListID = inventoryMap[customerAddress.countryCode];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && dw.system.Site.current.ID == 'CosmoProf') {
+				inventoryListID = inventoryMap['US_Default'];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && dw.system.Site.current.ID == 'CosmoProf-CA') {
+				inventoryListID = inventoryMap['CA_Default'];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			} 
+			Logger.error("SetDefaultAddress : Set the inventory list on profile "+customer.ID+" inventory : "+inventoryListID);
+			if(!empty(inventoryListID)) {
+					customer.profile.custom.inventoryListID = inventoryListID;
+			} else {
+				customer.profile.custom.inventoryListID = '';
+			}
+		}
+	}
+
+	if(addressChanged || empty(session.custom.sddCheckComplete) || !session.custom.sddCheckComplete ) {
+	// Execute for SDD.
+	Transaction.wrap(function () {
+		addressAsurance.execute();
+	});
+	session.custom.sddCheckComplete = true;
+	}
+
+	// Check if Basket is SDD Eligible
+	if (!(!session.custom.isPortalUser && 'isEligibleForSSD' in session.privacy && !empty(session.privacy.isEligibleForSSD) && 'bsgOrders' in session.privacy && !empty(session.privacy.bsgOrders))) {
+		if(!empty(pdict.Basket)) {
+			var basketProdItr : dw.util.Iterator = pdict.Basket.allProductLineItems.iterator();
+			while (basketProdItr.hasNext()) {
+				var pli : dw.order.ProductLineItem = basketProdItr.next();
+				pli.custom.isSDDEligible =  false;
+				pli.custom.sddOpted = null;
+				pli.custom.ShipNode = null;
+				pli.custom.reservationID = null;
+				pli.custom.deliveryMethod = 'DC';
+			}
+		}
+	}
+
+    return PIPELET_NEXT;
+}
+
+
+function replaceSpecialChar(input) {
+	var output = "";
+	if (!empty(input)) {
+	    var inputString = input.toString();
+	    for (var i=0; i<inputString.length; i++) {
+	        if (inputString.charCodeAt(i) <= 127) {
+	            output += inputString.charAt(i);
+	        }
+	    }
+	}	
+    return !empty(input) ? output : input;
+}

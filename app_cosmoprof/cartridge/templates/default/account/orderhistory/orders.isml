@@ -1,0 +1,685 @@
+<isdecorate template="account/orderhistory/pt_orderhistory">
+<isinclude template="util/modules"/>
+<isscript>
+	var current = 0;
+	var pageSize = 15;
+	var showingStart = current ;
+		if(showingStart == 0) {
+			pageSize = pageSize - 1;
+		}
+	var showingEnd = current + pageSize;
+	
+	//Get Current Year and Previous years.
+	var CurrentCalander = new dw.util.Calendar();
+	var currentYear = CurrentCalander.time.getFullYear().toFixed();
+	var currentDate = dw.util.StringUtils.formatCalendar(CurrentCalander, "MM/dd/yyyy");
+	
+	//Get First day of Year
+	var firstDayCal = new dw.util.Calendar(new Date(new Date().getFullYear(), 0, 1));
+	var firstDate = dw.util.StringUtils.formatCalendar(firstDayCal, "MM/dd/yyyy");
+	
+	//Last 30 Days
+	var pastThirtyCalander = new dw.util.Calendar();
+	pastThirtyCalander.add(dw.util.Calendar.DATE, -30);
+	var pastThirtyDate = dw.util.StringUtils.formatCalendar(pastThirtyCalander, "MM/dd/yyyy");
+	
+	//Last 90 Days
+	var pastNintyDaysCalander = new dw.util.Calendar();
+	pastNintyDaysCalander.add(dw.util.Calendar.DATE, -90);
+	var pastNintyDate = dw.util.StringUtils.formatCalendar(pastNintyDaysCalander, "MM/dd/yyyy");
+	
+	//Last 6 Month
+	var lastSixMonthCalander = new dw.util.Calendar();
+	lastSixMonthCalander.add(dw.util.Calendar.MONTH, -6);
+	var pastSixMonth = dw.util.StringUtils.formatCalendar(lastSixMonthCalander, "MM/dd/yyyy");
+	
+	var lastYearCalander = new dw.util.Calendar();
+	lastYearCalander.add(dw.util.Calendar.YEAR, -1);
+	var lastYear = lastYearCalander.time.getFullYear().toFixed();
+	
+	//Get First day of Year
+	var lastYearFirstDay = new dw.util.Calendar(new Date(new Date().getFullYear()-1, 0, 1));
+	var lastYearfirstDate = dw.util.StringUtils.formatCalendar(lastYearFirstDay, "MM/dd/yyyy");
+	
+	//Get last day of Year
+	var lastYearLastDay = new dw.util.Calendar(new Date(new Date().getFullYear()-1, 11, 31));
+	var lastYearLastDate = dw.util.StringUtils.formatCalendar(lastYearLastDay, "MM/dd/yyyy");
+	
+ </isscript>
+ 
+<isif condition="${!empty(pdict.OrderPagingModel)}"> 
+	<isscript>
+			current = pdict.OrderPagingModel.start;
+			pageSize = pdict.OrderPagingModel.pageSize;
+			if(current > 0) {
+				pageSize = pdict.OrderPagingModel.pageSize - 1;
+			}
+			totalCount = pdict.OrderPagingModel.count;
+			showingStart = current ;
+			if(showingStart == 0) {
+				pageSize = pageSize - 1;
+			}
+			showingEnd = current + pageSize;
+		if (showingEnd > totalCount) {
+			showingEnd = totalCount;
+		}
+	</isscript>
+</isif>
+	  
+	<iscomment>
+		Grab Site Preference value for Order Status. The value is used to distinguish between store purchases and all other orders (Web, etc).
+	</iscomment>
+		<isif condition="${'orderStatusSP' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.orderStatusSP)}">
+			<isset name="orderStatusSP" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('orderStatusSP').toUpperCase()}" scope="page"/>
+		<iselse>
+			<isset name="orderStatusSP" value="STORE PURCHASE" scope="page"/>
+		</isif>
+	
+	<div class="order-history">
+		<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+			<h1>
+				<isprint value="${Resource.msg('orders.purchasehistory','account',null)}" />
+			</h1>
+		</isif>
+		<iscomment>
+			Resetting the showingEnd and showingStart values to controll orders the isloop to display all the when click on the View All Orders or View Less 
+			because this is ajax call, but onclik on page number from pagination bar it is not ajax call 
+		 </iscomment>
+		<isif condition="${!empty(pdict.CurrentHttpParameterMap.format) && pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' && !empty(pdict.CurrentHttpParameterMap.viewall) && pdict.CurrentHttpParameterMap.viewall.stringValue == 'true'}">
+			<isset name="showingEnd" value="${-1}" scope="page"/>
+			<isset name="showingStart" value="${-1}" scope="page"/>
+		 </isif>
+	 	<isset name="ordArray" value="${pdict.orderHeaders}" scope="page"/>
+		<div class="mobile-exclude calender-search">
+		<isif condition="${ordArray == null}">
+			<span class="searchorderhistorylabel">
+				<isprint value="${Resource.msg('order.searchorderhistory','order',null)}" />
+			</span>
+		<iselse>
+			<span class="searchorderhistorylabel">
+				<isprint value="${Resource.msg('order.searchorderhistory','order',null)}" />
+			</span>
+ 		</isif>
+ 		
+ 		<div class="Order-filter">
+ 			
+ 			<div class="accord-section refine-by-date">
+ 				<div class="accord-header"><span>${Resource.msg('order.select-by-data','order',null)} </span></div>
+ 				<div class="accord-content default-search-spans ${!empty(pdict.DateRange) ? "open":""}" id="accord-date-range">
+ 					<!-- Added CP-950  -->
+ 					<div class="selection-outer">
+	 					<select class="oh-select-date-range" id="date_range">
+	 						<option value="30" data-range= "DAYS" data-to="${currentDate}" data-from="${pastThirtyDate}" ${!empty(pdict.DateRange) && pdict.DateRange == '30'? "selected='selected'":""} >${Resource.msg('order.lastthirtydays','order',null)}</option>
+	 						<option value="90" data-range= "DAYS" data-to="${currentDate}" data-from="${pastNintyDate}" ${(!empty(pdict.DateRange) && pdict.DateRange == '90') || empty(pdict.DateRange)? "selected='selected'":""} >${Resource.msg('order.lastninetydays','order',null)}</option>
+	 						<option value="6" data-range= "MONTHS" data-to="${currentDate}" data-from="${pastSixMonth}" ${!empty(pdict.DateRange) && pdict.DateRange == '6'? "selected='selected'":""} >${Resource.msg('order.lastsixmonths','order',null)}</option>
+	 						<option value="${currentYear}" data-range= "YEARS" data-to="${currentDate}" data-from="${firstDate}" ${!empty(pdict.DateRange) && pdict.DateRange == currentYear? "selected='selected'":""} ><isprint value="${currentYear}" /></option>
+	 						<option value="${lastYear}" data-range= "YEARS" data-to="${lastYearLastDate}" data-from="${lastYearfirstDate}" ${!empty(pdict.DateRange) && pdict.DateRange == lastYear? "selected='selected'":""} ><isprint value="${lastYear}" /></option>
+	 						<option value="custom" data-range="CUSTOM" ${!empty(pdict.DateRange) && pdict.DateRange == 'custom'? "selected='selected'":""}>${Resource.msg('order.customdaterange','order',null)}</option>
+	 					</select>
+ 					</div>
+ 					<div class="dateSelect" ${!empty(pdict.DateRange) && pdict.DateRange == 'custom'? "style='display: block;'":""}>
+						<div class="custompicker from-search">
+							<span class="from-label">
+								<isprint value="${Resource.msg('searchbreadcrumbs.from','search',null)}" />
+							</span>
+							<input type="text" id="datepicker1" class="fromDatePicker updatefromDatePicker" placeholder="${Resource.msg('orders.dateformat','account',null)}" value="${pdict.fromDate}">				
+						</div>
+						<div class="custompicker to-search">
+							<span class="to-label">
+								<isprint value="${Resource.msg('searchbreadcrumbs.to','search',null)}" />
+							</span>
+							<input type="text" id="datepicker2" class="toDatePicker updatetoDatePicker" placeholder="${Resource.msg('orders.dateformat','account',null)}" value="${pdict.toDate}">
+						</div>
+					</div>
+ 				</div>
+ 				<iscomment><span class="refine-by-header refine-section-date"><isprint value="${Resource.msg('order.refine-by-data','order',null)}" /></span></iscomment>
+			</div>
+			
+			<div class="accord-section narrow-results">
+				<div class="accord-header"><span>${Resource.msg('order.narrowresult','order',null)}</span></div>
+				<div class="accord-content ${!empty(pdict.OrderType) ? "open":""}" id="accord-narrow-orders">
+					<div class="refine-by-order-type">
+						<span class="refine-by-header refine-section-ordertype"><isprint value="${Resource.msg('order.refine-by-order-type','order',null)}" /></span>
+						<!-- Added CP-950  -->
+						<div class="ship-selection-outer">
+		 					<select id="purchase-type">
+		 						<option value="ALL" ${!empty(pdict.OrderType) && pdict.OrderType == 'ALL'? "selected='selected'":""} >${Resource.msg('order.purchasetype.allpurchases','order',null)}</option>
+		 						<option value="SP" ${!empty(pdict.OrderType) && pdict.OrderType == 'SP'? "selected='selected'":""} >${Resource.msg('order.purchasetype.storepurchases','order',null)}</option>
+		 						<option value="SHIPMENT" ${!empty(pdict.OrderType) && pdict.OrderType == 'SHIPMENT'? "selected='selected'":""} >${Resource.msg('order.purchasetype.shipment','order',null)}</option>
+		 						<option value="NSP" ${!empty(pdict.OrderType) && pdict.OrderType == 'NSP'? "selected='selected'":""} >${Resource.msg('order.purchasetype.onlineorders','order',null)}</option>
+		 					</select>
+						</div>
+						<iscomment> CP-950 Removed
+						<div class="order-type-checkbox">
+							<span> <input type="checkbox" id="SP" name="store" class="is-store-purcahse" value="SP" ${!empty(pdict.SP) ? 'checked' : ''} >Store</span><span> <input type="checkbox" name="store" id="NSP" class="is-store-purcahse" value="NSP" ${!empty(pdict.NSP) ? 'checked' : ''}>Non-Store</span>
+						
+						</div>
+						</iscomment>
+					</div>
+					
+					<iscomment> CP-950 Removed
+						<div class="refine-by-order-status">
+							<span class="refine-by-header refine-section-orderstatus"><isprint value="${Resource.msg('order.refine-by-order-status','order',null)}" /></span>
+							<div class="order-type-status">
+								<span> <input type="checkbox" name="orderstatus" id="INP" class="order-status" value="INP" ${!empty(pdict.OrderInProgress) ? 'checked' : ''}>In Progress</span><span> <input type="checkbox" name="orderstatus" id="CPT" class="order-status" value="CPT" ${!empty(pdict.OrderCompleted) ? 'checked' : ''}>Completed</span> <span> <input type="checkbox" name="orderstatus" id="RTD" class="order-status" value="RTD" ${!empty(pdict.OrderReturned) ? 'checked' : ''}>Returned</span>
+								
+							</div>
+						</div>
+					</iscomment>
+					
+					<div class="refine-by-shipping-addr">
+						<span class="refine-by-header refine-section-shipaddr"><isprint value="${Resource.msg('order.refine-by-order-ship-addr','order',null)}" /></span>
+						<div class="customer-shipping-addr">
+							<isinclude template="account/orderhistory/orderHistorySelectAddress" />	
+						</div>
+					</div>
+				</div>
+	 		</div>
+ 		</div>
+ 		
+ 		<iscomment><div class="search-left-content"></div></iscomment>
+		<div class="calender-search">
+			<a href="${URLUtils.url('Order-History')}" id="datePickerFind" class="buttonstyle">				
+					<isprint value="${Resource.msg('forms.search.purchase','forms',null)}" />				
+			</a>
+		</div>
+		<isif condition="${!empty(ordArray)}">	
+  		<div class="downloadcsv">
+  			<div class="results-summary-section">
+				<div class="results-summary left">
+					<!-- If all the attribute selected -->
+					<isif condition="${!empty(pdict.ShippAddrId) && !empty(pdict.OrderType)}">
+						<isset name="shippAddr" value="${customer.addressBook.getAddress(pdict.ShippAddrId)}" scope="Page" />
+						<isif condition="${pdict.OrderType == 'NSP'}">
+							<p>${Resource.msg('order.result.onlineordersshipped','order',null)} <span><isprint value="${shippAddr.address1}" />,
+							<isif condition="${!empty(shippAddr.address2)}"> 
+							 	<isprint value="${shippAddr.address2}" />,
+							</isif>
+							<isprint value="${shippAddr.city}" />, <isprint value="${shippAddr.stateCode}" /> <isprint value="${shippAddr.postalCode}" /></span> <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						</isif>
+						
+						<isif condition="${pdict.OrderType == 'SP'}">
+							<p>${Resource.msg('order.result.storeordershipped','order',null)} <span><isprint value="${shippAddr.address1}" />,
+							<isif condition="${!empty(shippAddr.address2)}"> 
+							 	<isprint value="${shippAddr.address2}" />,
+							</isif>
+							<isprint value="${shippAddr.city}" />, <isprint value="${shippAddr.stateCode}" /> <isprint value="${shippAddr.postalCode}" /></span> <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						</isif>
+						
+						<isif condition="${pdict.OrderType == 'SHIPMENT'}">
+							<p>${Resource.msg('order.result.shipmentsshipped','order',null)} <span><isprint value="${shippAddr.address1}" />,
+							<isif condition="${!empty(shippAddr.address2)}"> 
+							 	<isprint value="${shippAddr.address2}" />,
+							</isif>
+							<isprint value="${shippAddr.city}" />, <isprint value="${shippAddr.stateCode}" /> <isprint value="${shippAddr.postalCode}" /></span> <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						</isif>
+						
+						<isif condition="${pdict.OrderType == 'ALL'}">
+							<p>${Resource.msg('order.result.allordersshipped','order',null)} <span><isprint value="${shippAddr.address1}" />,
+							<isif condition="${!empty(shippAddr.address2)}"> 
+							 	<isprint value="${shippAddr.address2}" />,
+							</isif>
+							 <isprint value="${shippAddr.city}" />, <isprint value="${shippAddr.stateCode}" /> <isprint value="${shippAddr.postalCode}" /></span> <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						</isif>
+					<iselse>
+						<isif condition="${!empty(pdict.OrderType) && pdict.OrderType == 'SP'}">
+							<p>${Resource.msg('order.result.storepurchases','order',null)} <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						<iselseif condition="${!empty(pdict.OrderType) && pdict.OrderType == 'NSP'}" >
+							<p>${Resource.msg('order.result.onlineorders','order',null)} <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						<iselseif condition="${!empty(pdict.OrderType) && pdict.OrderType == 'SHIPMENT'}" >
+							<p>${Resource.msg('order.result.shipments','order',null)} <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						<iselse>
+							<p>${Resource.msg('order.result.allpurchases','order',null)} <span><isprint value="${pdict.fromDate}" /></span>-<span><isprint value="${pdict.toDate}" /></span></p>
+						</isif>
+					</isif>
+				
+				
+					
+				</div>
+				<div class="results-summary right">
+					<h5>${Resource.msg('order.summary','order',null)}</h5>
+					<div><span>${Resource.msg('order.summary.taxableproducts','order',null)}</span> : <isprint value="${!empty(pdict.OrdeTaxableProduct) ?  dw.value.Money(pdict.OrdeTaxableProduct.toString().toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode()) : 0}" /></div>
+					<div><span>${Resource.msg('order.summary.nontaxableproducts','order',null)}</span> : <isprint value="${!empty(pdict.OrderNonTaxableProduct) ?  dw.value.Money(pdict.OrderNonTaxableProduct.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode()) : 0}" /> </div>
+					<div><span>${Resource.msg('order.summary.totaltax','order',null)}</span> : <isprint value="${!empty(pdict.OrderTotalTaxes) ?  dw.value.Money(pdict.OrderTotalTaxes.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode()) : 0}" />  </div>
+					<div><span>${Resource.msg('order.summary.grandtotal','order',null)}</span> : <isprint value="${!empty(pdict.OrderTotals) ?  dw.value.Money(pdict.OrderTotals.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode()) : 0}" />  </div>
+				</div>
+			</div>	
+  			<div class="dwnld">
+		  		<isset name="queryMap" value="${request.httpParameters}" scope="Page" />
+				<isset name="downloadCSVURL" value="${URLUtils.https('Order-DownloadCSV')}" scope="Page" />
+				<isif condition="${!queryMap.isEmpty()}"> 
+					<isloop items="${queryMap.entrySet().iterator()}" var="query" status="loopstatus"  >
+						<isif condition="${query.key.toString() != 'start' && query.key.toString() != 'sz' }"> 
+							<isset name="downloadCSVURL" value="${downloadCSVURL.append(query.key, query.value[0])}" scope="Page" />
+						</isif>
+					</isloop>
+				</isif>
+		  		
+				<isif condition="${!empty(queryMap)}">
+					<isinclude url="${downloadCSVURL}"/>
+				<iselseif condition="${!empty(pdict.fromDate) && !empty(pdict.toDate)}">
+					<isinclude url="${URLUtils.url('Order-DownloadCSV', 'from',pdict.fromDate,'to',pdict.toDate)}"/>
+				<iselse>
+					<isinclude url="${URLUtils.url('Order-DownloadCSV')}"/>	
+				</isif>
+			</div>
+		</div>
+		</isif>
+	</div>
+	
+	<isif condition="${empty(ordArray)}">	
+		<div class="no_orders">
+				<isprint value="${Resource.msg('orders.noorderspurchase','account',null)}" />
+		</div>
+	<iselse>
+		<div class="order-history-labels desktop-only">
+			<span class="label orderdate"><isprint value="${Resource.msg('orders.orderdate','account',null)}" /></span>
+			<span class="label orderno"><isprint value="${Resource.msg('orders.orderno','account',null)}" /></span>
+			<span class="label bsginvoiceno"><isprint value="${Resource.msg('orders.bsginvoiceno','account',null)}" /></span>
+			<span class="label shippedto"><isprint value="${Resource.msg('orders.shippedto','account',null)}" /></span>
+			<span class="label ordertotal"><isprint value="${Resource.msg('orders.ordertotal','account',null)}" /></span>
+			<span class="label viewdetail"><isprint value="${Resource.msg('orders.viewdetail','account',null)}" /></span>
+			<span class="label orderstatus"><isprint value="${Resource.msg('orders.orderreorder','account',null)}" /></span>
+		</div>
+		<div class="orderdetailview">
+		<ul class="search-result-items order-details"> 
+			<iscomment>
+				<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+					<li class="back">
+						<a href="${URLUtils.url('Account-Show')}" class="mobile-page-header">
+							<isprint value="${Resource.msg('orders.orderhistory','account',null)}" />
+						</a>
+					</li>
+				</isif>
+			 </iscomment>	
+			<isloop items="${ordArray}" var="order" status="orderloopstate" begin="${showingStart}" end="${showingEnd}">			
+				<li>
+					<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+						<div class="order-history-header">							
+							<isset name="OrderStatus" value="${order.orderStatus.toUpperCase()}" scope="page"/>
+							<isset name="OrderChannel" value="${order.orderChannel.toUpperCase()}" scope="page"/>								
+							<isif condition="${!empty(order.orderDate)}"> 
+								<div class="order-date">	
+									<isscript>
+										if(!empty(order.orderDate)) {
+											var orderDate = order.orderDate;
+											var splitedDate = orderDate.split("-");
+											var formattedDate =  splitedDate[1]+ "/" + splitedDate[2] + "/" + splitedDate[0];
+										}
+										
+									 </isscript>	
+									 <span class="label mobile-label orderdate"><isprint value="${Resource.msg('orders.orderdatemobile','account',null)}" /></span>				
+									<span class="value">
+										<isprint value="${formattedDate}" />
+									</span>
+								</div>
+							</isif>
+							<div class="order-number">
+								<iscomment>
+									The following isif condition checks the order status of the order. If the
+									order status reads 'STORE PURCHASE', render appropriate labels and info.
+								</iscomment>
+								<iscomment>Commented in CP-532
+								<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+									<isif condition="${!empty(order.orderChannel)}">
+											<span class="label">
+												<isprint value="${Resource.msg('orders.storenumber','account',null)}" />
+											</span>
+										<span class="value">
+											<isprint value="${order.orderChannel.split(' ')[1]}"/>
+										</span>
+									</isif>
+									<isif condition="${!empty(order.cosmoProfInvoiceNumber)}">
+										<br/>
+										<span class="label">
+											<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+										</span>
+										<br/>
+										<span class="value">
+											<isprint value="${order.cosmoProfInvoiceNumber.split(' ')[1]}"/>
+										</span>
+									</isif>
+								<iselse>
+									<span class="label">
+										<isprint value="${Resource.msg('orderdetails.invoicenumber','components',null)}" />
+									</span>
+									<span class="value">
+										<isif condition="${!empty(order.cosmoProfInvoiceNumber)}"> 
+											<isprint value="${order.cosmoProfInvoiceNumber}" />
+										<iselse>
+										<br>
+											<isprint value="${Resource.msg('orders.invoicenopending','account',null)}" />
+										</isif>
+									</span>
+									
+									<isif condition="${!empty(order.webOrderNumber)}">
+										<br/>
+										<span class="label">
+											<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+										</span>
+										<span class="value">
+											<isprint value="${order.webOrderNumber}"/>
+										</span>
+									<iselseif condition="${!empty(order.orderNo)}" >
+										<br/>
+										<span class="label">
+											<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+										</span>
+										<br />
+										<span class="value">
+											<isprint value="${order.orderNo}"/>
+										</span>
+									</isif>
+								</isif>Commented in CP-532
+								 </iscomment>
+								 
+								 <iscomment>Display Order Number </iscomment>
+								 <isif condition="${!empty(order.webOrderNumber)}">
+									<span class="value">
+										<isprint value="${order.webOrderNumber}"/>
+									</span>
+								 <iselseif condition="${!empty(order.orderNo)}" >
+									<span class="label mobile-label orderno"><isprint value="${Resource.msg('orders.orderno','account',null)}" /></span>
+										<isprint value="${order.orderNo}"/>
+									</span>
+								<iselse>
+									&nbsp;
+								 </isif>
+							</div>
+							<iscomment>Removed From CP-532					
+								<div class="order-shipto">
+									<div class="order-shipped-to">
+										<isif condition="${!empty(OrderStatus) && !OrderStatus.equals(orderStatusSP)}">
+										 	<isif condition="${!empty(order.recentOrder) && !order.recentOrder}"> 
+											<span class="label"><isprint value="${Resource.msg('orders.shippedto','account',null)}" /></span>
+													<span class="value">
+												<isif condition="${order.shipToCompany != ''}">
+													<isprint value="${order.shipToCompany}"/>
+												<iselse/>
+													<isprint value="${order.shipToFirstName}"/> <isprint value="${order.shipToLastName}"/>
+												</isif>
+											</isif>
+										</isif>
+									</div>
+								</div>
+							 </iscomment>
+							 
+							 <iscomment>BSG Invoice Number-- Added in CP-532 </iscomment>
+							 <div class="bsginvoiceno">
+							 	<isif condition="${!empty(order.cosmoProfInvoiceNumber)}">
+							 		<isprint value="${order.cosmoProfInvoiceNumber}" />
+							 	<iselse>
+							 		<span class="label mobile-label bsginvoiceno"><isprint value="${Resource.msg('orders.bsginvoicenomobile','account',null)}" /></span>
+							 		<isprint value="${Resource.msg('orders.invoicenopending','account',null)}" />
+							 	 </isif>
+							 </div>
+							 
+							 <iscomment>Shippped To Address detail-- CP-532 TBD </iscomment>
+							 <div class="shippedto">
+							 <span class="label mobile-label shippedto"><isprint value="${Resource.msg('orders.shippedtomobile','account',null)}" /></span>
+							 	<isif condition="${!empty(order.shippingAddress) && !empty(order.shippingAddress.address1)}">
+							 		<isset name="shipAddr" value="${order.shippingAddress}" scope="Page" />
+							 		<isif condition="${!empty(shipAddr.firstName) || !empty(shipAddr.lastName)}">
+							 			<isprint value="${shipAddr.firstName}" /> <br><isprint value="${shipAddr.lastName}" /><br>
+							 		</isif>
+							 		<isif condition="${!empty(shipAddr.company)}">
+							 			<isprint value="${shipAddr.company}" /><br>
+							 		 </isif>
+							 		<isprint value="${shipAddr.address1}" /><br>
+							 		<isif condition="${!empty(shipAddr.address2)}">
+							 			<isprint value="${shipAddr.address2}" /><br>
+							 		</isif>
+							 		<isprint value="${shipAddr.city}" />, <isprint value="${shipAddr.state}" />, <isprint value="${shipAddr.zip}" />
+							 	<iselse>
+							 		&nbsp;
+							     </isif>
+							 </div>
+							 
+							 
+							 <iscomment>Order Total Detail - CP-532 </iscomment>
+							<div class="order-total">
+								<isif condition="${!empty(order.orderTotal)}"> 							
+								<span class="label mobile-label ordertotal"><isprint value="${Resource.msg('orders.ordertotal','account',null)}" /></span>
+									<isprint value="${dw.value.Money(order.orderTotal.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" /> 
+									<isif condition="${order.orderStatus.toString().toUpperCase() == "RETURN"}"> <span>-</span> </isif>
+								</span>
+								<iselse>
+									&nbsp;
+								</isif>
+								 
+								<isif condition="${!empty(order.tax)}">
+									<span class="tax-amount">
+										<isprint value="${Resource.msg('order.ordertax','order',null)}" /> <isprint value="${dw.value.Money(order.tax.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" />
+									</span>
+								<iselseif condition="${!empty(order.recentOrder)}" >
+									<isif condition="${!empty(order.tax)}">
+										<span class="tax-amount">
+										<isprint value="${Resource.msg('order.ordertax','order',null)}" /> <isprint value="${order.tax}" />
+									</span>
+									 </isif>
+								</isif> 
+								
+								
+							</div>
+							<iscomment>Order Status Removed from Order HIstory
+								<isinclude template="account/orderhistory/orderstatusinclude" />
+							 </iscomment>						
+							<div class="order-btn">		
+								<form action="${URLUtils.url('Order-Detail')}" method="post"	name="${pdict.CurrentForms.cart.htmlName}" id="order-history-form">
+									<input type="hidden" value="${dw.util.StringUtils.encodeBase64(order.cosmoProfInvoiceNumber)}" name="cin"/>
+ 									<isif condition="${'orderStatusSP' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.orderStatusSP)}">
+										<isset name="orderStatusSP" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('orderStatusSP').toUpperCase()}" scope="page"/>
+									<iselse>
+										<isset name="orderStatusSP" value="STORE PURCHASE" scope="page"/>
+									</isif>
+									<isset name="OrderStatus" value="${pdict.Order.orderStatus.toUpperCase()}" scope="page"/>
+									<isif condition="${OrderStatus != orderStatusSP && !empty(order.webOrderNumber)}">
+										<input type="hidden" value="${order.webOrderNumber}" name="orderID"/>
+									</isif>
+									<span class="label mobile-label viewdetail"><isprint value="${Resource.msg('orders.viewdetail','account',null)}" /></span>
+									<button type="submit" class="button-fancy-small view-order" value="submit">
+										<iscomment><span><isprint value="${Resource.msg('orders.vieworder','account',null)}" /></span></iscomment>
+	 								</button>
+	 									<input type="hidden" value="${!empty(order.recentOrder) ? true : false}" name="recentOrder">
+										<input type="hidden" value="${!empty(order.orderNo) ? dw.util.StringUtils.encodeBase64(order.orderNo) : ""}" name="orderNo">
+										<input type="hidden" value="${!empty(order.cosmoProfInvoiceNumber) ? order.cosmoProfInvoiceNumber:''}" name="cosmoProfInvoiceNumber">							
+									<iscomment>
+										<button type="submit" class="button-fancy-small" value="submit">
+											<span>${Resource.msg('orders.orderdetail','account',null)}</span>
+	 									</button>
+	 								</iscomment>
+ 								</form>								
+								
+  								
+ 							</div>
+ 							<div class="reorder-btn">
+ 								<isif condition="${!empty(order.recentOrder)}">
+ 								<span class="label mobile-label orderstatus"><isprint value="${Resource.msg('orders.orderreorder','account',null)}" /></span>
+									<isreorder order_id="${order.orderNo != null ? order.orderNo : ''}" />
+								<iselse>
+								<span class="label mobile-label orderstatus"><isprint value="${Resource.msg('orders.orderreorder','account',null)}" /></span>
+									<isreorder order_id="${order.webOrderNumber != null ? order.webOrderNumber : ''}" />
+								</isif>
+ 							</div>
+ 							
+						</div>
+						
+					<iselse/>
+					<iscomment>For Mobile Devices </iscomment>
+						<form action="${URLUtils.url('Order-Detail')}" method="post" name="${pdict.CurrentForms.cart.htmlName}" id="order-history-form">
+							<input type="hidden" value="${dw.util.StringUtils.encodeBase64(order.cosmoProfInvoiceNumber)}" name="cin"/>
+							<button type="submit" class="mobile-orderlink" value="submit">
+								<span><isprint value="${Resource.msg('orders.orderdetail','account',null)}" /></span>
+							</button>
+						</form>
+						
+						<div class="order-history-header">
+							<div class="order-number">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+								</span>
+								<span class="value">
+									<isprint value="${order.cosmoProfInvoiceNumber}" />
+								</span>
+							</div>
+							<div class="order-total">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.ordertotal','account',null)}" />
+								</span>
+								<span class="value">
+									<isprint value="${order.orderTotal}"/>
+								</span>
+							</div>
+	
+							<isinclude template="account/orderhistory/orderstatusinclude" />
+							
+							<div class="order-date">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.date','account',null)}" />
+								</span>
+								<span class="value">
+									<isprint value="${order.orderDate}" />
+								</span>
+							</div>
+							<div class="order-shipped-to">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.shippedto','account',null)}" />
+								</span>
+								<span class="value">
+									<isif condition="${order.shipToCompany != ''}">
+										<isprint value="${order.shipToCompany}"/>
+									<iselse/>
+										<isprint value="${order.shipToFirstName}"/> <isprint value="${order.shipToLastName}"/>
+									</isif>
+								</span>
+							</div>
+						</div>
+						</a>
+					</isif>
+					
+					<iscomment>Mobile does NOT show items in order history list--- Removed from CP-532
+					<isif condition="${pdict.CurrentSession.custom.device != 'mobile' && !empty(order.object) && order.object.hasOwnProperty('shipments')}">
+						<div class="order-history-items">
+							<table class="order-history-table">
+								<isloop items="${order.object.shipments}" var="Shipment" status="shipmentloopstate">
+									<isif condition="${shipmentloopstate.first}">
+										<tr>
+											<isif condition="${!empty(Shipment.custom.shipmentType) && Shipment.custom.shipmentType == 'instore'}">
+												<th class="order-shipped-to">
+													<isprint value="${Resource.msg('cart.store.instorepickup','storepickup',null)}" />
+												</td>
+											<iselse>
+												<th class="order-shipped-to">
+													<isprint value="${Resource.msg('orders.shippedto','account',null)}" />
+												</td>
+											</isif>	
+											<th class="order-items">
+												<isprint value="${Resource.msg('orders.items','account',null)}" />
+											</td>
+											<th class="order-total-price">
+												<isprint value="${Resource.msg('orders.ordertotal','account',null)}" />
+											</td>
+										</tr>
+									<iselse>
+										<tr>
+											<isif condition="${!empty(Shipment.custom.shipmentType) && Shipment.custom.shipmentType == 'instore'}">
+												<th class="order-shipped-to">
+													<isprint value="${Resource.msg('cart.store.instorepickup','storepickup',null)}" />
+												</td>
+											<iselse>									
+												<th class="order-shipped-to">
+													<isprint value="${Resource.msg('orders.shippedto','account',null)}" />
+												</th>
+											</isif>						
+											<th class="order-items">
+												<isprint value="${Resource.msg('orders.items','account',null)}" />
+											</th>
+											<th></th>
+										</tr>
+									</isif>
+									
+									<tr>
+										<td>
+											<isif condition="${Shipment.giftCertificateLineItems.size() == 1}">
+												<isset name="theGiftCert" value="${Shipment.giftCertificateLineItems.iterator().next()}" scope="page"/>
+												<span class="value">
+													<isprint value="${theGiftCert.recipientEmail}" />
+												</span>
+											<iselse>
+												<span class="value">
+													<isprint value="${Shipment.shippingAddress.fullName}" />
+												</span>
+											</isif>
+			
+										</td>
+										
+										<td class="order-items">
+											<ul>								
+											<isset name="OrderPagingModel.pageSize" value=${(!empty(pdict.OrderPagingModel) && pdict.OrderPagingModel.hasOwnProperty('pageSize'))? pdict.OrderPagingModel.pageSize : 0} scope="pdict">
+												<isloop items="${Shipment.productLineItems}" var="PLI" status="pliloopstate">
+	
+													<isif condition="${ !empty(pdict.OrderPagingModel) && pdict.OrderPagingModel.hasOwnProperty('pageSize') && ( pliloopstate.count - 1 ) >= pdict.OrderPagingModel.pageSize }">														
+														<li class="hidden">
+													<iselse>
+														<li>
+													</isif>
+														<isprint value="${PLI.productName}"/>
+													</li>
+													
+												</isloop>
+				
+												<isloop items="${Shipment.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+													<li>
+														<isprint value="${Resource.msg('global.giftcertificate','locale',null)}" />
+													</li>
+												</isloop>
+											
+											</ul>						
+										</td>
+										
+										<td>
+											<isif condition="${shipmentloopstate.first}">
+												<span class="value">
+													<isprint value="${order.object.totalGrossPrice}"/>
+												</span>
+											<iselse>
+												&nbsp;
+											</isif>
+										</td>
+									</tr>
+								</isloop>
+							</table>
+						</div>
+					</isif>
+					</iscomment>
+				</li>
+				
+				<iscomment>if we have more than five orders, we use the paging bar</iscomment>
+				<isif condition="${!empty(pdict.OrderPagingModel) && pdict.OrderPagingModel.hasOwnProperty('pageSize') && (orderloopstate.count >= (pdict.OrderPagingModel.pageSize + 1))}">
+					<isbreak/>
+				</isif>
+				
+			</isloop>
+		</ul>
+		</div>
+		<div class="search-result-options">
+			<isset name="queryMap" value="${request.httpParameters}" scope="Page" />
+			<isset name="paginationqueryURL" value="${URLUtils.https('Order-History')}" scope="Page" />
+			<isif condition="${!queryMap.isEmpty()}"> 
+				<isloop items="${queryMap.entrySet().iterator()}" var="query" status="loopstatus"  >
+					<isif condition="${query.key.toString() != 'start' && query.key.toString() != 'sz' }"> 
+						<isset name="paginationqueryURL" value="${paginationqueryURL.append(query.key, query.value[0])}" scope="Page" />
+					</isif>
+				</isloop>
+			</isif>
+		 	<isif condition="${!queryMap.isEmpty()}">
+		 		<ispagingbar pageurl="${paginationqueryURL}" pagingmodel="${pdict.OrderPagingModel}"/>
+		 	<iselseif condition="${!empty(pdict.fromDate) && !empty(pdict.toDate)}"> 
+			 	<ispagingbar pageurl="${URLUtils.https('Order-History','from',pdict.fromDate,'to',pdict.toDate)}" pagingmodel="${pdict.OrderPagingModel}"/>
+			 <iselse>
+			 	<ispagingbar pageurl="${URLUtils.https('Order-History')}" pagingmodel="${pdict.OrderPagingModel}"/>					
+			</isif> 
+		</div>
+	</isif>
+	</div>
+</isdecorate>

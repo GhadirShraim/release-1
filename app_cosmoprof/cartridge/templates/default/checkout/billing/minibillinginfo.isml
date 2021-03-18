@@ -1,0 +1,158 @@
+<iscomment>
+	This template renders the billing address and a list of all payment
+	methods (more precessively payment instruments) used for the payment
+	of the basket. It is displayed in the order summary at the right hand
+	side in the checkout process.
+</iscomment>
+<isset name="billingAddress" value="${pdict.Basket.billingAddress}" scope="page"/>
+<isset name="paymentInstruments" value="${pdict.Basket.paymentInstruments}" scope="page"/>
+<div class="page-header">
+	${Resource.msg('billing.pageheader','checkout',null)}
+</div>
+<iscomment>Billing Address info </iscomment>
+
+<isset name="billingAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getAddress('-1')}" scope="page" />
+<isif condition="${!empty(pdict.CurrentSession.custom.isPlccFirst) && pdict.CurrentSession.custom.isPlccFirst}" >
+<div class="mini-billing-address  order-component-block plcc-order-review">
+	
+	<div id="payment-method-container">
+			<div id="plccsessiontimeout-popup" class="hide">
+				<div class="alert-message">WAIT!</div>
+				<div>
+					<iscontentasset aid="plcc-sessiontimeout-popup">
+				</div>
+				<p>${Resource.msg('plcc.billingPopuptext.button','checkout',null)}</p>
+				<div class="confirm-buttons">
+					<button class="button btn-primary btn-block plcc-confirm-button" type="submit" name="submit" value="submit-payment"  data-vansrc="${URLUtils.https('COBilling-VANRemoval')}">${Resource.msg('plcc.billingPopupconfirm.button','checkout',null)}</button>
+					<button class="button btn-primary btn-block plcc-cancel-button" value="cancel-payment">${Resource.msg('plcc.billingPopupcancel.button','checkout',null)}</button>
+				</div>
+			</div>
+			<isif condition="${!empty(pdict.CurrentSession.custom.isPlccFirst) && pdict.CurrentSession.custom.isPlccFirst}" >
+				<div class="plcc-payment-approval">
+				    <div class="plcc-payment-img"> </div>
+				    <div class="plcc-payment-details">
+					    <div class="plcc-row-1"><span class="plcc-bold">${Resource.msg('plcc.pageheader','checkout',null)}</span>${Resource.msg('plcc.subpageheader','checkout',null)}</div>
+					    <div class="plcc-row-2">${Resource.msg('plcc.subpageheadertwo','checkout',null)}</div>
+					</div>
+				</div>
+				<div class="plcc-pay-card">
+					<div class="plcc-pay-card-info">${Resource.msg('plcc.cardinfo','checkout',null)}</div>
+					<div class="plcc-pay-card-block row no-gutters">
+						<div class="next-step-button col-12 col-md-4">
+							<button class="button-fancy-large plcc-chechout-button" value="${Resource.msg('global.submitorder','locale',null)}">
+									${Resource.msg('global.placeorder','locale',null)}
+							</button>
+						</div>
+						<div class="plcc-other-payment-container col-12 col-md-4">
+							<button class="button button--third btn-block plcc-other-payment" type="button">${Resource.msg('plcc.billing.changepaymentbutton','checkout',null)}</button>
+						</div>
+					</div>
+				</div>	
+			</isif>
+		</div>	
+</div>
+<iselse>
+
+
+
+<div class="mini-billing-address  order-component-block">
+<isif condition="${!empty(pdict.CurrentForms.billing.billingAddress.addressFields)}">
+	<isif condition="${pdict.Basket.paymentInstrument.paymentMethod == 'ON_ACCOUNT'}"> 
+		<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.accountNumber)}">
+			<span class="billing-accountno"><isprint value="${Resource.msg('billing.accountno','checkout',null)}" /> <isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}" /></span><br>
+		</isif>
+	<iselseif condition="${pdict.Basket.paymentInstrument.paymentMethod == 'PayPal'}" >
+		<span class="billing-accountno"><isprint value="${Resource.msg('minibillinginfo.paypal','checkout',null)}" /></span><br>
+	<iselseif condition="${pdict.Basket.paymentInstrument.paymentMethod == 'BML'}" >
+		<span class="billing-accountno"><isprint value="${Resource.msg('minibillinginfo.paypalCredit','checkout',null)}" /></span><br>
+	<iselse>
+		<isif condition="${!empty(pdict.Basket.paymentInstrument) &&  pdict.Basket.paymentInstrument.paymentMethod == 'CREDIT_CARD'}">
+			<isif condition="${!empty(pdict.CurrentForms.billing.paymentMethods.creditCard.number.value)}"> 
+				<span class="cardno-label"><isprint value="${Resource.msg('confirmation.CCNumber','checkout',null)}" /></span> ${pdict.Basket.paymentInstrument.maskedCreditCardNumber}  <br />
+				<span class="cardno-label"><isprint value="${Resource.msg('checkout.ccexp','checkout',null)}" /></span> ${pdict.Basket.paymentInstrument.creditCardExpirationMonth}/${pdict.Basket.paymentInstrument.creditCardExpirationYear} <br />
+			</isif> 
+		</isif>
+	</isif>
+    <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.companyName.value}" /></br>
+	<b><isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.firstName.value}"/> <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.lastName.value}"/></b> <br>
+    <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.address1.value}"/></br>
+    <isif condition="${!empty(pdict.CurrentForms.billing.billingAddress.addressFields.address2.value)}">
+    	<isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.address2.value}"/></br>
+    </isif>
+    <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.city.value}"/>, <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.states.state.value}"/> <isprint value="${pdict.CurrentForms.billing.billingAddress.addressFields.zip.value}"/><br>
+<iselse>
+	<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.accountNumber)}">
+			<span class="billing-accountno"><isprint value="${Resource.msg('billing.accountno','checkout',null)}" /> <isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}" /></span><br>
+	</isif>
+	<isprint value="${billingAddress.companyName}" /></br>
+	<isprint value="${billingAddress.firstName}"/> <isprint value="${billingAddress.lastName}"/><br>
+    <isprint value="${billingAddress.address1}"/></br>
+    <isif condition="${!empty(billingAddress.address2)}">
+    	<isprint value="${billingAddress.address2}"/></br>
+    </isif>
+    <isprint value="${billingAddress.city}"/>, <isprint value="${billingAddress.stateCode}"/> <isprint value="${billingAddress.postalCode}"/><br>
+</isif>
+<iscomment>
+	<isloop items="${pdict.CurrentCustomer.profile.addressBook.addresses}" var="currBillAddress">
+		<isif condition="${currBillAddress.ID.equals('-1')}">
+			<script type="text/javascript">
+			var onAccountAddressID = "${currBillAddress.ID}";
+		</script>
+		<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.accountNumber)}">
+			<span class="billing-accountno"><isprint value="${Resource.msg('billing.accountno','checkout',null)}" /> <isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}" /></span><br>
+		 </isif>
+		<isprint value="${currBillAddress.firstName}"/> <isprint value="${currBillAddress.lastName}"/><br>
+	    <isprint value="${currBillAddress.address1}"/></br>
+	    <isif condition="${(currBillAddress.address2 != null) && (currBillAddress.address2 != "")}">
+	    	<isprint value="${currBillAddress.address2}"/></br>
+	    </isif>
+	    <isprint value="${currBillAddress.city}"/>, <isprint value="${currBillAddress.stateCode}"/> <isprint value="${currBillAddress.postalCode}"/><br>
+		<isbreak/>
+		</isif>
+	</isloop>
+ </iscomment>
+</div>
+
+<iscomment>As Per Redesign Only Billing Address Should be here.
+<isif condition="${!empty(billingAddress)}">
+	<div class="mini-billing-address  order-component-block">
+
+		<div class="details">
+			<div><isprint value="${billingAddress.firstName}"/> <isprint value="${billingAddress.lastName}"/></div>
+			<div><isprint value="${billingAddress.address1}"/></div>
+			<isif condition="${!empty(billingAddress.address2)}">
+				<div><isprint value="${billingAddress.address2}"/></div>
+			</isif>
+			<div><isprint value="${billingAddress.city}"/>, <isprint value="${billingAddress.stateCode}"/> <isprint value="${billingAddress.postalCode}"/></div>
+			<div><isprint value="${billingAddress.countryCode}"/></div>
+		</div>
+
+	</div>
+</isif>
+<isif condition="${!empty(paymentInstruments)}">
+	
+	<isloop items="${paymentInstruments}" var="paymentInstr" status="loopstate">
+		<div class="mini-payment-instrument  order-component-block <isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">
+
+			<div class="details">
+				<isinclude template="paypal/summarybillinginfo"/>
+				<isif condition="${dw.order.PaymentInstrument.METHOD_GIFT_CERTIFICATE.equals(paymentInstr.paymentMethod)}">
+					<div>${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}: <isprint value="${paymentInstr.maskedGiftCertificateCode}"/></div>
+				<iselse>	
+					<div><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></div>
+					<isminicreditcard p_card="${paymentInstr}" p_show_expiration="${true}"/>						
+					<div>
+						${Resource.msg('minibillinginfo.amount','checkout',null)}: <isprint value="${paymentInstr.paymentTransaction.amount}"/>
+					</div><!-- END: payment-amount -->
+				</isif>
+			</div>
+		</div>
+	</isloop>
+</isif>
+ </iscomment>
+<div class="editpayment">
+<a href="${URLUtils.https('COCustomer-Start')}" class="secondarybtn">
+	${Resource.msg('global.change','locale',null)}
+</a>
+</div>
+</isif>

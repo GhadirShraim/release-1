@@ -1,0 +1,21 @@
+<isinclude template="util/modules"/>
+
+<isif condition="${('customerType' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.customerType)}" >
+	<input type="hidden" value="${pdict.CurrentCustomer.profile.custom.customerType}" id="customerType"/>
+</isif>
+
+<div id="plccconfirmation-popup" class="hide">
+	<div>
+		<iscontentasset aid="plcc-account-confirmation-modal" encoding="off"/>
+	</div>
+	<div class="user-details">
+		<p><isprint value="${pdict.CurrentCustomer.profile.companyName}" /></p>
+		<p><isprint value="${pdict.CurrentCustomer.profile.firstName}" />
+	    <isprint value="${pdict.CurrentCustomer.profile.lastName}" /></p>
+	</div>
+	
+	<div class="confirm-btns clearfix">
+		<button class="secondarybtn no plccconfirmation-cancel-button">${Resource.msg('plcc.AccountPopupcancel.button','checkout',null)}</button>
+		<button class="primaryButtn yes plccconfirmation-confirm-button">${Resource.msg('plcc.AccountPopupconfirm.button','checkout',null)}</button>
+	</div>
+</div>

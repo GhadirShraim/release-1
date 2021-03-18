@@ -1,0 +1,43 @@
+/**
+* GetShippingAddresses
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+*	@input CurrentCustomer: dw.customer.Customer
+*   @output ShippingAddresses : Array
+*   @output SortedAddress : dw.util.SortedMap
+*
+*/
+var Customer = require('dw/customer').Customer;
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var shipAddrArray : Array = new Array();
+	var address : CustomerAddress = null;
+	var sorteAddr : dw.util.SortedMap = new dw.util.SortedMap();
+	
+	try {
+		var CurrentCustomer : Customer = args.CurrentCustomer;
+		for each (address in CurrentCustomer.profile.addressBook.addresses){
+			if ('addressType' in address.custom && address.custom.addressType == 'SHIP'){
+				shipAddrArray.push(address);
+				if(new Number(address.ID) != Number.NAN) {
+					sorteAddr.put(new Number(address.ID),address);
+				} else {
+					sorteAddr.put(address.ID,address);
+				}
+			}
+			
+		}
+	}
+	catch (ex){
+		Logger.error("[GetShippingAddresses] There was an error getting shipping addresses: {0}",ex);
+	}
+
+    args.ShippingAddresses = shipAddrArray;
+    args.SortedAddress = sorteAddr; 
+
+   return PIPELET_NEXT;
+}

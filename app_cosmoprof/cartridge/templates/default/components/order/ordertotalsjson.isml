@@ -1,0 +1,85 @@
+
+<iscomment>
+	This template is used to render the order totals for a basket or an order.
+
+    Parameters:
+    p_lineitemctnr     : the line item container to render (this could be either an order or a basket as they are both line item containers)
+    p_showshipmentinfo : boolean that controls if individual shipment information is rendered or if aggregate totals are rendered
+    p_shipmenteditable : boolean that controls if the shipment should have an edit link
+    p_totallabel       : label to use for the total at bottom of summary table
+</iscomment>
+
+<iscomment>Create page varibale representing the line item container</iscomment>
+<isset name="LineItemCtnr" value="${pdict.p_lineitemctnr}" scope="page"/>
+
+<isif condition="${!empty(LineItemCtnr)}">
+
+<div class="orderpaymenttotal">		
+	<div class="ups order-sec" >
+	<!-- Order Sub Total -->
+		<div  class="label">
+			<isprint value="${Resource.msg('orderdetails.ordersubtotal', 'order', null)}"/>
+		</div>
+		<div  class="value">
+			<isif condition="${!empty(LineItemCtnr.orderSubtotal)}">
+				<isprint value="${dw.value.Money(LineItemCtnr.orderSubtotal.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" />
+			<iselse>
+				<isprint value="${Resource.msg('ordersummary.nodata','components',null)}" />
+			</isif>
+		</div>
+		<hr />
+		<isif condition="${!empty(LineItemCtnr.discountPrice) && LineItemCtnr.discountPrice.value > 0.0}">
+			<div  class="label">
+				<isprint value="${Resource.msg('orderdetail.discount', 'order', null)}"/>
+			</div>
+			<div  class="value">
+				- <isprint value="${LineItemCtnr.discountPrice.value}"/>
+			</div>
+			<hr />
+		</isif>
+		
+	<!-- Order Sub Total End -->
+		<div  class="label">
+			<!--  SHIPPING NAME -->
+			 <isprint value="${Resource.msg('orderdetail.shippingmethod', 'order', null)}"/>
+		</div>
+		<div  class="value">
+			<isif condition="${!empty(pdict.recentOrder)}">
+				<isprint value="${dw.value.Money(LineItemCtnr.shippingTotalPrice.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" />
+			<iselseif condition="${LineItemCtnr.shippingTotalPrice}">
+				<isprint value="${dw.value.Money(LineItemCtnr.shippingTotalPrice.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/>
+			<iselse>
+			${Resource.msg('ordersummary.nodata','components',null)}
+			</isif>
+		</div>
+	</div>
+	
+	<div class="taxamount order-sec">
+		<div  class="label">${Resource.msg('ordersummary.ordertax','components',null)}</div>
+		<div  class="value">
+			<isif condition="${LineItemCtnr.totalTax}">
+				<isprint value="${dw.value.Money(LineItemCtnr.totalTax.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/>
+			<iselse>
+				${Resource.msg('ordersummary.nodata','components',null)}
+			</isif>
+		</div>
+	</div>
+	
+	<iscomment>Discount Model 
+	<isif condition="${!empty(LineItemCtnr.discountPrice)}">
+		<div class='order-sec'>
+			<div  class="label">${Resource.msg('orderdetail.discountapplied','order',null)}</div>
+			<div  class="value">
+				-<isprint value="${LineItemCtnr.discountPrice}" />
+			</div>
+		</div>
+	 </isif>
+	</iscomment>	
+			<iscomment>order total</iscomment>
+	<div class="order-summary-order-total order-sec">	
+		<div  class="label"><isprint value="${pdict.p_totallabel}"/></div>
+		<div  class="value"><isprint value="${dw.value.Money(LineItemCtnr.orderTotal.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/></div>
+	</div>
+</div>
+
+</isif>

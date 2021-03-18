@@ -1,0 +1,105 @@
+<isinclude template="util/modules"/>
+<ul class="mobile-user">
+	
+	<isif condition="${ (pdict.CurrentCustomer.registered) && (!pdict.CurrentCustomer.authenticated)}">
+	
+		<li>
+			<a href="${URLUtils.https('Account-Show')}" title="${Resource.msg('global.accountlink','locale',null)} " class="user-account">
+				<isprint value="${pdict.CurrentCustomer.profile.firstName}"/>
+				<isprint value="${pdict.CurrentCustomer.profile.lastName}"/>
+			</a>
+			<isif condition="${!pdict.CurrentCustomer.authenticated}">
+				(
+					<a title="${Resource.msg('global.login','locale',null)}${pdict.CurrentCustomer.profile.firstName} ${pdict.CurrentCustomer.profile.lastName}" href="${URLUtils.https('Account-Show')}" class="user-account-login">
+						${Resource.msg('headercustomerinfo.pleaselogin','components',null)}
+					</a>
+				)
+			</iselse>
+			
+			</isif>
+		</li>
+		<li class="last">
+			<a title="${Resource.msg('headercustomerinfo.not','components',null)} ${pdict.CurrentCustomer.profile.firstName} ${pdict.CurrentCustomer.profile.lastName}" class="logout-btn" href="${URLUtils.https('Login-Logout')}">
+				(
+					${Resource.msg('headercustomerinfo.not','components',null)}
+					<isprint value="${pdict.CurrentCustomer.profile.firstName}"/>?
+				)
+			</a>
+		</li>
+		
+	<iscomment>
+		User has session and is validated
+		--------------------------------------------------------
+	</iscomment>
+ 	
+	<iselseif condition="${pdict.CurrentCustomer.registered}">
+		<li class="mobile-my-account">
+			<isset name="preferredAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress()}" scope="page" />
+			<isif condition="${preferredAddress != null}">
+				<a href="${URLUtils.https('Account-MobileAddress')}" title="${Resource.msg('global.accountlink','locale',null)} " class="user-account">
+					<div>
+						<span class="header">${Resource.msg('headercustomerinfo.shipto','components',null)}</span></br>
+						<isif condition="${'addressLabel' in preferredAddress.custom && !empty(preferredAddress.custom.addressLabel)}">
+							<isprint value="${preferredAddress.custom.addressLabel}"/></br>
+						</isif>
+						<isprint value="${preferredAddress.firstName}"/> <isprint value="${preferredAddress.lastName}"/></br>
+						<isprint value="${preferredAddress.address1}"/></br>
+						<isprint value="${preferredAddress.address2}"/><isif condition="${preferredAddress.address2 != null}"></br></isif>
+						<isprint value="${preferredAddress.city}"/>, 
+						<isprint value="${preferredAddress.stateCode}"/> 
+						<isprint value="${preferredAddress.postalCode}"/>
+					</div>
+				</a>
+			</isif>
+		</li>
+		<li class="mobile-my-account">	
+			<a class="header user-account" href="${URLUtils.https('Account-EditProfile')}" title="${Resource.msg('global.accountinfo','locale',null)}">
+				${Resource.msg('global.accountinfo','locale',null)}
+			</a>
+		</li>
+		<li class="mobile-my-account">	
+			<a class="header user-account" href="${URLUtils.https('Order-History')}" title="${Resource.msg('headercustomerinfo.orderhistory','components',null)}">
+				${Resource.msg('headercustomerinfo.orderhistory','components',null)}
+			</a>
+		</li>
+		<li class="mobile-my-account">
+			<a class="header user-account" href="${URLUtils.https('Wishlist-Show')}" title="${Resource.msg('global.accountlink','locale',null)}">
+				${Resource.msg('headercustomerinfo.favorites','components',null)}
+			</a>
+		</li>
+		<li class="mobile-my-account">
+			<a class="header user-account" href="${URLUtils.https('CustomerService-ContactUs')}" title="${Resource.msg('global.accountlink','locale',null)}">
+				${Resource.msg('headercustomerinfo.contactus','components',null)}
+			</a>
+		</li>
+		<li>
+			<a title="${Resource.msg('headercustomerinfo.not','components',null)} ${pdict.CurrentCustomer.profile.firstName} ${pdict.CurrentCustomer.profile.lastName}" class="logout-btn user-account" href="${URLUtils.https('Login-Logout')}">
+				${Resource.msg('headercustomerinfo.signout','components',null)}
+			</a>
+		</li>
+			
+		
+	
+ 	<iscomment>
+ 		User has no session
+		--------------------------------------------------------
+ 	</iscomment>
+ 	
+	 <iselse>
+		
+		<li>
+			${Resource.msg('headercustomerinfo.welcome','components',null)}
+			<a title="${Resource.msg('global.login','locale',null)}" href="${URLUtils.https('LoginBarrier-Show')}" class="user-login">
+				${Resource.msg('global.login','locale',null)}
+			</a>
+		</li>
+		
+		<li class="last">
+			<a title="${Resource.msg('global.register','locale',null)}" href="${URLUtils.https('Account-StartRegister')}" class="user-register">
+				${Resource.msg('global.register','locale',null)}
+			</a>
+		</li>
+	
+	</isif>
+ 
+</ul>

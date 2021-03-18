@@ -1,0 +1,5 @@
+<div id="product-content">
+	<div class="masterdetail">
+		<isinclude template="product/productcontent"/>
+	</div>
+</div>

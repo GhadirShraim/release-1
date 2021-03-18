@@ -1,0 +1,115 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input Order : dw.order.Order
+*   @input Profile : dw.customer.Profile
+*-  @output ExampleOut : Number
+*
+*/
+
+importPackage( dw.system );
+importPackage( dw.customer );
+importPackage( dw.order );
+importPackage( dw.util );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	
+	try {
+		
+		//Check if this customer has brand purchase limit in session
+		var brandPurchaseLimit = 'limitedBrands' in session.privacy && !empty(session.privacy.limitedBrands) ? session.privacy.limitedBrands : '';
+		if (empty(brandPurchaseLimit)) {
+			return PIPELET_NEXT;
+		}
+		//Store Brand in ArrayList and check if the Line Item in this order has product the same brand store in Profile Level Attribute with price.
+		var brandList : ArrayList = new ArrayList();
+		var parseBrandPurchaseLimit = JSON.parse(brandPurchaseLimit);
+		if (!empty(parseBrandPurchaseLimit)) {
+			for (var brand in parseBrandPurchaseLimit) {
+				var brandVal = Object.keys(parseBrandPurchaseLimit[brand])[0];
+				brandList.add(brandVal);
+			}
+			
+			//Get the Existing Record From Profile and Store into Map
+			var existingRecord = args.Profile.custom.brandPurchaseControlRecord;
+			var recordMap : HashMap = new HashMap();
+			if( !empty(existingRecord) ) {
+				var existingRecParse = JSON.parse(existingRecord);
+				for (var rec in existingRecParse) {
+					var reckey = Object.keys(existingRecParse[rec])[0];
+					var priceVal = existingRecParse[rec][reckey];
+					recordMap.put(reckey, priceVal);
+				}
+			}
+			
+			//Get all cancelled Order and Update the Recorded Data
+			var date : Date = new Date();
+			var firstDateCal = new Calendar(new Date(date.getFullYear(), date.getMonth(), 1));
+			var lastDateCal = new Calendar(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+			
+			var fromdate : String = StringUtils.formatCalendar(firstDateCal, "yyyy-MM-dd");
+			var todate : String = 	StringUtils.formatCalendar(lastDateCal, "yyyy-MM-dd");
+			
+			var expdate = StringUtils.formatCalendar(lastDateCal, "MM/dd/yyyy");
+			
+			if (!empty(brandList) && brandList.length > 0) {
+				
+				//Iterate all the Product Line Items from the Order and check if that has the same brand as we have in Limited.
+				var plis : Iterator = args.Order.allProductLineItems.iterator();
+				//Loop All items and store it in Profile Level attribute. Brand|Price
+				var brandTotalPrice = 0;
+				while( plis.hasNext() ) {
+					var pli : ProductLineItem = plis.next();
+					if (!empty(pli.product.brand) && brandList.contains(pli.product.brand)) {
+						//Get the Adjusted Price and Set into Map
+						var adjustedPrice = pli.adjustedPrice.value;
+						if (recordMap.containsKey(pli.product.brand)) {
+							//Add the existing Pricing to this price
+							adjustedPrice += new Number(recordMap.get(pli.product.brand));
+							recordMap.put(pli.product.brand, adjustedPrice);
+						} else {
+							recordMap.put(pli.product.brand, pli.adjustedPrice.value);
+						}
+					}
+				}
+			}
+			
+			//Convert Map Into JSON and Store into Profile
+			var keySetItr : Iterator = recordMap.keySet().iterator();
+			var objArr : Array = [];
+			
+			while( keySetItr.hasNext() ) {
+				var key = keySetItr.next();
+				var obj = new Object();
+				obj[key] = Number(recordMap.get(key)).toFixed(2);
+				objArr.push(obj);
+			}
+			
+			if(!empty(objArr) && objArr.length > 0) {
+				var brandRecStr = JSON.stringify(objArr);
+				args.Profile.custom.brandPurchaseControlRecord = brandRecStr;
+				args.Profile.custom.brandPurchaseLimitExp = expdate;
+			}
+		}
+	
+		
+	} catch(e) {
+		var error = e;
+		Logger.error("[RecordBrandsForPurchaseLimit.ds] - Error While Executing Logic for Purchase Limit" + e);
+		return PIPELET_NEXT;
+	}
+   return PIPELET_NEXT;
+}
+

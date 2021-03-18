@@ -1,0 +1,44 @@
+/**
+* Demandware Script File
+*	
+*	@input beforeChangeAddress : Boolean
+*/
+importPackage( dw.order );
+var Logger = require('dw/system').Logger;
+var Site : dw.system.Site = require('dw/system').Site;
+function execute( args : PipelineDictionary ) : Number
+{
+	
+	try{
+			var currentBasket : Basket = BasketMgr.getCurrentBasket();
+			if(!empty(currentBasket) && currentBasket !=null && args.beforeChangeAddress != true){
+				var totalNmberOfLineItems = currentBasket.getAllProductLineItems().length;
+				Logger.error('********Basket Line Items after change address Interaction continue node [shippingaddressdialog.isml] = ' + totalNmberOfLineItems ); 
+			}else if(!empty(currentBasket) && currentBasket !=null){
+				var totalNmberOfLineItems = currentBasket.getAllProductLineItems().length;
+				if(args.CurrentHttpParameterMap.isParameterSubmitted('callFrom')){ 
+					Logger.error('********Accessed from the page  '+args.CurrentHttpParameterMap.callFrom);	
+				}
+				Logger.error('********Basket Line Items Before change address Interaction continue node [shippingaddressdialog.isml] = ' + totalNmberOfLineItems );
+			}
+			
+			if(args.beforeChangeAddress == true){
+				if(args.CurrentHttpParameterMap.isParameterSubmitted('callFrom')){
+					Logger.error('********Accessed from the page  '+args.CurrentHttpParameterMap.callFrom);	
+					Logger.error('********Basket Line Items Before change address in thank you page = ' + currentBasket.getAllProductLineItems().length );
+				}
+			}
+			
+			if(args.CurrentHttpParameterMap.isParameterSubmitted('orderID')){
+				Logger.error('*** is order ID submitted '+ args.CurrentHttpParameterMap.isParameterSubmitted('orderID') + ' orderNo : '+args.CurrentHttpParameterMap.orderID);
+			}else{ 
+				Logger.error('*** is order ID submitted   '+ args.CurrentHttpParameterMap.isParameterSubmitted('orderID'));
+				Logger.error('********Basket Line Items Before change address in thank you page = ' + currentBasket.getAllProductLineItems().length );
+			}
+	}catch(e){ 
+		//exception? laSmesauwce
+		Logger.error('empty Basket'); 
+			return PIPELET_NEXT
+	}
+	return PIPELET_NEXT;
+}

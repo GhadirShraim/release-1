@@ -1,0 +1,194 @@
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '1'}">
+	<isslot id="plpslot-banner-1" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '2'}">
+	<isslot id="plpslot-banner-2" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '3'}">
+	<isslot id="plpslot-banner-3" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '4'}">
+	<isslot id="plpslot-banner-4" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '5'}">
+	<isslot id="plpslot-banner-5" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '6'}">
+	<isslot id="plpslot-banner-6" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '7'}">
+	<isslot id="plpslot-banner-7" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '8'}">
+	<isslot id="plpslot-banner-8" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '9'}">
+	<isslot id="plpslot-banner-9" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '10'}">
+	<isslot id="plpslot-banner-10" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '11'}">
+	<isslot id="plpslot-banner-11" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '12'}">
+	<isslot id="plpslot-banner-12" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '13'}">
+	<isslot id="plpslot-banner-13" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '14'}">
+	<isslot id="plpslot-banner-14" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '15'}">
+	<isslot id="plpslot-banner-15" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '16'}">
+	<isslot id="plpslot-banner-16" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '17'}">
+	<isslot id="plpslot-banner-17" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '18'}">
+	<isslot id="plpslot-banner-18" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '19'}">
+	<isslot id="plpslot-banner-19" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '20'}">
+	<isslot id="plpslot-banner-20" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '21'}">
+	<isslot id="plpslot-banner-21" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '22'}">
+	<isslot id="plpslot-banner-22" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '23'}">
+	<isslot id="plpslot-banner-23" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '24'}">
+	<isslot id="plpslot-banner-24" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '25'}">
+	<isslot id="plpslot-banner-25" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '26'}">
+	<isslot id="plpslot-banner-26" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '27'}">
+	<isslot id="plpslot-banner-27" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '28'}">
+	<isslot id="plpslot-banner-28" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '29'}">
+	<isslot id="plpslot-banner-29" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '30'}">
+	<isslot id="plpslot-banner-30" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '31'}">
+	<isslot id="plpslot-banner-31" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '32'}">
+	<isslot id="plpslot-banner-32" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '33'}">
+	<isslot id="plpslot-banner-33" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '34'}">
+	<isslot id="plpslot-banner-34" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '35'}">
+	<isslot id="plpslot-banner-35" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '36'}">
+	<isslot id="plpslot-banner-36" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '37'}">
+	<isslot id="plpslot-banner-37" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '38'}">
+	<isslot id="plpslot-banner-38" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '39'}">
+	<isslot id="plpslot-banner-39" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '40'}">
+	<isslot id="plpslot-banner-40" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '41'}">
+	<isslot id="plpslot-banner-41" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '42'}">
+	<isslot id="plpslot-banner-42" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '43'}">
+	<isslot id="plpslot-banner-43" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '44'}">
+	<isslot id="plpslot-banner-44" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '45'}">
+	<isslot id="plpslot-banner-45" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '46'}">
+	<isslot id="plpslot-banner-46" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '47'}">
+	<isslot id="plpslot-banner-47" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+<isif condition="${!empty(bannerTilePosition) && bannerTilePosition ==  '48'}">
+	<isslot id="plpslot-banner-48" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+</isif>
+
+

@@ -1,0 +1,22 @@
+<iscomment>check if only one brand refinement is selected</iscomment>
+<isset name="hasAttributes" value="${false}" scope="page" />
+<isset name="isBrandRefinement" value="${false}" scope="page" />
+<isset name="seletedBrandName" value="" scope="page" />
+<isset name="selectedRefinementCount" value="${0}" scope="page" />
+<isloop items="${pdict.ProductSearchResult.refinements.refinementDefinitions}" var="definition" status="attributes">
+	<isif condition="${definition.isAttributeRefinement() && pdict.ProductSearchResult.isRefinedByAttribute(definition.attributeID)}">
+		<isset name="hasAttributes" value="${true}" scope="page" />
+		<isloop items="${pdict.ProductSearchResult.refinements.getRefinementValues(definition)}" var="value" status="values">
+			<isif condition="${pdict.ProductSearchResult.isRefinedByAttributeValue(definition.attributeID, value.value)}">
+				<isset name="selectedRefinementCount" value="${selectedRefinementCount+1}" scope="page"/>
+				<isif condition="${definition.attributeID == 'manufacturerName'}">
+					<isset name="isBrandRefinement" value="${true}" scope="page" />
+					<isset name="seletedBrandName" value="${value.value}" scope="page" />
+				<iselse/>
+					<isset name="isBrandRefinement" value="${false}" scope="page" />
+					<isbreak>
+				</isif>
+			</isif>	
+		</isloop>
+	</isif>
+</isloop>

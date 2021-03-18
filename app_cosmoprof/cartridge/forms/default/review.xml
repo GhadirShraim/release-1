@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19">
+	<field formid="title" label="review.title" type="string" mandatory="true" parse-error="review.titleparseerror"/>
+	<field formid="nickname" label="review.nickname" type="string" mandatory="true" parse-error="review.titleparseerror"/>
+	<field formid="text" label="review.comments" type="string" mandatory="true" parse-error="review.titleparseerror"/>
+	<field formid="rating" label="review.rating" type="string" mandatory="true" max-length="1" regexp="(^1|2|3|4|5$)" range-error="forms.review.field.invalid" parse-error="forms.review.field.invalid" />
+	<action formid="submit" valid-form="false"/>
+</form>

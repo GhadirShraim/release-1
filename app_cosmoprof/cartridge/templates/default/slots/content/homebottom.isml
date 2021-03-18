@@ -1,0 +1,19 @@
+<iscache type="relative" hour="24"/>
+
+<iscomment>
+	This template renders the slot content of the bottom category landing slot
+	in case the slot content is of type Content Asset.
+	Note, only one content asset is rendered.
+</iscomment>
+
+<iscomment>make sure we have content at all</iscomment>
+<isif condition="${slotcontent != null}">
+	<isloop items="${slotcontent.content}" var="contentAsset">
+		<isprint value="${contentAsset.custom.body}" encoding="off"/>
+		<isprint value="${contentAsset.custom.custom_body_1}" encoding="off"/>
+		<isprint value="${contentAsset.custom.custom_body_2}" encoding="off"/>
+		<div class="autoplayvalue hide" id="autoplayvalue"><isprint value="${'sliderAutoPlay' in contentAsset.custom ? contentAsset.custom.sliderAutoPlay : 'false'}" encoding="off"/></div>
+		<div class="autoplayspeed hide" id="autoplayspeed"><isprint value="${'sliderAutoPlaySpeed' in contentAsset.custom ? contentAsset.custom.sliderAutoPlaySpeed : '2000'}" encoding="off"/></div>
+	</isloop>
+	
+</isif>

@@ -1,0 +1,128 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input Basket : dw.order.Basket
+*   @output RestrictCheckout : Boolean
+*   @output RestrictCheckoutObject : dw.util.ArrayList
+*
+*/
+importPackage( dw.order );
+importPackage( dw.util );
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+  try {
+  	
+  	args.RestrictCheckout = false;
+	args.RestrictCheckoutObject = null;
+  	//Get the Brands from Session
+	var limitedBrnads = 'limitedBrands' in session.privacy && !empty(session.privacy.limitedBrands) ? session.privacy.limitedBrands : '';
+	var limitedBrand : ArrayList = new ArrayList();
+	//This Map will Store Limited Brand for threshold amount
+	var consumedBrand : HashMap = new HashMap();
+	if(!empty(limitedBrnads)) {
+		var restrictedBrands = JSON.parse(limitedBrnads);
+		//Convert it into Map
+		var brandThresHoldMap : HashMap = new HashMap();
+		for each(var obj in restrictedBrands) {
+			var keys = Object.keys(obj);
+			brandThresHoldMap.put(keys[0], obj[keys[0]]);
+		}
+		
+		//Get the Recorded Brand already bought.
+		var existingRecord = customer.profile.custom.brandPurchaseControlRecord;
+		var recordMap : HashMap = new HashMap();
+		if( !empty(existingRecord) ) {
+			var existingRecParse = JSON.parse(existingRecord);
+			for (var rec in existingRecParse) {
+				var reckey = Object.keys(existingRecParse[rec])[0];
+				var priceVal = existingRecParse[rec][reckey];
+				//recordMap.put(reckey, priceVal);
+				var obj = {
+					'BRAND': reckey,
+					'THRESHOLD': brandThresHoldMap.get(reckey),
+					'USED': Number(priceVal),
+					'CROSS': Number(priceVal) > Number(brandThresHoldMap.get(reckey))
+				}
+				consumedBrand.put(reckey, obj);
+				
+			}
+		}
+		
+		var plisItr : Iterator = args.Basket.allProductLineItems.iterator();
+		var currentBasketBrand : HashSet = new HashSet();
+		
+		while(plisItr.hasNext()) {
+			var pli : ProductLineItem = plisItr.next();
+			var brand = pli.product.brand;
+			
+			if(empty(brand)) {
+				continue;
+			}
+			if (empty(brandThresHoldMap.get(brand))) {
+				continue;
+			}
+			currentBasketBrand.add(brand);
+			
+			
+			if(!empty(brandThresHoldMap) && brandThresHoldMap.get(brand)) {
+				var adjustedPrice = pli.adjustedPrice.value;
+				if(consumedBrand.get(brand)) {
+					//Add with the tracked Amount.
+					adjustedPrice += consumedBrand.get(brand)['USED'];
+					var obj = {
+						'BRAND': brand,
+						'THRESHOLD': brandThresHoldMap.get(brand),
+						'USED': adjustedPrice,
+						'CROSS': adjustedPrice > Number(brandThresHoldMap.get(brand))
+					}
+					consumedBrand.put(brand, obj);
+				} else {
+					var obj = {
+						'BRAND': brand,
+						'THRESHOLD': brandThresHoldMap.get(brand),
+						'USED': adjustedPrice,
+						'CROSS': adjustedPrice > Number(brandThresHoldMap.get(brand))
+					}
+					consumedBrand.put(brand, obj);
+				}
+			}
+		}
+		
+		//Check if We have restricted Brand to disable Cart Page
+		if(consumedBrand.size() > 0) {
+			
+			var keySetItr : Iterator = consumedBrand.entrySet().iterator();
+			
+			while(keySetItr.hasNext()) {
+				var entry = keySetItr.next();
+				var value = entry.value;
+				if(value['CROSS']== true && currentBasketBrand.contains(value['BRAND'])) {
+					limitedBrand.add(value);
+				}
+			}
+		}
+		
+		if(limitedBrand.length > 0) {
+			args.RestrictCheckout = true;
+			args.RestrictCheckoutObject = limitedBrand;
+		}
+	}
+  } catch(e) {
+	 Logger.error("[CheckForPurchaseLimitInCart.ds] Error while calculating cart for Purchase Limit: "+ e );
+  }
+   return PIPELET_NEXT;
+}

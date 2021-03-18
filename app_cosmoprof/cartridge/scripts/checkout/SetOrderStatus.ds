@@ -1,0 +1,25 @@
+/**
+* Set the order export status to EXPORT_STATUS_READY
+*
+* @input Order : dw.order.Order The order.
+* @input Decision : String
+* 
+* 
+*/
+importPackage( dw.order );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+    // read pipeline dictionary input parameter
+    var order : Order = pdict.Order;
+	var DMDecision = pdict.Decision;
+	// set the export status to EXPORT_STATUS_READY
+	if (DMDecision == "REVIEW") {
+		order.setExportStatus(Order.EXPORT_STATUS_NOTEXPORTED);
+	} else {
+		order.setExportStatus(Order.EXPORT_STATUS_READY);	
+	}
+	
+   
+   	return PIPELET_NEXT;
+}

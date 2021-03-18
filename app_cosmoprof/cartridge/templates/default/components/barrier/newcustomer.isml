@@ -1,0 +1,21 @@
+<iscache type="relative" hour="24"/>
+<isinclude template="util/modules"/>
+<isdecorate template="content/home/pt_storefront">
+
+<div class="newcustomer-header">
+	<isprint value="${Resource.msg('headercustomerinfo.newcustomer','components',null)}" />
+</div>
+<div class="newcustomer-back">
+	<a href="${URLUtils.url('Home-Show')}"><isprint value="${Resource.msg('accountregister.back.mobile','account',null)}" /></a>
+</div>
+
+<div class="new-customer-option-mobile">
+	<isif condition="${!pdict.CurrentCustomer.authenticated && !pdict.CurrentSession.custom.isPortalUser}">
+		<div class="mobile-new-customer">
+			<iscontentasset aid="new-customer-menu" />
+		</div>	
+	</isif>
+</div>	
+	
+
+</isdecorate>

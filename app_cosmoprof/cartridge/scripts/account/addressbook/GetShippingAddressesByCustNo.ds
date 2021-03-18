@@ -1,0 +1,50 @@
+/**
+* GetShippingAddresses
+*
+* Description- The purpose of this script is to retrieve all shipping addresses from a customer based on their customer number and output an array of them
+*
+*	@input custNo: String
+*   @output ShippingAddresses : Array
+*
+*/
+
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var CustomerMgr = require('dw/customer').CustomerMgr;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try 
+	{
+		//Build a shipping address array for adding a customer's valid shipping address objects to
+		var shipAddr = [];
+		var address : CustomerAddress = null;
+		//remove the "ID: " from the customer's number
+		var custNum = args.custNo.replace('ID: ','');
+		//retrieve a customer's profile based on their customer number so we can retrieve their addresses
+		var custProfile = CustomerMgr.getProfile(custNum);
+		var address;
+		
+		//loop through all of the addresses in a customer's address book
+		for(var i = 0; i < custProfile.addressBook.addresses.length; i++)
+		{
+			//set the current address
+			address = custProfile.addressBook.addresses[i];
+			
+			//verify the address is of custom type "SHIP'
+			if ('addressType' in address.custom && address.custom.addressType == 'SHIP')
+			{
+				//add the address to the array so it can be outputted
+				shipAddr.push(address);
+			}
+		}
+		
+    	args.ShippingAddresses = shipAddr;
+	}
+	catch (e)
+	{
+		Logger.error("GetShippingAddressesByCustNo.ds There was an error getting shipping addresses: {0}",e);
+	}
+
+   return PIPELET_NEXT;
+}

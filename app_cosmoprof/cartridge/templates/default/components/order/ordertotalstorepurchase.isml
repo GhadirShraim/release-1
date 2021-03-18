@@ -1,0 +1,46 @@
+<iscomment>
+	This template is used to render the order totals for a store purchase.
+
+	Parameters:
+	storeorder		: the line item container to render (this could be either an order or a basket as they are both line item containers)
+	totallabel		: label to use for the total at bottom of summary table
+</iscomment>
+
+<iscomment>Create page variable representing the line item container</iscomment>
+<isset name="storeOrder" value="${pdict.storeorder}" scope="page"/>
+<isif condition="${!empty(storeOrder)}">
+	<div class="orderpaymenttotal">
+			<iscomment>Sub-total</iscomment>			
+			<div class="subtotal order-sec" >
+				<div  class="label">
+					 <isprint value="${Resource.msg('orderdetails.merchandise', 'order', null)}"/>
+				</div>
+				<div class="value">
+					<isif condition="${!empty(storeOrder.orderSubtotal)}">
+						<isprint value="${Resource.msgf('global.dollarsignamt', 'locale', null, storeOrder.orderSubtotal)}"/>
+					<iselse>
+						${Resource.msg('ordersummary.nodata','components',null)}
+					</isif>
+				</div>
+			</div>
+		
+			<iscomment>tax amount</iscomment>
+			<div class="taxamount order-sec">
+				<div  class="label">${Resource.msg('ordersummary.ordertax','components',null)}</div>
+				<div class="value">
+					<isif condition="${storeOrder.totalTax}">
+						<isprint value="${storeOrder.totalTax}"/>
+					<iselse>
+						${Resource.msg('ordersummary.nodata','components',null)}
+					</isif>
+				</div>
+			</div>
+		
+			<iscomment>order total</iscomment>
+			<div class="order-summary-order-total order-sec">	
+				<div class="label"><isprint value="${pdict.totallabel}"/></div>
+				<div class="value"><isprint value="${Resource.msgf('global.dollarsignamt', 'locale', null, storeOrder.orderTotal)}"/></div>
+			</div>
+
+	</div>
+</isif>

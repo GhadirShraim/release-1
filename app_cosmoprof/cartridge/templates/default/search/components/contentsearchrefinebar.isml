@@ -1,0 +1,184 @@
+<isinclude template="util/modules"/>
+
+
+<iscomment>NOTE: Removes Refinements if NO Content is found</iscomment>
+<isif condition="${pdict.ContentSearchResult != null}">
+
+<iscomment>Fetches refinement options for easier handling in the template</iscomment>
+<isset name="Refinements" value="${pdict.ContentSearchResult.refinements}" scope="page"/>
+
+<iscomment>Process refinement options based on configured refinement definitions</iscomment>
+<isif condition="${Refinements != null && Refinements.refinementDefinitions.size() > 0}">
+
+	<iscomment>If we have a folder context, we build a path from the root to the category</iscomment>
+	<isscript>
+		var folder = pdict.ContentSearchResult.folder;
+		var path = new dw.util.ArrayList();
+		while( folder != null && folder.parent != null )
+		{
+			if( !folder.online ) continue;
+			path.addAt( 0, folder );
+			folder = folder.parent;
+		}
+	</isscript>
+
+
+	<iscomment>Navigation header based on browsing vs. keyword search</iscomment>
+		
+		<isif condition="${pdict.ContentSearchResult.folderSearch}">
+			<div class="headerLeft">
+			<h2 class="refinement-header"><isprint value="${path.get(0).displayName}"/></h2>
+			</div>
+		
+		</isif>
+		<div class="blogRefinmentSection">
+		<isloop items="${Refinements.refinementDefinitions}" var="RefinementDefinition" status="refinementsLoopState">
+
+			<div class="refinement ${RefinementDefinition.attributeID == 'isVideo' ? 'hide' : ''} ${RefinementDefinition.displayName}<isif condition="${RefinementDefinition.isFolderRefinement()}"> folder-refinement</isif>">
+
+				<iscomment>FOLDER REFINEMENTS</iscomment>
+				<isif condition="${RefinementDefinition.isFolderRefinement()}">
+	
+					<iscomment>render the folder refinement label, display the top level folder and a relax link in case we refined to a folder already</iscomment>
+					<isif condition="${path.size() > 0}">
+						
+						<iscomment>display the top level label only for keyword searches</iscomment>
+						<isif condition="${!pdict.ContentSearchResult.folderSearch}">
+							<a href="${pdict.ContentSearchResult.urlRefineFolder('Search-ShowContent', path.get(0).ID)}">
+								<isprint value="${path.get(0).displayName}"/>
+							</a>
+							(<a class="clearfix" href="${pdict.ContentSearchResult.urlRelaxFolder('Search-ShowContent')}">
+								${Resource.msg('searchrefinebar.viewall','search',null)}
+							</a>)
+						</isif>
+						
+						<isfolderrefinementvalues searchmodel="${pdict.ContentSearchResult}" folder="${path.get(0)}" folderpath="${path}" folderlevel="1"/>
+						
+					<iselse>
+					
+						<h3>
+							<isprint value="${RefinementDefinition.displayName}"/>
+						</h3>
+						
+						<isfolderrefinementvalues searchmodel="${pdict.ContentSearchResult}" folderlevel="1"/>
+					
+					</isif>
+	
+				</isif>
+
+		 		<iscomment>ATTRIBUTE REFINEMENTS</iscomment>
+				<isif condition="${RefinementDefinition.isAttributeRefinement()}">
+				
+					<isif condition=${!useSelect}>
+						<h3>
+							<isprint value="${RefinementDefinition.getDisplayName()}"/>
+						</h3>
+					</isif>
+
+					<isif condition="${pdict.ContentSearchResult.isRefinedByAttribute(RefinementDefinition.attributeID)}">
+						<div class="clear-refinement">
+							(<a title="${Resource.msg('searchrefinebar.clearselection','search',null)}" href="${pdict.ContentSearchResult.urlRelaxAttribute('Search-ShowContent',RefinementDefinition.attributeID)}">${Resource.msg('searchrefinebar.clearselection','search',null)}</a>)
+						</div>
+					</isif>
+
+					<iscomment>Handling of attribute refinements (depending on whether there are more than the configured cutoff)</iscomment>
+					<isset name="showAllVideoURL" value="" scope="page" />
+					<isif condition="${RefinementDefinition.attributeID == 'isVideo'}">
+						<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue" status="refinementSelectStatus">
+							<isif condition="${RefinementValue.getValue() == 'true'}">
+								<isset name="showAllVideoURL" value="${pdict.ContentSearchResult.urlRefineAttributeValue('Search-ShowLibraryContent',RefinementValue.getID(),RefinementValue.getValue())}" scope="page" />
+							</isif>
+						</isloop>
+					</isif>
+					<isif condition="${useSelect}">
+						<isset name="globalURLRelax" value="${URLUtils.https('Search-ShowContent', 'fdid', pdict.CurrentHttpParameterMap.fdid)}" scope="Page" />
+						<select class="selectRefinements"  <isif condition="${Refinements.getAllRefinementValues(RefinementDefinition).size() > RefinementDefinition.cutoffThreshold}">class="scrollable"</isif>>
+							<iscomment>render the refinement values as simple list</iscomment>
+							<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue" status="refinementSelectStatus">
+								<isif condition="${refinementSelectStatus.first}">
+									<isset name="relaxURL" value="${pdict.ContentSearchResult.urlRelaxAttribute('Search-ShowContent', RefinementDefinition.attributeID)}" scope="Page" />
+									<option value="${RefinementDefinition.attributeID == 'brand' ? globalURLRelax : relaxURL}">
+										<span><isprint value="${Resource.msgf('content.dropdownoption','search', null, RefinementDefinition.getDisplayName())}" /> </span>
+									</option>
+								</isif>
+								<isset name="SearchPipeline" value="Search-ShowContent" scope="page" />
+								<isif condition="${pdict.CurrentHttpParameterMap.fdid.value == 'digitallibrary'}">
+									<isset name="SearchPipeline" value="Search-ShowLibraryContent" scope="page" />
+								</isif>
+								
+								<isif condition="${pdict.ContentSearchResult.isRefinedByAttributeValue(RefinementDefinition.attributeID,RefinementValue.value)}">
+									<option class="selected"  selected value="${pdict.ContentSearchResult.urlRelaxAttributeValue(SearchPipeline,RefinementValue.getID(),RefinementValue.getValue())}">
+								<iselse>
+									<option value="${pdict.ContentSearchResult.urlRefineAttribute(SearchPipeline,RefinementValue.getID(),RefinementValue.getValue())}">
+								</isif>
+										<isprint value="${RefinementValue.getDisplayValue()}"/>
+									</option>
+							</isloop>
+						</select>
+					<iselse/>
+						<ul <isif condition="${Refinements.getAllRefinementValues(RefinementDefinition).size() > RefinementDefinition.cutoffThreshold}">class="scrollable"</isif>>
+							<iscomment>render the refinement values as simple list</iscomment>
+							<iscomment>(DW task) please make it dynamic</iscomment>
+							<span></span>
+							<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue">
+								<isif condition="${pdict.ContentSearchResult.isRefinedByAttributeValue(RefinementDefinition.attributeID,RefinementValue.value)}">
+									<li class="selected">
+										<a title="${RefinementValue.getDisplayValue()}" href="${pdict.ContentSearchResult.urlRelaxAttributeValue('Search-ShowContent',RefinementValue.getID(),RefinementValue.getValue())}" ><isprint value="${RefinementValue.getDisplayValue()}"/></a>
+									</li>
+								<iselse>
+									<li>
+										<a title="${RefinementValue.getDisplayValue()}" href="${pdict.ContentSearchResult.urlRefineAttributeValue('Search-ShowContent',RefinementValue.getID(),RefinementValue.getValue())}" ><isprint value="${RefinementValue.getDisplayValue()}"/></a>
+									</li>
+								</isif>
+							</isloop>
+						</ul>
+					</isif>
+				</isif>
+			</div>
+		</isloop>
+		</div>
+		<isif condition="${useSelect}">
+			<iscomment>If this is the archived page, then use the archive URL  </iscomment>
+			<isif condition="${pdict.CurrentHttpParameterMap.fdid.value == 'digitallibrary'}">
+				<div class ="clearall">
+					<a class="link-button-small applyfilter primaryButtn" href="${URLUtils.url('Search-ShowLibraryContent','fdid','digitallibrary')}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.applyfilter','search',null)}
+					</a>
+					<a class="link-button-small secondarybtn" href="${URLUtils.url('Search-ShowLibraryContent','fdid','digitallibrary')}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('content.clearall','search',null)}
+					</a>
+					<isif condition="${empty(showAllVideoURL)}">
+						<isset name="showAllVideoURL" value="${URLUtils.url('Search-ShowLibraryContent','fdid','digitallibrary')}" scope="page" />
+					</isif>
+					<a class="link-button-large primaryButtn" href="${showAllVideoURL}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.viewallvideos','search',null)}
+					</a>
+				</div>
+			<iselseif condition="${pdict.ContentSearchResult.folder.displayName.lastIndexOf('Archive') > 0}">
+	 			<div class ="clearall">
+	 				<a class="link-button-small applyfilter primaryButtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-archive-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.applyfilter','search',null)}
+					</a>
+					<a class="link-button-small secondarybtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-archive-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+	 					${Resource.msg('content.clearall','search',null)}
+	 				</a>
+	 				<a class="link-button-large primaryButtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.viewcurrent','search',null)}
+					</a>
+	 			</div>
+			<iselse>
+				<div class ="clearall">
+					<a class="link-button-small applyfilter primaryButtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.applyfilter','search',null)}
+					</a>
+					<a class="link-button-small secondarybtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('content.clearall','search',null)}
+					</a>
+					<a class="link-button-large primaryButtn" href="${URLUtils.url('Search-ShowContent','fdid','blog-archive-' + cCode)}" title="${Resource.msg('header.beautybloglink','components',null)}">
+						${Resource.msg('topcontenthits.viewarchived','search',null)}
+					</a>
+				</div>				
+			</isif>
+		</isif>
+	</isif>
+</isif>

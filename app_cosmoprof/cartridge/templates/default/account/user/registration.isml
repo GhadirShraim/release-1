@@ -1,0 +1,285 @@
+<isdecorate template="account/pt_account">
+	<isinclude template="util/modules"/>
+	<isset name="isMobileDevice" value="${pdict.CurrentSession.custom.device == 'mobile'}" scope="page" />
+	<isset name="AccountSyncResponse" value="${'contact' in pdict.AccountSyncResponse ? pdict.AccountSyncResponse.contact[0] : pdict.AccountSyncResponse.account[0]}" scope="page" />
+	<isscript>
+		var firstName : String = pdict.CurrentCustomer.profile.firstName;
+		var lastName : String = pdict.CurrentCustomer.profile.lastName;
+		var fullName : String = StringUtils.format("{0} {1}", firstName, lastName);
+		
+		var chainCodesAllowed : dw.util.ArrayList = dw.system.Site.current.getCustomPreferenceValue('chainCodesAllowedToSetLogin');
+		var customerChainCode : String = pdict.CurrentCustomer.profile.custom.chainCode;
+		var enableLoginChange : Boolean;
+
+		if ( !empty(chainCodesAllowed) && !empty(customerChainCode) ) 
+		{
+			enableLoginChange = (chainCodesAllowed.indexOf(customerChainCode) != -1) ? true : false;
+		}
+	</isscript>
+
+	<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+	<iscomment>Builds a registration page for the user. It provides all input fields for names and address</iscomment>
+
+	<iscomment>Only enable the facebook registration if the customer isn't authenticated</iscomment>
+	<isif condition="${!pdict.CurrentCustomer.authenticated &&
+						(dw.system.Site.getCurrent().getCustomPreferenceValue('facebookConnectEnabled')) &&
+						(dw.system.Site.getCurrent().getCustomPreferenceValue('facebookAppID') != null) &&
+						(dw.system.Site.getCurrent().getCustomPreferenceValue('facebookURI') != null)
+						}">
+		<isinclude template="account/facebook/facebookregistration"/>
+	</isif>
+
+	<isset name="profileNum" value="${AccountSyncResponse != null && pdict.CustomerType == 'A' ? pdict.AccountNumber : pdict.CardNumber}" scope="page"/>
+	<isif condition="${pdict.CRMerror}">
+		<h1>There was an error with updating your request.</h1>
+	</isif>
+	<isif condition="${!empty(profileNum)}">
+		<div id="successPreregistrationMessage">
+			<isif condition="${!empty(pdict.Action) && pdict.Action == 'edit'}">
+		<legend><isprint value="${Resource.msg('account.editaccount','account',null)}" /></legend>
+	<iselse/>
+		<legend><isprint value="${Resource.msg('account.welcomereg','account',null)}" /></legend>
+	</isif>	
+	
+	<isif condition="${pdict.CurrentSession.custom.isPortalUser}">
+		<span><isprint value="${Resource.msg('account.portalaccountnumberfound','account',null)}" /></span>
+	<iselseif condition="${pdict.CustomerType == 'A'}">
+		<span><isprint value="${Resource.msg('account.accountnumberfound','account',null)}" /></span>
+	<iselse/>
+		<span><isprint value="${Resource.msg('account.cardnumberfound','account',null)}" /></span>
+	</isif>
+	<p class="padtop20">
+		<span><isprint value="${Resource.msg('account.accountcardnumber','account',null)}" /></span>
+		<span><isprint value="${profileNum.toString()}"/></span>
+	</p>
+	<p>
+	<isif condition="${!empty(AccountSyncResponse.name) && empty(AccountSyncResponse.firstName) && empty(AccountSyncResponse.lastName)}">
+		<isset name="AccountHolderName" value="${AccountSyncResponse.name}" scope="page"/>
+		<isprint value="${AccountHolderName.split(' ').slice(0, -1).join(' ').replace(/[^a-zA-Z& ]/g, '').toLowerCase()}"/>
+		<isprint value="${AccountHolderName.split(' ').slice(-1).join(' ').toLowerCase()}"/>
+	<iselse/>
+		<isprint value="${AccountSyncResponse.firstName.toLowerCase()}"/>
+		<isprint value="${AccountSyncResponse.lastName.toLowerCase()}"/>
+	</isif>
+	</p>
+	<p>
+		<isprint value="${AccountSyncResponse.billingAddressLine1.toLowerCase()}"/>
+	</p>
+	<p>
+		<isprint value="${AccountSyncResponse.billingCityOrTown.toLowerCase()}"/>
+		<isprint value="${AccountSyncResponse.billingStateOrProvinceCode.state}"/>
+		<isprint value="${AccountSyncResponse.billingZipOrPostalCode.toLowerCase()}"/>
+	</p>
+	
+	<div class="pre-reg-message padtop20">
+		<span class="italic">
+			<isprint value="${Resource.msg('account.preregmessage2','account',null)}" /><br/>
+		</span>
+	</div>
+		</div>
+	</isif>
+	
+	<form action="${URLUtils.httpsContinue()}" method="post" id="RegistrationForm" name="registration-form">
+		<input type="hidden" name="${dw.web.CSRFProtection.getTokenName()}" value="${dw.web.CSRFProtection.generateToken()}">
+		<div class="<isif condition="${pdict.editProfile}">account-edit-main<iselse>account-prereg-main</isif>">
+			<fieldset>
+				<div class="<isif condition="${pdict.editProfile}">account-edit-profile<iselse>account-pre-reg</isif>">
+					<legend>
+						<isif condition="${pdict.editProfile}">
+							<isprint value="${Resource.msg('registration.editMyInfo', 'account', null)}"/>
+						<iselseif condition="${pdict.CurrentSession.custom.isPortalUser}" >
+							<isprint value="${Resource.msg('preregistrationwebprofile.step2','account',null)}" /><br>
+							<div class="portal-login-info">
+								<isprint value="${Resource.msg('preregistrationLoginInfo','account',null)}" /><isprint value="${profileNum.toString()}"/>
+							</div>
+						<iselse>
+							<isprint value="${Resource.msg('preregistration.step2','account',null)}" />
+						</isif>
+					</legend>
+					<div class="backlink" >
+ 
+						<a href="${URLUtils.url("Account-ViewProfile")}"><isprint value="${Resource.msg('account.backtomyinformation','account',null)}" /></a>
+ 
+					</div>
+					<div class="account-info">
+						<ul>
+							<li>
+								<span><isprint value="${Resource.msg('registration.editinfoName', 'account', null)}"/></span>
+								<span><isprint value="${fullName}"/></span>
+							</li>
+							<li>
+								<isif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'A'}">
+									<span><isprint value="${Resource.msg('registration.accountnumber', 'account', null)}"/></span>
+									<isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}"/>
+								<iselseif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+									<span><isprint value="${Resource.msg('registration.proclubmember', 'account', null)}"/></span>
+									<isprint value="${pdict.CurrentCustomer.profile.custom.cardNumber}"/>
+								</isif>
+							</li>
+							<li>
+								<span><isprint value="${Resource.msg('registration.emailAddress', 'account', null)}"/></span>
+								<span><isprint value="${pdict.CurrentCustomer.profile.email}"/></span>
+							</li> 
+						</ul>
+					</div>
+					<isif condition="${pdict.editProfile}">
+						<isinputfield formfield="${pdict.CurrentForms.profile.customer.accountemail}" type="input" xhtmlclass="enter-email email email1" rowclass="inline-field email-field" labelvalue="${Resource.msg('profile.enteremail', 'forms', null)}"/>
+						<iscomment>This Messege is not required now.
+							<isif condition="${enableLoginChange}"> 
+								<span class="italic email-msg"><isprint value="${Resource.msg('profile.enteremailmsg', 'forms', null)}"/></span>
+							</isif>
+						 </iscomment>
+						<isif condition="${pdict.LoginExists}">
+							<span class="italic error error-message login-exists"><isprint value="${Resource.msg('profile.loginexists', 'forms', null)}"/></span>
+						</isif>
+						<span class="italic email-error-msg err-enter-email"></span>
+						<isinputfield formfield="${pdict.CurrentForms.profile.customer.accountemailconfirm}" type="input" xhtmlclass="retype-email email email2" rowclass="inline-field retype-email" labelvalue="${Resource.msg('profile.retypeemail', 'forms', null)}"/>
+						<span class="italic email-error-msg err-retype-email"></span>
+						<span class="italic email-error-msg err-emails"></span>
+					  <isif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'A' || pdict.CurrentCustomer.profile.custom.customerType == 'C' }">
+					  	  <div class="additional-email-message">
+					  	  		<sapn class="additional-email-head"><isprint value="${Resource.msg('profile.AddtionalemailAddress', 'forms', null)}"/></sapn>
+					  	  		<span class="additional-email-order"><isprint value="${Resource.msg('registration.addtionalemail', 'account', null)}"/></span>
+					  	  		<isinputfield formfield="${pdict.CurrentForms.profile.customer.addtionalemail}" type="textarea"  rowclass="inline-field retype-email" />
+					  	  </div>
+					  </isif>
+						<isif condition="${enableLoginChange}">
+							<isinputfield formfield="${pdict.CurrentForms.profile.login.changelogin}" type="password" rowclass="changelogin"/>
+							<span class="italic password-error-msg"></span>
+						</isif>
+						<iscomment>	this might not be needed any more
+							<isinputfield formfield="${pdict.CurrentForms.profile.customer.profession}" type="select" xhtmlclass="profession-select"/>
+						</iscomment>
+						<isif condition="${pdict.CurrentUser.profile.custom.customerType.value == 'C'}">
+							<isinputfield formfield="${pdict.CurrentForms.profile.customer.phoneHome}" type="input" rowclass="phone-row" xhtmlclass="phone"/>
+							<isinputfield formfield="${pdict.CurrentForms.profile.customer.phoneMobile}" type="input" rowclass="phone-row" xhtmlclass="phone"/>
+							<isinputfield formfield="${pdict.CurrentForms.profile.customer.phoneWork}" type="input" rowclass="phone-row" xhtmlclass="phone"/>
+							<div class="employee-type-container first-type">
+								<span class="caption"><isprint value="${Resource.msg('profile.employeetype', 'forms', null)}"/></span>
+								<span class="subCaption"><isprint value="${Resource.msg('profile.selectApply', 'forms', null)}"/></span>
+								<div class="checkbox-container">
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.owner}" type="checkbox" rowclass="employee-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.student}" type="checkbox" rowclass="employee-type-row"/>
+								</div>
+							</div>
+							<div class="employee-type-container">
+								<span class="caption"><isprint value="${Resource.msg('profile.professionaltype', 'forms', null)}"/></span>
+								<span class="subCaption"><isprint value="${Resource.msg('profile.selectApply', 'forms', null)}"/></span>
+								<div class="checkbox-container">
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.cosmetologist}" type="checkbox" rowclass="professional-type-row cosmetologist-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.barber}" type="checkbox" rowclass="professional-type-row barber-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+								</div>
+							</div>
+							<div class="birthdayClubField">
+								<isinputfield formfield="${pdict.CurrentForms.profile.customer.birthdayClub}" type="input" xhtmlclass="birthdaylub" rowclass="inline-field birthdayclub"  attribute1="placeholder" value1="${Resource.msg('profile.mmdd', 'forms', null )}"/>
+							</div>
+							<div class="marketingprefs-container">
+								<span class="marketingprefs-msg"><isprint value="${Resource.msg('profile.marketingcommunicationpreferences', 'forms', null)}"/></span>
+								<div class="form-row marketing-pref-row">
+									<span><isprint value="${Resource.msg('registration.textmessaging', 'account', null)}" /></span>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.mobileOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optedin', 'account', null)}" attribute1="value" value1="true"
+									 	attribute2="${(pdict.CurrentForms.profile.customer.mobileOptIn.value == true) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.mobileOptIn.value == true) ? 'checked' : null}"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.mobileOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optout', 'account', null)}" attribute1="value" value1="false"
+										attribute2="${(pdict.CurrentForms.profile.customer.mobileOptIn.value == false) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.mobileOptIn.value == false) ? 'checked' : null}"/>
+								</div>
+
+								<div class="form-row marketing-pref-row">
+									<span><isprint value="${Resource.msg('registration.emailmessaging', 'account', null)}" /></span>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.emailOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optedin', 'account', null)}" attribute1="value" value1="true"
+									 	attribute2="${(pdict.CurrentForms.profile.customer.emailOptIn.value == true) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.emailOptIn.value == true) ? 'checked' : null}"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.emailOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optout', 'account', null)}" attribute1="value" value1="false"
+										attribute2="${(pdict.CurrentForms.profile.customer.emailOptIn.value == false) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.emailOptIn.value == false) ? 'checked' : null}"/>
+								</div>
+								
+								<div class="form-row marketing-pref-row">
+									<span><isprint value="${Resource.msg('registration.directmessaging', 'account', null)}" /></span>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.directMailOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optedin', 'account', null)}" attribute1="value" value1="true"
+									 	attribute2="${(pdict.CurrentForms.profile.customer.directMailOptIn.value == true) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.directMailOptIn.value == true) ? 'checked' : null}"/>
+									<isinputfield formfield="${pdict.CurrentForms.profile.customer.directMailOptIn}" type="radio" rowclass="row-buttons" label="true" labelvalue="${Resource.msg('registration.optout', 'account', null)}" attribute1="value" value1="false"
+										attribute2="${(pdict.CurrentForms.profile.customer.directMailOptIn.value == false) ? 'checked' : null}" value2="${(pdict.CurrentForms.profile.customer.directMailOptIn.value == false) ? 'checked' : null}"/>								
+								</div>
+							</div>
+						</isif>
+					<iselse/>
+						<input type="hidden" name="prereg" value="true">
+						<isif condition="${pdict.CurrentSession.custom.isPortalUser}" >
+							<div class="email-description">
+								<span><isprint value="${Resource.msg('registration.emailResourceMsg', 'account', null)}" /></span>
+							</div>
+						</isif>
+						<isinputfield formfield="${pdict.CurrentForms.profile.customer.email}" type="input"/>
+						<isif condition="${!empty(pdict.AlreadyExistError)}">
+							<span class="error"><isprint value="${Resource.msg(pdict.AlreadyExistError,'forms',"null")}" /></span>
+						 </isif>
+						
+						<isinputfield formfield="${pdict.CurrentForms.profile.customer.emailconfirm}" type="input"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.login.password}" type="password"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.login.passwordconfirm}" type="password"/>
+						<isif condition="${!empty(AccountSyncResponse) && pdict.CustomerType == 'C'}"> 
+							<div class="preregemailoptin">
+								<isinputfield formfield="${pdict.CurrentForms.profile.customer.preRegemailOptIn}" type="checkbox" rowclass="form-indent label-inline" attribute1="${dw.system.Site.current.ID == 'CosmoProf-CA' ? "" : "checked"}" value1="${dw.system.Site.current.ID == 'CosmoProf-CA' ? "" : "checked"}" />
+							</div>
+						</isif>
+
+					</isif>
+				</div>
+			</fieldset>
+			 
+			<fieldset>
+				<isif condition="${!(pdict.editProfile)}">
+					<div id="diversion-policy" class="diversion-policy">
+						<legend>
+							<isprint value="${Resource.msg('preregistration.step3','account',null)}" />
+						</legend>
+						<span class="red"><isprint value="${Resource.msg('preregistration.continue','account',null)}" />
+						</span>
+						<a href="javascript:void(0)" class="registerlink"><isprint value="${Resource.msg('registration.professional', 'account', null)}" /></a>
+						<div class="diversion-policy-link">
+							<iscontentasset aid="professional-purchase-agreement"/>
+						</div>
+						<isslot id="diversion-policy" description="Diversion Policy" context="global"/>
+						<iscomment><isinputfield formfield="${pdict.CurrentForms.profile.customer.agreedprofessionalpolicy}" type="checkbox" rowclass="form-indent label-inline" requiredtext="${Resource.msg('forms.requiredinput','forms',null)}" /></iscomment> 
+						<isinputfield formfield="${pdict.CurrentForms.profile.customer.agreediversionpolicy}" type="checkbox" rowclass="form-indent label-inline" requiredtext="${Resource.msg('forms.requiredinput','forms',null)}"/>
+					</div>
+				</isif>
+			</fieldset>	
+				  
+			<fieldset>
+				<isif condition="${pdict.editProfile}">
+					<isset name="btnName" value="${'account-edit-btn'}" scope="page"/>
+				<iselse/>
+					<isset name="btnName" value="${'account-prereg-btn'}" scope="page"/>
+				</isif>	
+				
+				<div class="form-row form-row-button accounteditbtn">
+					<button type="submit" value="${Resource.msg('global.save','locale',null)}" name="${pdict.CurrentForms.profile.confirm.htmlName}" class=" primaryButtn">
+						<isprint value="${Resource.msg('global.save','locale',null)}" />
+					</button>
+				</div>
+				 <iscomment>
+				<div class="accounteditbtn form-row form-row-button cancel">
+					<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}" class="secondarybtn">
+						<isprint value="${Resource.msg('global.cancel','locale',null)}" />
+					</a>	
+				</div>
+				 </iscomment>
+				<isif condition="${!(pdict.editProfile)}">
+					<div class="prereg-bottom">
+						<iscomment>
+						<span class="prereg-mobile">
+							<isprint value="${Resource.msg('preregistration.text','account',null)}" />
+						</span>
+						 </iscomment>
+					</div>
+				</isif>
+				<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>	
+			</fieldset>
+		</div>
+	</form>
+</isdecorate>

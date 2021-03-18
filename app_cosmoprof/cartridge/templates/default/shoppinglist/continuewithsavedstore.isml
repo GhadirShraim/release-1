@@ -1,0 +1,46 @@
+<isdecorate template="shoppinglist/pt_shoppinglist">
+	<isinclude template="util/modules"/>
+	<isscript>importScript("checkout/Utils.ds");</isscript>
+<div class="store-selection-outer">
+	<h1 class="content-header list-name">
+		<isprint value="${Resource.msg('store.shoppinglist.store.selection','account',null)}" />
+	</h1>
+	<div class="back-to-previous">
+		<a href="${URLUtils.url('ShoppingList-Start')}"><isprint value="${Resource.msg('store.shoppinglist.back.myshoppinglist','account',null)}" /></a>
+	</div>
+	<div class="store-top-section continue-page">
+		 <isif condition="${!empty(pdict.CurrentCustomer.profile.custom.savedStore)}">
+		 	<isset name="savedStore" value="${JSON.parse(pdict.CurrentCustomer.profile.custom.savedStore)}" scope="Page" />
+		 	<span class="use-my-saved-location"><isprint value="${Resource.msg('forms.giftregistry.store.saved','forms',null)}" /></span>	
+	  		<span id="saved-store-detail" data-savedstoredetail='<isprint value="${pdict.CurrentCustomer.profile.custom.savedStore}" encoding="off"/>'></span>
+	  		<div class="saved-store-address">
+		  		<isif condition="${!empty(savedStore.address1)}">
+					<div class="address1">
+						<isprint value="${savedStore.address1}" />
+					</div>
+				</isif>
+				<isif condition="${!empty(savedStore.address2)}">
+					<div class="address2">
+						<isprint value="${savedStore.address2}" />
+					</div>
+				 </isif>
+				 <isif condition="${!empty(savedStore.city)}"><span class="city"><isprint value="${savedStore.city}" />,</span></isif> <isif condition="${!empty(savedStore.region)}"><span class="state"><isprint value="${savedStore.region}" />,</span></isif> <isif condition="${!empty(savedStore.postalcode)}"><span class="zip"><isprint value="${savedStore.postalcode}" /></span></isif>
+			</div>
+			<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.giftregistry.htmlName}" id="select-store-form">
+				<div class="storessearch-result">
+					 <div class="hide">
+					 	<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.selectedstore}" type="input" xhtmlclass="selectes-store"  />
+					 </div>
+					 <div class="change-store-saved">
+						<button name="${pdict.CurrentForms.giftregistry.changemystore.htmlName}" value="${Resource.msg('shoppinglist.store.change','storepickup',null)}" class="change-saved-store" type="submit" ><isprint value="${Resource.msg('shoppinglist.store.change','storepickup',null)}" /></button>
+					 </div>
+					 <div class="continue-store-saved">
+						<button name="${pdict.CurrentForms.giftregistry.sendtofinalstep.htmlName}" value="${Resource.msg('shoppinglist.store.continue','storepickup',null)}" class="continue-saved-store" type="submit" ><isprint value="${Resource.msg('shoppinglist.store.continue','storepickup',null)}" /></button>
+					 </div>
+					 <div class="error-msg"></div>
+				</div>
+			</form>
+		 </isif>
+	</div>
+</div>	
+</isdecorate>

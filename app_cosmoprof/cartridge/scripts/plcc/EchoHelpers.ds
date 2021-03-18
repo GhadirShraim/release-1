@@ -1,0 +1,100 @@
+/**
+*Echo Helper
+*/
+importPackage( dw.system );
+importPackage( dw.svc );
+importPackage( dw.util );
+
+
+function getADSrequest(customerDetails,contactID) {
+	
+	var URLUtils = require('dw/web/URLUtils');
+	var customerProfile = customerDetails.profile;
+	var defaultAddress = null;
+	
+	if (!empty(customerProfile) && !empty(customerProfile.addressBook)) {
+		var addressBook = customerProfile.addressBook;
+		//first try and pull the default address from preferred
+		if (!empty(addressBook.preferredAddress)) {
+			defaultAddress = addressBook.preferredAddress;
+			//then try to pull it from addresses
+		} else if (!empty(addressBook.addresses) && addressBook.addresses.size() > 0) {
+			defaultAddress = addressBook.addresses.get(0);
+		}
+	}
+	
+	var clientNamePLCC = dw.system.Site.getCurrent().getCustomPreferenceValue('clientNamePLCC');
+	var clientTokenPLCC = 'BSG-'+ UUIDUtils.createUUID();
+	session.custom.clientTokenPLCC = clientTokenPLCC;
+	var customerMemberID = !empty(contactID)?contactID:'';
+	var echoURL = dw.system.Site.getCurrent().getCustomPreferenceValue('echoURL');
+	var successURL = URLUtils.abs('PLCC-Success').toString();
+	var failureURL = URLUtils.abs('PLCC-Failure').toString();
+	var timestamp : String = dw.util.StringUtils.formatCalendar(dw.system.System.getCalendar(), "yyyy-MM-dd'T'HH:mm:ss.S'Z'");
+	
+	var firstName = replaceSpecialChar(customerDetails.profile.firstName);
+	var lastName = replaceSpecialChar(customerDetails.profile.lastName);
+	var address1 = replaceSpecialChar(defaultAddress.address1);
+	var address2 = replaceSpecialChar(defaultAddress.address2);
+	
+	
+	
+	if(!empty(echoURL)) {
+		var requestData= {
+	    "clientName": clientNamePLCC ? clientNamePLCC : "cosmoprof",
+	    "bundleID": "",
+	    "clientToken": clientTokenPLCC,
+	    "data1": {
+	    	"echoUrl": echoURL,
+	        "approvalUrl": URLUtils.abs('PLCC-Success').toString(),
+	        "nonApprovalUrl":URLUtils.abs('PLCC-Failure').toString(),
+	        "purchaseAmount": "",
+	        "customerMemberID": customerMemberID, 
+	        "applicant": {
+	            "firstName": firstName,
+	            "lastName": lastName,
+	            "email": customerDetails.profile.email,
+	            "address1": address1,
+	            "address2": !empty(address2)?address2:'',
+	            "city": defaultAddress.city,
+	            "state": defaultAddress.stateCode,
+	            "zip": defaultAddress.postalCode.substr(0,5),
+	            "country": defaultAddress.countryCode.value
+	        }
+	    },
+	    "timestamp": timestamp
+		}
+	} else {
+		var requestData= {
+	    "clientName": clientNamePLCC ? clientNamePLCC : "cosmoprof",
+	    "bundleID": "",
+	    "clientToken": clientTokenPLCC,
+	    "data1": {
+	        "approvalUrl": URLUtils.abs('PLCC-Success').toString(),
+	        "nonApprovalUrl":URLUtils.abs('PLCC-Failure').toString(),
+	        "purchaseAmount": "",
+	        "customerMemberID": customerMemberID, 
+	        "applicant": {
+	            "firstName": firstName,
+	            "lastName": lastName,
+	            "email": customerDetails.profile.email,
+	            "address1": address1,
+	            "address2": !empty(address2)?address2:'',
+	            "city": defaultAddress.city,
+	            "state": defaultAddress.stateCode,
+	            "zip": defaultAddress.postalCode.substr(0,5),
+	            "country": defaultAddress.countryCode.value
+	        }
+	    },
+	    "timestamp": timestamp
+		}
+	}
+	return requestData;
+}
+function replaceSpecialChar(input :  String) {
+	return !empty(input) ? input.toString().replace(/\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|[\u0080-\u00ff]/g, "") : input;
+}
+
+module.exports = {
+	getADSrequest: getADSrequest
+};

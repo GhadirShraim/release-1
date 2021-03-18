@@ -1,0 +1,49 @@
+<isimagesizes />
+
+<isset name="blog" value="${dw.content.ContentMgr.getContent(cCode + '-banner')}" scope="page"/>
+
+<isif condition="${blog != null && blog.online}">
+	<div class="banner-image">
+		<img height="250" width="350" class="contentMainImage" src="${blog.custom.thumbnailImage.getAbsImageURL(imageConfig.mobileCategoryGridSmallView)}"/> 
+	</div>
+</isif>
+
+<iscomment>Only certain chain codes can see blog tags and comments (add chain code to site pref)</iscomment>
+<isscript>
+	importScript( "util/ViewHelpers.ds" );
+	
+	var displayTagsComments = false;
+	var cCodes = dw.system.Site.current.preferences.custom.blogChainCodes;
+	var currentCC = (pdict.CurrentCustomer.authenticated && 'chainCode' in pdict.CurrentCustomer.profile.custom && !empty(pdict.CurrentCustomer.profile.custom.chainCode)) ? pdict.CurrentCustomer.profile.custom.chainCode : dw.system.Site.current.preferences.custom.defaultChainCode;
+	
+	if(currentCC && cCodes != null)
+	{
+		//iterate through all the chain codes that are stored in the custom site preference "blogChainCodes"
+		for each(var c in cCodes)
+		{
+			//if the chain code in the site pref equls the current chain code then remove tags and comments from the blog
+			if(c == currentCC)
+			{
+				displayTagsComments = true;
+				var tags = buildTagsArray(pdict.ContentSearchResult);
+				break;
+			}
+		}
+	}
+</isscript>
+
+<isif condition="${displayTagsComments}">
+	<div class="tags">
+		<isif condition="${!empty(tags)}">
+			<h2>${Resource.msg('account.blogtags','account',null)}</h2>
+			<isloop items="${tags}" var="tag" status="tagStatus">
+				<isprint value="${tag}"/>
+				<isif condition="${!tagStatus.last}">,</isif>
+			</isloop>
+		</isif>	
+	</div>
+	<div class="comments">
+		<h2>${Resource.msg('account.blogcomments','account',null)}</h2>
+		<iframe src="${dw.system.Site.getCurrent().preferences.custom.commentsURL}" width="100%" height="350px" frameborder="0"></iframe>
+	</div>
+</isif>

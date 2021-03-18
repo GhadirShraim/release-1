@@ -1,0 +1,42 @@
+/**
+* PAVCheck.ds
+*
+*-Description - Run a product availability check to see if the current customer can purchase the given products
+*
+*	@input CurrentCustomer : dw.customer.Customer
+*	@input LIC : dw.order.LineItemCtnr
+*	@input AddressId : String
+*   @output outArray : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.customer);
+
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		var AddressObj = {
+				profile : pdict.CurrentCustomer.profile,
+				addressID :  pdict.AddressId
+		}
+		
+		if(pdict.LIC == null)
+		{
+			return PIPELET_ERROR;
+		}
+		
+		var unshippableProducts = ProductUtils.getAvailability(pdict.LIC, false, AddressObj);
+		
+		pdict.outArray = unshippableProducts;
+	}
+	catch(e)
+	{
+		Logger.error('PAVCheck has failed with the following error: ' + e);
+		return PIPELET_ERROR;
+	}
+	
+    return PIPELET_NEXT;
+}

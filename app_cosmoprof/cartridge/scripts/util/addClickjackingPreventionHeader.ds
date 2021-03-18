@@ -1,0 +1,12 @@
+/**
+* addClickjackingPreventionHeader.ds
+* //set the response header (X-FRAME-OPTIONS) to prevent clickjacking 
+*/
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+   response.addHttpHeader("X-FRAME-OPTIONS","SAMEORIGIN");
+
+   return PIPELET_NEXT;
+}

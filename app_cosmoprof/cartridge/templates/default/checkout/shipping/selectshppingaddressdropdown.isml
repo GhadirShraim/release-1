@@ -1,0 +1,21 @@
+<!--- TEMPLATENAME: selectshppingaddressdropdown.isml --->
+<isscript>
+	importScript("checkout/Utils.ds");
+			
+</isscript>
+<select id="${pdict.CurrentForms.singleshipping.addressList.htmlName}" name="addressselectdropdown" class="input-select">
+	<iscomment>May be preferable to replace data-address attribute with ajax call</iscomment>
+	<option value="">${Resource.msg('forms.address.list.select','forms',null)}</option>							
+	<isloop items="${pdict.SortedAddress.entrySet()}" var="address">
+		<isset name="jsonAddr" value="${AddressInJSONObj(address.value)}" scope="PAGE" />
+		<isset name="aid" value="${!empty(address.value.ID) ? address.value.ID : address.value.key}" scope="page"/>
+		<isset name="addrLabel" value="${'addressLabel' in  address.value.custom && !empty(address.value.custom.addressLabel) ? address.value.custom.addressLabel + ':' : ''}" scope="page"/>	
+		<isif condition="${aid == '-1'}">
+			<iscontinue/>
+		<iselse>
+			<option value="${aid}" data-address='<isprint value="${JSON.stringify(jsonAddr).replace("'","^")}" encoding="off"/>'>
+			(${aid.substring(0,10)}) <isprint value="${addrLabel}"/> <isprint value="${address.value.address1}"/>, <isprint value="${address.value.city}"/>, <isprint value="${address.value.stateCode}"/>, <isprint value="${address.value.postalCode}"/>
+		</option>
+		</isif>	
+	</isloop>	
+</select>

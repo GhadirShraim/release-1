@@ -1,0 +1,30 @@
+<iscomment>Google analytics order confirmation tracking</iscomment>
+<script type="text/javascript">
+	ga('require', 'ecommerce');
+	
+	//Send transaction data
+	ga('ecommerce:addTransaction', {
+	  'id': '${dw.system.Site.getCurrent().preferences.custom.googleAnalyticsID}',                  												// Transaction ID. Required.
+	  'affiliation': '${pdict.CurrentCustomer.profile.companyName != '' ? pdict.CurrentCustomer.profile.companyName : ''}',   								// Affiliation or store name.
+	  'revenue': '${empty(pdict.Order.totalGrossPrice.value) ? '0.00' : pdict.Order.totalGrossPrice.value}',               							// Grand Total.
+	  'shipping': '${empty(pdict.Order.adjustedShippingTotalPrice.value) ? '0.00' : pdict.Order.adjustedShippingTotalPrice.value.toFixed(2)}',     	// Shipping.
+	  'tax': '${empty(pdict.Order.totalTax.value) ? '0.00' : pdict.Order.totalTax.value}', 															// Tax.
+	  'currency': '${pdict.Order.getCurrencyCode() != null ? pdict.Order.getCurrencyCode() : 'USA'}'												// Currency	                     
+	});
+	
+	//loop through all line items and add each item to the "ga" variable
+	<isloop items="${pdict.Order.allProductLineItems}" alias="pli" status="statusloop">
+
+		ga('ecommerce:addItem', {
+		  'id': '${pli.product.ID}',                    																		// Transaction ID. Required.
+		  'name': '${pli.product.name}',    																					// Product name. Required.
+		  'sku': '${!empty(pli.product.manufacturerSKU) ? pli.product.manufacturerSKU : ''}',  									// SKU / code.
+		  'category': '${pli.product.getPrimaryCategory() != null ? pli.product.getPrimaryCategory().getDisplayName() : ''}',	// Category or variation.
+		  'price': '${pli.basePrice.value}',                																	// Unit price.
+		  'quantity': '${pli.quantity.value}'                   																// Quantity.
+		});
+		
+	</isloop>
+	
+	ga('ecommerce:send');
+</script>

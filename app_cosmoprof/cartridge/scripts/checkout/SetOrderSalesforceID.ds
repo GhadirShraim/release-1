@@ -1,0 +1,44 @@
+/**
+* Set the order export status to EXPORT_STATUS_READY
+*
+* @input Order : dw.order.Order The order.
+* @input CurrentCustomer : dw.customer.Customer  This is the account owner
+* @input contactID : String
+* 
+* 
+*/
+importPackage( dw.order );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+    // read pipeline dictionary input parameter
+    var order : Order = pdict.Order;
+    var orderPI: Collection = order.getPaymentInstruments(); 
+    var plccCheck = false;
+    
+    var paymentInstrumnets : Collection = order.getPaymentInstruments();
+	
+	if (!empty(paymentInstrumnets) && paymentInstrumnets.size() > 0 ) {
+		var paymentItr : Iterator = paymentInstrumnets.iterator();
+		
+		while(paymentItr.hasNext()) {
+			let paymentInstrument = paymentItr.next();
+			if(!empty(paymentInstrument.paymentTransaction.custom.isPLCCVan) && paymentInstrument.paymentTransaction.custom.isPLCCVan){
+				paymentInstrument.paymentTransaction.custom.isPLCCVan = true;
+			}
+			else {
+				paymentInstrument.paymentTransaction.custom.isPLCCVan = false;
+			}			
+			if(paymentInstrument.custom.isPLCC){
+				paymentInstrument.paymentTransaction.custom.isPLCC = true;
+				plccCheck = true;
+			}
+		}
+	}
+	
+	if(!empty(pdict.contactID)){
+		order.custom.salesforceId = pdict.contactID;
+	}
+      
+   	return PIPELET_NEXT;
+}

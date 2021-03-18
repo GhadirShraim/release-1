@@ -1,0 +1,27 @@
+<iscache status="off"/>
+<isinclude template="util/modules"/>
+
+<isset name="customer" value="${pdict.CurrentCustomer}" scope="page"/>
+<isset name="consCode" value="${(customer.authenticated && 'consolidationCode' in customer.profile.custom) ? customer.profile.custom.consolidationCode : null}" scope="page"/>
+<isset name="cCode" value="${(customer.authenticated && 'chainCode' in customer.profile.custom) ? customer.profile.custom.chainCode : ''}" scope="page"/>		
+<isset name="isCosmoUserOrAuthenticated" value="${!pdict.CurrentSession.custom.isPortalUser || pdict.CurrentCustomer.authenticated || pdict.CurrentSession.custom.isNonLoginPortalUser}" scope="page" />
+<isset name="isNonLoginPortal" value="${'isNonLoginPortalUser' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.isNonLoginPortalUser) ? pdict.CurrentSession.custom.isNonLoginPortalUser : false }" scope="page" />
+
+<!--  category navigation -->
+<iscomment>INCLUDE: category menu</iscomment>
+
+<isif condition="${isCosmoUserOrAuthenticated}">
+	<div id="navigation" role="navigation">
+		<nav>
+			<div class="visually-hidden navigation-header">Catalog Navigation</div>
+			<isif condition="${cCode != null && consCode != null}">
+				<isinclude url="${URLUtils.url('Home-IncludeCustomHeaderMenu','cCode',cCode,'conCode',consCode)}"/>
+			<iselseif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}" >
+				<isinclude url="${URLUtils.url('Home-NonLoginCat')}"/> 
+			<iselse>
+				<isinclude url="${URLUtils.url('Home-IncludeCustomHeaderMenu')}"/>
+					
+			</isif>
+		</nav>
+	</div><!-- /navigation -->
+</isif>

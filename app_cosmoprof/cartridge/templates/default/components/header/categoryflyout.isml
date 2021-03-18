@@ -1,0 +1,42 @@
+<iscache status="off"/>
+<isscript>
+	importScript( "util/ViewHelpers.ds" );
+</isscript>
+<isset name="topCat" value="${pdict.category}" scope="page"/>
+<isset name="topCatNameLength" value="${topCat.getDisplayName().length}" scope="page"/>
+<isset name="flyOutRenderer" value="${MainNavigationUtilities.generateFlyoutRendering(topCat)}" scope="page"/>
+
+<div class="level-2 ${flyOutRenderer.colLayoutHoriz ? 'menu-horizontal' : ''}">
+	<div class="menu-wrapper">
+		<ul class="level-2">
+			<isif condition="${flyOutRenderer.renderFlyout}">
+					<isloop items="${flyOutRenderer.subCategories}" var="subCat" begin="0" end="${flyOutRenderer.firstcolcount-1}" status="subcatstatus">
+						<li ${subcatstatus.first ? 'class=first' : ''} ${subcatstatus.last ? 'class=last' : ''}>
+							<a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(subCat)}" encoding="off"/>" class="level-2">
+								<isprint value="${subCat.getDisplayName()}"/>
+							</a>
+							
+						</li>
+					</isloop>
+				<iselse/> 
+					<li class="notlogin">
+						<div class="please">
+							${Resource.msg('header.catlogindd1','components',null)}
+						</div>
+						<a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(topCat)}" encoding="off"/>"  class="login-redirect">
+							<span>${Resource.msg('header.catlogindd2','components',null)}</span>
+						</a>
+						<div class="toshop">
+							${Resource.msg('header.catlogindd3','components',null)}
+						</div>
+					</li>
+				</isif>
+			</ul> 
+			<isif condition="${flyOutRenderer.hasCustomContent}">
+				<div class="custom"><isprint value="${topCat.custom.headerMenuBanner}" encoding="off"/></div>
+			</isif>
+		</div>	
+		
+	</div>
+	
+

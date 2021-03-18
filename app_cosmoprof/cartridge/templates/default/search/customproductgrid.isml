@@ -1,0 +1,19 @@
+<isscript>
+	importScript('search/ProductGridUtils.ds');
+</isscript>
+<iscomment><!--Display the remaining products as list--></iscomment>
+
+<isset name="checkInWishList" value="${false}" scope="Page" />
+<isif condition="${!empty(pdict.wishlistitems) && customer.authenticated}">
+	<isset name="checkInWishList" value="${true}" scope="Page" />		
+</isif>
+
+<isset name="addedToWishList" value="${false}" scope="Page" />
+<isif condition="${checkInWishList}">
+	<isset name="addedToWishList" value="${ProductGridUtils.checkIfAddedInWishList(pdict.wishlistitems, pdict.producthits.product.ID)}" scope="Page" />
+</isif>
+
+<isobject object="${pdict.product}" view="searchhit">
+	<isinclude url="${ProductGridUtils.buildHitTileURL(pdict.producthits, '', addedToWishList)}"/>
+</isobject>
+

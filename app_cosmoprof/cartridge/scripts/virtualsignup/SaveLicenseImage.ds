@@ -1,0 +1,61 @@
+/**
+* 
+*	@input HPM : dw.web.HttpParameterMap
+*	@input FirstName : String
+*	@input LastName : String
+*	@input oldFileName : String 
+*	@output FileName : String
+*	@output originalFileString : String
+*	@output originalFileURL : String
+*/
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var licenseNamePrefix = "LicenseFilenamePrefix" in Site.current.preferences.custom ? Site.current.getCustomPreferenceValue("LicenseFilenamePrefix") : '';
+	var firstName = args.FirstName,
+		lastName = args.LastName,
+		dateStamp = dw.util.StringUtils.formatCalendar(new dw.util.Calendar(), "yyyy_MM_dd_HH_mm_ss").replace(new RegExp(/_/g), ""),
+		files,
+		originalFile = null,
+		fileName = dw.util.StringUtils.format("{0}_{1}_{2}",firstName,lastName,dateStamp),
+	   	fileNameToCRM = licenseNamePrefix +"/"+fileName.replace(new RegExp(/[^a-z A-Z 0-9 - .]/g), ""); 
+	if(fileNameToCRM.length > 100){
+		firstName = firstName.toUpperCase().charAt(0);
+		fileName = dw.util.StringUtils.format("{0}{1}_{2}",firstName,lastName,dateStamp);
+		fileNameToCRM = licenseNamePrefix +"/"+fileName.replace(new RegExp(/[^a-z A-Z 0-9 - .]/g), ""); 
+		if(fileNameToCRM.length > 100){
+			var CharToTrim = fileNameToCRM.length - 100;
+			lastName = lastName.substr(0,(lastName.length - CharToTrim));
+			fileName = dw.util.StringUtils.format("{0}{1}_{2}",firstName,lastName,dateStamp);
+		}
+		
+	}
+	//process the file, save to disk and get file name
+	files = request.getHttpParameterMap().processMultipart(function(fieldName, contentType, originalFileName){
+		if(!empty(originalFileName) && originalFileName !=null){
+			originalFile = originalFileName;
+			var extension = originalFileName.substr(originalFileName.lastIndexOf('.'));
+			fileName = (fileName + extension).replace(new RegExp(/[^a-z A-Z 0-9 - .]/g), "");
+			return new dw.io.File(dw.io.File.IMPEX + "/vsuimages/" + fileName);
+		}
+	});
+	
+	//save file name to put in Create Customer API
+	args.FileName = fileName;
+	if(!empty(originalFile)){
+		args.originalFileString = originalFile;
+	}else{
+		args.originalFileString = args.oldFileName;
+	}
+	
+	args.originalFileURL = licenseNamePrefix +"/"+fileName;
+	if(originalFile !=null && !empty(originalFile)){
+		session.custom.fileURLToCRM = licenseNamePrefix +"/"+fileName;
+		session.custom.imageFileName = args.originalFileString;
+		session.custom.UpdatedimageFileName = fileName;
+		
+	}
+
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,125 @@
+/**
+ *	Pipelet script to merge DW orders with service orders.
+ * 	Returns a collection of orders which exist in the pnasonic back-end plus any orders which only exist in DW (not yet exported).
+ *  @input CustomerNo : String Current Customer No.
+ *	@input FromDate : String   From Date
+ *  @input ToDate :   String   To Date
+ *	@input ServiceOrders	: dw.util.ArrayList list of orders received from the order history service
+ *  @output MergedOrders : Object List of merged orders. This contains all orders from the order history service plus any orders which only exist in DW.
+ *	@output MergedOrdersCount : Number total order count
+ */
+importPackage(dw.system);
+importPackage(dw.util);
+importPackage(dw.order);
+
+function execute(args : PipelineDictionary) : Number {
+	try{
+		//Initialize From Date and To Date. If both are empty then assume from date 1900-01-01 and to Date is current time
+		var fromCal : Calendar = !empty(args.FromDate) ? new Calendar(new Date(args.FromDate)) : new Calendar(new Date("1900-01-01"));
+		
+		var toCal : Calendar = !empty(args.ToDate) ? new Calendar(new Date(args.ToDate)) : new Calendar(new Date());
+		
+		//get Current Date and Compare from to Date Logic need to Improve
+		var currentCal : Calendar = new Calendar();
+		
+		if(StringUtils.formatCalendar(toCal, "yyyy-MM-dd").equals(StringUtils.formatCalendar(currentCal, "yyyy-MM-dd"))) {
+			toCal.add(Calendar.DATE, 1);
+		}
+		
+		var fromdate : String = StringUtils.formatCalendar(fromCal, "yyyy-MM-dd");
+		var todate : String = 	StringUtils.formatCalendar(toCal, "yyyy-MM-dd");
+		
+		
+		// intialize vars
+		var customerNo : String = args.CustomerNo;
+		var newOrdersList : dw.util.ArrayList = args.MergedOrders = new ArrayList();
+		args.MergedOrdersCount = 0;
+		
+		// create order query string to fetch the orders which are NOT part of the service orders list
+		var orderQuery = "customerNo={0} AND status!={1} AND exportStatus != {2} AND creationDate >= {3} AND creationDate <= {4} ";
+			
+		// get the list of orders excluding received from the service
+		var orderIt : dw.util.SeekableIterator = dw.order.OrderMgr.queryOrders(orderQuery, "creationDate desc", customerNo, dw.order.Order.ORDER_STATUS_FAILED, dw.order.Order.EXPORT_STATUS_EXPORTED, fromdate, todate);
+		//create a temp ArrayList;
+		
+		var tempList : ArrayList = new ArrayList();
+		
+		if(orderIt.count > 0) {
+			tempList.addAll(orderIt.asList());
+			
+		}
+		//Create order prototype 
+		
+		function protoObj(order: Order){
+			this.orderNo = order.orderNo;
+			this.orderStatus =  order.status.displayValue == "CANCELLED" ? "cancelled" : "Processing";
+			this.orderChannel = "DemandwareOrder";
+			this.orderDate = StringUtils.formatCalendar(new Calendar(order.creationDate),"yyyy-MM-dd") ;
+			this.orderTotal = order.getTotalGrossPrice().value;	
+			this.tax  = order.totalTax.value;
+			this.shippingAddress = {
+				"firstName" :	 order.defaultShipment.shippingAddress.firstName,
+				"lastName"	:	order.defaultShipment.shippingAddress.lastName,
+				"address1"	:	order.defaultShipment.shippingAddress.address1,
+				"address2"	:	!empty(order.defaultShipment.shippingAddress.address2) ? order.defaultShipment.shippingAddress.address2 : '',
+				"city"		:	order.defaultShipment.shippingAddress.city,
+				"state"		:	order.defaultShipment.shippingAddress.stateCode,
+				"zip"		:	order.defaultShipment.shippingAddress.postalCode,
+				"country"	:	order.defaultShipment.shippingAddress.countryCode.value,
+				"phone"		:	order.defaultShipment.shippingAddress.phone
+			}
+			var nonTaxableMerchandise = 0;
+			var taxableMerchandise = 0;
+			var lineItemsItr : dw.util.Iterator=  order.getShipments()[0].productLineItems.iterator();
+			while(lineItemsItr.hasNext()) {
+				var pli = lineItemsItr.next();
+				if(!empty(pli.adjustedTax.value) && pli.adjustedTax.value > 0) {
+					taxableMerchandise += pli.adjustedPrice.value;
+				} 
+				else if(!empty(pli.adjustedTax.value) && pli.adjustedTax.value == 0) {
+					nonTaxableMerchandise += pli.adjustedPrice.value;
+				}
+			}
+			
+			this.nonTaxableMerchandise = nonTaxableMerchandise;
+			this.taxableMerchandise = taxableMerchandise;
+			this.recentOrder = true;	
+		}
+		
+		//create a prototype value for each order
+		var itr : dw.util.Iterator = tempList.iterator();
+		while(itr.hasNext()) {
+			var thisOrder : Order = itr.next();
+			newOrdersList.add(new protoObj(thisOrder));
+			
+		}
+		
+		//Close the Iterator
+		orderIt.close();
+		
+		//Get All Order From Service
+		if(!empty(args.ServiceOrders) && args.ServiceOrders.length > 0) {
+			//add order to from Response
+			Logger.info("MergeOrderHistory.ds merging service orders .. service order count: "+ args.ServiceOrders.length);
+			newOrdersList.sort( new PropertyComparator("creationDate", false ) );
+			newOrdersList.addAll(args.ServiceOrders);
+		} else {
+			
+			Logger.info("MergeOrderHistory.ds merging service orders .. service order count: 0  ");	
+		}
+		
+		if (newOrdersList.length > 0) {
+			Logger.info("MergeOrderHistory.ds total orders (service orders and demandware orders) count: "+ newOrdersList.length);
+			args.MergedOrders = newOrdersList;
+			args.MergedOrdersCount = newOrdersList.length;
+		}
+		
+
+	} catch(e) {
+		var error = e;
+		return PIPELET_ERROR;
+		
+		
+	}
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,580 @@
+<iscomment>To check whether user has added this product to his wishlist	</iscomment>
+<isset name="wishListed" value="false" scope="page" />
+<isinclude template="util/modules" />
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+<isset name="sddEnabled" value="${false}" scope="page" />
+<isif condition="${'SDDAvailable' in pdict.Product.custom && pdict.Product.custom.SDDAvailable == true}">
+	<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+		<isset name="sddEnabled" value="${true}" scope="page" />
+	</isif>	
+</isif>
+<isloop items="${pdict.CurrentForms.wishlist.items}" var="item" status="loopstate">	
+	<isif condition="${pdict.Product.ID.equals(item.object.product.ID)}">
+			<isset name="wishListed" value="true" scope="page" />
+	</isif>
+</isloop>
+
+<isif condition="${false && pdict.resetAttributes}">
+	<isscript>
+		var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+		var url = dw.web.URLUtils.url('Product-Variation', 'pid', pdict.Product.ID, 'format', 'ajax');
+		var qs = ProductUtils.getQueryString(pdict.CurrentHttpParameterMap, ["source", "uuid", "Quantity"]);		
+		if (qs && qs.length>0) { url+="&"+qs; }		
+	</isscript>	
+	<isinclude url="${url}"/>
+<iselse>
+	<iscomment>To check the product is Kit product or not </iscomment>
+	<isscript>
+		var kitProductRegEx : RegExp = /[0-9]+ (K|k)(I|i)(T|t)+/g;
+		var hasKit = false; 
+		if (kitProductRegEx.test(pdict.Product.custom.size)) {
+			hasKit = true;
+		}	
+	</isscript>
+	<isset name="promos" value="${dw.campaign.PromotionMgr.activeCustomerPromotions.getProductPromotions(pdict.Product)}" scope="page"/>
+	<isset name="isQuickView" value="${pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist'}" scope="page"/>	
+	<isset name="showColorSelector" value="${!empty(pdict.Product.variationModel.getProductVariationAttribute('color'))}" scope="page"/>
+	<isset name="showSizeSelector" value="${!empty(pdict.Product.variationModel.getProductVariationAttribute('size'))}" scope="page"/>
+	<isset name="isSimpleProduct" value="${false}" scope="page"/>
+	<isset name="isKitProduct" value="${false}" scope="page"/>
+	<isif condition="${!pdict.Product.isVariant() && !pdict.Product.isMaster() && pdict.Product.getVariants().empty}">
+		<isset name="isSimpleProduct" value="${true}" scope="page"/>
+		 <isif condition="${hasKit}"> 
+			<isset name="isKitProduct" value="${true}" scope="page"/>	 
+		 </isif>
+	</isif>	
+	<isscript>		
+		var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+		var masterId = pdict.Product.isVariant() ? pdict.Product.masterProduct.ID : pdict.Product.ID; 
+		var avm = pdict.Product.availabilityModel;
+		pdict.available = avm.availability>0;
+						
+		var availableCount = "0";
+		if (pdict.available && !empty(avm.inventoryRecord)) {						
+			availableCount = avm.inventoryRecord.perpetual ? "999" : avm.inventoryRecord.ATS.value.toFixed().toString();
+		}
+		if (pdict.CurrentCustomer.authenticated) {
+			var brandLevelRestrictionCheck = ProductUtils.restrictcheckForLargePurchase(pdict.Product);
+		}
+	</isscript>
+	<iscomment> 
+		primary details 
+		=============================================================
+	</iscomment>
+
+	<h2 class="visually-hidden">Details</h2>	
+	<span class="visually-hidden" itemprop="url">${URLUtils.http('Product-Show','pid', pdict.Product.ID)}</span>
+	<input type="hidden" value="${ pdict.available ? pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) : masterId.substring(masterId.lastIndexOf('-')+1) }" id="skuID"/>	
+		<div class="sku-upc-wrap">
+			
+				<div class="product-number sku">
+					<isif condition="${!pdict.Product.master}"> 
+					${Resource.msg('product.item','product',null)} <span itemprop="productID"><isprint value="${ pdict.available ? pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) : masterId.substring(masterId.lastIndexOf('-')+1) }"/></span>
+					</isif>
+				</div>
+			
+			<div class="product-number upc">
+				<isif condition="${!pdict.Product.master}"> 
+				<isif condition="${'UPC' in pdict.Product && !empty(pdict.Product.UPC) && pdict.Product.UPC.length > 0}">
+						${Resource.msg('product.upc','product',null)} <span itemprop="productID"><isprint value="${ pdict.available ? pdict.Product.UPC : masterId }"/></span>
+				</isif>	
+				</isif>
+			</div>
+		</div>
+		<isif condition="${isSimpleProduct && !showSizeSelector && !showColorSelector}">	
+			<isinclude template="product/components/productsize"/>
+		</isif>
+	<iscomment>
+		# SAL-651 - Display badge on PDP
+		For desktop, we show it under Prev & Next (right hand side)
+	</iscomment>
+	<iscomment>
+		<isif condition="${!isQuickView}">
+			<div class="col2-bv">
+				<isinclude template="product/components/reviews-stars"/>
+				<isif condition="${pdict.CurrentCustomer.authenticated}">
+					<a id="ShowReviewsLink" href="#reviewsec">${Resource.msg('global.writeareview','locale',null)}</a>
+				</isif>
+			</div>
+		</isif>
+	</iscomment>	
+	
+	<isset name="pam" value="${pdict.Product.getAttributeModel()}" scope="page"/>
+	<isset name="group" value="${pam.getAttributeGroup('mainAttributes')}" scope="page"/>
+	<isinclude template="product/components/group"/>
+	
+	<isif condition="${!isQuickView}">
+		<div class="product-review-links">
+		   	<isinclude template="product/components/reviewsmini"/>
+		</div>
+	</isif>
+	
+		
+	
+	
+
+	<iscomment> 
+		product actions
+		=============================================================
+	</iscomment>
+	
+	<div class="${showColorSelector ? 'colorselectoractions' : ''}">
+		<div class="product-add-to-cart">
+		<isif condition="${showColorSelector}">
+			<div class="productsubinfo">
+				<iscomment>Login price view handling remote include</iscomment>
+				<isif condition="${isQuickView}">
+					<isset name="isQuickView" value="${true}" scope="page"/>
+				<iselse/>
+					<isset name="isQuickView" value="${false}" scope="page"/>
+				</isif>
+				<isinclude url="${URLUtils.url('Product-PricingLoginView','view','productViewB','productid', pdict.Product.ID, 'isQuickView', isQuickView, 'showColorSelector', showColorSelector)}"/>
+			</div>
+		</isif>
+			<h2 class="visually-hidden">Product Actions</h2>
+			
+			<form action="${URLUtils.continueURL()}" method="post" id="${pdict.CurrentForms.product.addtocart.dynamicHtmlName}" class="pdpForm">
+				<div class="pdp-color-swatch-form-section">
+				<fieldset>
+				
+				<legend class="visually-hidden">Add to cart options</legend>
+				
+				<isinclude template="product/components/options"/>
+				<div class="size-pdp">
+					<isif condition="${!showColorSelector}">
+						<iscomment>Login price view handling remote include</iscomment>
+						<isif condition="${isQuickView}">
+							<isset name="isQuickView" value="${true}" scope="page"/>
+						<iselse/>
+							<isset name="isQuickView" value="${false}" scope="page"/>
+						</isif>
+						<isinclude url="${URLUtils.url('Product-PricingLoginView','view','productViewC','productid', pdict.Product.ID, 'showColorSelector', showColorSelector, 'isQuickView', isQuickView)}"/>
+					</isif>
+					<isif condition="${(isSimpleProduct || isKitProduct) && pdict.CurrentCustomer.authenticated}"> 
+						<div class="simpleProductAddToList">
+							<a class="wl-action addtoList simpleProductAddToList ${pdict.Product.ID} <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtolist','locale',null)}</a>
+						</div>
+					</isif>
+				</div>				
+				<isscript>
+					var updateSources = ["cart", "giftregistry", "wishlist"];
+					var source = pdict.CurrentHttpParameterMap.source.stringValue;
+					var buttonTitle = dw.web.Resource.msg('global.addtocart','locale','Add to Cart');
+					var plid = null;
+					if( updateSources.indexOf(source)>-1 ){
+						buttonTitle = dw.web.Resource.msg('global.update','locale','Update');
+						if( pdict.CurrentHttpParameterMap.productlistid && pdict.CurrentHttpParameterMap.productlistid.stringValue ) {
+							plid = pdict.CurrentHttpParameterMap.productlistid.stringValue;
+						}
+					} else {
+						// Only pass on white-listed sources
+						source = null; 
+					}		
+				</isscript>
+				<isset name="cartAction" value="add" scope="page"/>
+			
+				<isif condition="${!empty(pdict.CurrentHttpParameterMap.productlist) && pdict.CurrentHttpParameterMap.productlist.value == 'productcategory'}">
+					<input type="hidden" name="q" class="productlistAddTocart" value="${'productcategory'}" />
+				<iselseif condition="${!empty(pdict.CurrentHttpParameterMap.productlist) && pdict.CurrentHttpParameterMap.productlist.value =='ylike'}">	
+					<input type="hidden" name="ylike" class="productlistAddTocart" value="${'ylike'}" />
+				<iselse>
+					<input type="hidden" name="cgid" class="productlistAddTocart" value="${'searchproduct'}" /> 
+				</isif>
+				
+				<isif condition="${pdict.CurrentHttpParameterMap.uuid.stringValue}">	
+					<input type="hidden" name="uuid" id="uuid" value="${pdict.CurrentHttpParameterMap.uuid.stringValue}" />
+					<isset name="cartAction" value="update" scope="page"/>
+				</isif>
+				<isif condition="${source}">
+					<input type="hidden" name="source" id="source" value="${source}" />
+				</isif>		
+				<isif condition="${plid}">
+					<input type="hidden" name="productlistid" id="productlistid" value="${plid}" />
+				</isif>	
+				
+				<isscript>
+					var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+					
+					var av = ProductUtils.getAvailability(pdict.Product, false);
+				</isscript>
+				
+				<isset name="av" value="${JSON.stringify(av)}" scope="request"/>
+				<input type="hidden" name="cartAction" id="cartAction" value="${cartAction}" />
+				<input type="hidden" name="pid" id="pid" value="${pdict.Product.ID}" />
+				<isset name="disabledAttr" value="${(pdict.CurrentCustomer.authenticated && av != null && av.inStock && !pdict.Product.master &&  !showColorSelector  && !showSizeSelector) ? '' : ' disabled="disabled"'}" scope="page"/>
+				
+				<iscomment>
+				<isif condition="${!empty(sddEnabled) && sddEnabled == true}">
+					<isset name="disabledAttr" value="${''}" scope="page"/>
+				</isif>
+				</iscomment>
+				
+				<iscomment>If we have Brand Level Restriction for Large Purchase Order, Make it disable </iscomment>
+				<isset name="purchaseLimitdisabledAttr" value="${''}" scope="page"/>
+				<isif condition="${!empty(brandLevelRestrictionCheck) && brandLevelRestrictionCheck == true}">
+					<isset name="purchaseLimitdisabledAttr" value="${' disabled="disabled"'}" scope="page"/>
+				</isif>	
+				<isif condition="${disabledAttr.length == 0}">
+					<isset name="qtyLimit" value="${'quantityLimit' in pdict.Product.custom ? pdict.Product.custom.quantityLimit : ''}" scope="page" />
+					<div id="add-to-bag-bar" class="simple-product-page  <isif condition="${isSimpleProduct}">simple-kit-product</isif> <isif condition="${showColorSelector && showSizeSelector}">color-size-addcart</isif> ">
+						<isif condition="${pdict.CurrentCustomer.authenticated && !showColorSelector && !showSizeSelector}"> 
+								<div class="inventory">
+									<div class="quantity">
+										<span class="label">${Resource.msg('global.qty','locale',null) }&nbsp;</span>					
+
+										<input type="number" inputmode="numeric" data-maxqty="${qtyLimit}" pattern="[0-9]*" class="input-text" name="Quantity" id="Quantity" size="2" maxlength="4" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" value="${Number(empty(pdict.CurrentHttpParameterMap.Quantity.stringValue) ? 1 : pdict.CurrentHttpParameterMap.Quantity.stringValue).toFixed()}" data-available="${availableCount}"  <isif condition="${pdict.Product.isMaster()}"> disabled="disabled"</isif> />
+
+										<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+												<isif condition="${pdict.available && !pdict.Product.bundle && !pdict.Product.master}">
+													<iscomment> We need to add code to check if this product is already added to faveorie list or not. 
+																If yes, we will show the red heart and clicking on it should remove it from the list
+																<a class="wl-action heart-R" href="${URLUtils.https('Wishlist-Remove', 'pid', pdict.Product.ID, 'source', 'productdetail')}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+																If not, we will show the gray heart and clicking on it should add it
+																<a class="wl-action heart-G" href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+													
+													<a class="wl-action heart-G" href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}">&nbsp;&nbsp;33333&nbsp;&nbsp;&nbsp;&nbsp;</a>
+													</iscomment>
+												</isif>	
+										</isif>
+										
+									</div>
+								</div>
+							</isif>
+						<button id="add-to-cart" type="submit" title="${buttonTitle}" value="${buttonTitle}" data-brandlimit="${brandLevelRestrictionCheck}" class="button-fancy-large primaryButtn add-to-cart ${!empty(purchaseLimitdisabledAttr) && purchaseLimitdisabledAttr.length > 0 ? 'add-to-cart-disabled' : ''}" <isprint value="${purchaseLimitdisabledAttr}"  encoding="off" /> >${buttonTitle}</button>
+						<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+							<div id="gotit" style="display:none;">${Resource.msg('product.gotit','product',null)}</div>
+						</isif>
+						<isif condition="${isSimpleProduct}">
+							<isif condition="${pdict.CurrentCustomer.authenticated}">
+								<div class="availability-block">
+									<div class="availability">
+										<span class="label">${Resource.msg('global.availability','locale',null)}:&nbsp;</span>
+										<span class="value"><isinclude template="product/components/availability"/></span>
+										<div class="availability-results online-stock">	</div>	
+									</div>
+								</div>
+							</isif>
+						</isif>
+						<iscomment>SDD Badges </iscomment>
+						<isif condition="${!isQuickView}">
+							<isinclude url="${URLUtils.url('SDD-SddBadges','view','PRODUCT','productid', pdict.Product.ID)}"/>
+						</isif>
+						
+						<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+							<button id="add-to-instorepickup" class="instorepickup-btn" type="button" title="<isprint value="${Resource.msg('product.instorepickup','product',null)}" />" class="button-fancy-large"><isprint value="${Resource.msg('product.instorepickup','product',null)}" /></button>
+			    		    <span class="inventory-label"><isprint value="${Resource.msg('global.inventory','locale',null)}"/></span>
+			    		</isif>
+			    		<div class="clear"></div>
+			    		<isif condition="${!empty(brandLevelRestrictionCheck) && brandLevelRestrictionCheck == true}">
+							<div class="brandlimit-message"><isprint value="${Resource.msgf('product.brandlimiterrormsg','product',null, pdict.Product.brand)}"/></div>
+						</isif>
+						<div class="product-links">
+							<isif condition="${!showColorSelector}">
+								<isif condition="${!isQuickView}">
+									<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+										<ul class="menu-no-border">
+											<isif condition="${pdict.available && !pdict.Product.bundle && !pdict.Product.master}">
+												<iscomment>		
+												<isif condition="${pdict.CurrentCustomer.authenticated}">
+												<li class="no-border minwidth"><a class="wl-action addtoList <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtogiftregistry','locale',null)}</a></li>
+												</isif>
+												<isif condition="${pdict.CurrentCustomer.authenticated}">
+													<li class="no-border-last">
+														<a class="wl-action favoriteicon <isif condition="${wishListed != 'true'}">addtofav <iselse>removeFromfav </isif>" data-pid="${pdict.Product.ID}" data-href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}"  <isif condition="${wishListed != 'true'}">href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}"<iselse>href="javascript:void(0)" </isif>><isif condition="${wishListed == 'true'}">${Resource.msg('global.addedtowishlist','locale',null)}<iselse>${Resource.msg('global.addtowishlist','locale',null)}</isif></a>													
+													</li>
+												</isif>
+												</iscomment>
+											</isif>	
+										</ul>
+									</isif>
+									<iselse>
+									<div class="quickview-productlinks">
+										<ul class="menu-no-border">
+											<isif condition="${pdict.available && !pdict.Product.bundle && !pdict.Product.master}">
+												<isif condition="${pdict.CurrentCustomer.authenticated}">
+													<li class="no-border-last"><a class="wl-action addtoList <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif> <isif condition="${showColorSelector}">changeAddToList</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtogiftregistry','locale',null)}</a></li>
+												</isif>
+											</isif>	
+										</ul>
+										<div class="QuickViewFull">
+											<a href="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}" title="${pdict.Product.name}" data-prodid="${pdict.Product.ID}" >${Resource.msg('product.viewdetails','product',null)}</a>
+										</div>
+									</div>
+									</isif>
+								</isif>
+						</div><!-- END of for product-links simple product  -->
+					</div>					
+					<iscomment>				
+					<isif condition="${cosmoProductPriceObject.premiumPricing}">
+						<div class="pdp-promo-msg pricing-messaging">
+							${Resource.msg('product.premiumpricing','product',null)}
+						</div>
+					</isif>
+					 </iscomment>
+				<iselse>
+	
+					<isscript>
+						var pvm : dw.catalog.ProductVariationModel = pdict.Product.getVariationModel();
+						var it : dw.util.Iterator = pvm.getProductVariationAttributes().iterator();
+						var array : Array = [];
+						var options = '';
+						var requiredOptions = '';
+						while( it.hasNext() ) {
+							var text : dw.object.ObjectAttributeDefinition = it.next();
+							array.push( text.displayName );
+						}
+						options = array.join(', ');
+						var lastIndex = options.lastIndexOf(',');
+						if( lastIndex > 0 && options.length > 1 && array.length > 1) {
+						 requiredOptions = options.substr(0,lastIndex) + ' ' + dw.web.Resource.msg('product.attributedivider', 'product', null) + options.substr(lastIndex+1, options.length);
+						} else {
+						 requiredOptions = options;
+						}
+						var buttonTitleDisabledSelectVariation = StringUtils.format(dw.web.Resource.msg('product.missingval','product', null), requiredOptions);
+					    var buttonTitleDisabled = StringUtils.format(dw.web.Resource.msg('product.missing','product', null));
+						var buttonTitleLogin = Resource.msg('global.addtocartSignup','locale','LOGIN/REGISTER/SIGNUP');					
+					</isscript>
+					<div id="add-to-bag-bar" class="<isif condition="${showColorSelector}">color-add-to-cart</isif> <isif condition="${isSimpleProduct}">kit-producy-add-to-bag</isif>">
+						<isif condition="${!pdict.CurrentCustomer.authenticated}">
+							<button id="add-to-cart-login" type="button" title="${buttonTitleDisabled}" value="${buttonTitleDisabled}" data-brandlimit="${brandLevelRestrictionCheck}" class="button-fancy-large login-register-signupbtn">${buttonTitleLogin}</button>					
+						<iselse>
+						    <button id="add-to-cart" type="button" title="${buttonTitleDisabledSelectVariation}" value="${buttonTitleDisabledSelectVariation}" data-brandlimit="${brandLevelRestrictionCheck}" class="button-fancy-large add-to-cart-disabled"<isprint value="${disabledAttr}" encoding="off"/>>${buttonTitle}</button>
+						</isif>
+						
+						<isif condition="${isSimpleProduct}">
+							<iscomment>
+								<isif condition="${isSimpleProduct || isKitProduct}"> 
+									<a class="wl-action addtoList simpleProductAddToList ${pdict.Product.ID} <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtolist','locale',null)}</a>
+								</isif>
+							 </iscomment>
+							<isif condition="${pdict.CurrentCustomer.authenticated}">
+								<div class="availability-block">
+									<div class="availability">
+										<span class="label">${Resource.msg('global.availability','locale',null)}:&nbsp;</span>
+										<span class="value"><isinclude template="product/components/availability"/></span>
+										<div class="availability-results online-stock">	</div>	
+									</div>
+								</div>
+							</isif>
+						</isif>
+						<iscomment>SDD Badges </iscomment>
+						<isif condition="${!isQuickView}">
+							<isinclude url="${URLUtils.url('SDD-SddBadges','view','PRODUCT','productid', pdict.Product.ID)}"/>
+						</isif>
+						
+						<!--  Code For Store Pickup Button -->
+						<isif condition="${isSimpleProduct}">
+							<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+								<button id="add-to-instorepickup" class="instorepickup-btn" type="button" title="<isprint value="${Resource.msg('product.instorepickup','product',null)}" />" class="button-fancy-large add-tostore-pickup"><isprint value="${Resource.msg('product.instorepickup','product',null)}" /></button>
+								<span class="inventory-label"><isprint value="${Resource.msg('global.inventory','locale',null)}"/></span>
+				    		</isif>
+						<iselse>
+							<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+								<button id="add-to-instorepickup" class="instorepickup-btn" type="button" title="<isprint value="${Resource.msg('product.instorepickup','product',null)}" />" class="button-fancy-large add-tostore-pickup add-to-cart-disabled" <isprint value="${disabledAttr}" encoding="off"/>><isprint value="${Resource.msg('product.instorepickup','product',null)}" /></button>
+								<span class="inventory-label"><isprint value="${Resource.msg('global.inventory','locale',null)}"/></span>
+				    		</isif>
+						</isif>
+						
+				<iscomment>
+						<div class="product-links">
+							<isif condition="${!showColorSelector}">
+								<isif condition="${!isQuickView}">
+									 <ul class="menu-no-border">
+										 <isif condition="${!pdict.Product.master}">
+											<isif condition="${pdict.CurrentCustomer.authenticated}">
+												<li class="no-border minwidth"><a class="wl-action addtoList <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif> <isif condition="${showColorSelector}">changeAddToList</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtogiftregistry','locale',null)}</a></li>
+											</isif>
+										</isif>
+										 <isif condition="${!pdict.Product.master}">
+										 	<isif condition="${pdict.CurrentCustomer.authenticated}">
+												<li class="no-border-last">
+													<a class="wl-action favoriteicon <isif condition="${wishListed != 'true'}">addtofav <iselse>removeFromfav </isif>"  data-pid="${pdict.Product.ID}" data-href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}"  <isif condition="${wishListed != 'true'}"> href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}"<iselse>href="javascript:void(0)"</isif>><isif condition="${wishListed == 'true'}">${Resource.msg('global.addedtowishlist','locale',null)}<iselse>${Resource.msg('global.addtowishlist','locale',null)}</isif></a>
+												</li>
+											</isif>
+										 </isif>
+										
+									</ul>
+								</isif>
+							</isif>
+							
+							<isif condition="${isQuickView}">
+								<div class="quickview-productlinks">
+									<!-- shown only in quick view -->
+									<isif condition="${!pdict.Product.master || showColorSelector}">
+										<isif condition="${pdict.CurrentCustomer.authenticated}">
+											<ul class="menu-no-border">
+												<li class="no-border-last minwidth"><a class="wl-action addtoList <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif> <isif condition="${showColorSelector}">changeAddToList</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtogiftregistry','locale',null)}</a></li>
+											</ul>
+										</isif>
+									 </isif>
+									<div class="QuickViewFull">
+										<a href="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}" title="${pdict.Product.name}" data-prodid="${pdict.Product.ID}" >${Resource.msg('product.viewdetails','product',null)}</a>
+									</div>
+								</div><!-- End of quickview-productlinks -->
+							</isif>
+						</div>
+					 </iscomment>	
+					</div>
+				<iscomment>
+					<div class="product-links">
+						<isif condition="${showColorSelector}">
+							<isif condition="${!isQuickView}">
+								<ul class="menu-no-border">
+									<isif condition="${pdict.CurrentCustomer.authenticated}">
+										<li class="no-border-last minwidth"><a class="wl-action addtoList  <isif condition="${pdict.CurrentCustomer.authenticated}"> authenticated</isif> <isif condition="${showColorSelector}">changeAddToList</isif>" href="${URLUtils.url('GiftRegistry-StartPDP', 'pid', pdict.Product.ID, 'source', 'productdetail')}">${Resource.msg('global.addtogiftregistry','locale',null)}</a></li>
+									</isif>	
+									<isif condition="${pdict.CurrentCustomer.authenticated}">
+										<li class="no-border-last">
+											<a class="wl-action addIttoList <isif condition="${wishListed != 'true'}">addtofav <iselse>removeFromfav </isif>"  data-pid="${pdict.Product.ID}" <isif condition="${wishListed != 'true'}"> href="${URLUtils.https('Wishlist-Add', 'pid', pdict.Product.ID, 'source', 'productdetail')}"<iselse>href="javascript:void(0)"</isif>><isif condition="${wishListed == 'true'}">${Resource.msg('global.addedtowishlist','locale',null)}<iselse>${Resource.msg('global.addtowishlist','locale',null)}</isif></a>
+										</li>
+									</isif>
+								</ul>
+							</isif>
+					   </isif>
+					</div><!-- END of product-links  -->
+				</iscomment>	
+				</isif>
+				
+				<iscomment>
+					Not Required , this is handled in promotions.isml
+					<div class="pdp-promo-msg pricing-messaging">
+						Quantity Discount applies. No mix and match.Placement for extra pricing messaging
+					</div>
+				</iscomment>
+				
+				<isif condition="${pdict.CurrentCustomer.authenticated && !empty(promos)}"> 
+					<div class="pdp-promo-msg promo-messaging ">
+						<isinclude template="product/components/promotions"/>
+					</div>
+				</isif>
+				<isif condition="${pdict.Product.isVariant() || (pdict.Product.isMaster() && !pdict.Product.getVariants().empty)}">
+					<div class="variation-inventory-wrap">
+						<iscomment> 
+							variations
+							=============================================================
+						</iscomment>
+						<isset name="showTieredPrice" value="${false}" scope="page"/>
+							<isinclude template="product/components/variationsinclude"/>					
+					</div><!-- END of variation-inventory-wrap -->
+				</isif>	
+				<iscomment>
+				<isif condition="${isQuickView}">
+						<isif condition="${pdict.CurrentCustomer.authenticated}"> 
+								<div class="pdp-promo-msg promo-messaging ">
+									<isinclude template="product/components/promotions"/>
+								</div>
+							</isif>
+						</isif>
+				 </iscomment>
+				<isif condition="${isKitProduct && !empty(pdict.Product.longDescription) && !showColorSelector && !showSizeSelector}"> 
+					<div id="product-set-list" class="product-set-list custom-scroll bundle-product-content-sku simpleProduct-kit-product">
+						<isprint value="${pdict.Product.longDescription}" encoding="off" />
+					</div>
+				</isif>
+				<isif condition="${! empty(pdict.Product.custom['videoLink']) && pdict.Product.custom['videoLink'].length > 0}">
+					<div class="video-header-content-section">
+						<div class="awards_sec video-header">
+							<div class="awards_header">${Resource.msg('product.featurevideo','product',null)}</div>
+						</div>
+						<isscript>
+							var videoArray = [];
+							
+							if('videoLink' in pdict.Product.custom)
+							{
+								var videoLinks = pdict.Product.custom.videoLink;
+								
+								for each( var v in videoLinks)
+								{
+									videoArray.push(v);
+								}
+							}
+						</isscript>
+								
+						<isset name="videoimageUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+						<div  class="tab-content video-container color-video-mobile">
+								<isloop items="${videoArray}" var="video" status="videoStatus">
+										<isprint value="${video}" encoding="off"/>
+								</isloop>	
+						</div>
+					</div>	
+				</isif>
+				
+				
+				<iscomment>
+				<isif condition="${!pdict.Product.master || showColorSelector}"> 
+					<isif condition="${pdict.CurrentCustomer.authenticated}">
+						<div class="availability-block">
+							<div class="availability">
+								<span class="label">${Resource.msg('global.availability','locale',null)}:&nbsp;</span>
+								<span class="value"><isinclude template="product/components/availability"/></span>
+								<div class="availability-results online-stock">	</div>	
+							</div>
+						</div>
+					</isif>
+				</isif>
+				 </iscomment>	
+				<iscomment> 
+					product actions
+					=============================================================
+				</iscomment>
+				<iscomment>
+				<isif condition="${showColorSelector}">
+					<isif condition="${!isQuickView}">
+						<div class="product-links">	
+							<div class="product-actions">		
+								<ul class="menu-no-border">
+									<li class="minwidth"><a class="print-page"> ${Resource.msg('global.print', 'locale', null)}</a></li>
+									<li><a class="send-to-friend"  title="${Resource.msg('product.sendfriend','product',null)}" 
+										   href="${URLUtils.url('SendToFriend-Start', 'pid', pdict.Product.ID, 'source', 'productdetail')}">
+										   ${Resource.msg('product.sendfriend','product',null)}
+										   </a>
+									</li>
+								</ul>
+									Commenting the social icons display as part of Redesign
+								<div class="add-this-social-section">	
+									<div class="addthis_toolbox addthis_default_style socialiconspdp" data-produrl="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}"></div>
+									<div class="PDPinstagram"><a href=" https://www.instagram.com/cosmoprofbeauty/" class="icon" target="_blank"></a></div>
+									
+								</div> 	
+							</div><!--  end details block -->
+						</div>
+						</isif>
+				</isif>
+				
+				
+				<isif condition="${!isQuickView}">
+					<isif condition="${!showColorSelector}">
+						<div class="product-links">
+							<div class="product-actions">		
+								<ul class="menu-no-border">
+									<li class="minwidth"><a class="print-page"> ${Resource.msg('global.print', 'locale', null)}</a></li>
+									<li><a class="send-to-friend"  title="${Resource.msg('product.sendfriend','product',null)}" 
+										   href="${URLUtils.url('SendToFriend-Start', 'pid', pdict.Product.ID, 'source', 'productdetail')}">
+										   ${Resource.msg('product.sendfriend','product',null)}
+										   </a>
+									</li>
+								</ul>
+										Commenting the social icons display as part of Redesign
+								<div class="add-this-social-section">	
+									<div class="addthis_toolbox addthis_default_style socialiconspdp" data-produrl="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}"></div>
+									<div class="PDPinstagram"><a href=" https://www.instagram.com/cosmoprofbeauty/" class="icon" target="_blank"></a></div>
+								</div>		
+							</div><!--  end details block -->
+						</div>
+					</isif>
+				</isif>
+					</iscomment>
+				</fieldset>
+				</div>
+			</form>
+		</div>
+	</div><!-- END of colorselectoractions -->
+
+	<iscomment>This is ugly, but it works until we can get a better solution</iscomment>
+	<isif condition="${pdict.GetImages}">
+		<div id="update-images" style="display:none">
+			<isinclude template="product/components/productimages"/>
+		</div>
+	</isif>
+</isif>

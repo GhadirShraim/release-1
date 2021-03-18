@@ -1,0 +1,37 @@
+<isinclude template="util/modules"/>
+<isslot id="registry-header" description="Banner for Gift Registry" context="global" />	
+	<isif condition="${pdict.ProductList != null}">
+		<form action="${URLUtils.httpsContinue()}" method="post" id="${pdict.CurrentForms.giftregistry.event.htmlName}_navigation">	
+			<isset name="currentpage" value="event" scope="pdict" />
+			<div class="page-content-tab-navigaton">
+				<isinclude template="account/giftregistry/navigation"/>
+			</div>
+		</form>
+	</isif> 
+	<span name="errorMessage" class="error"/>
+		<isif condition="${!pdict.errorMessage == false}">
+			<isprint value="${Resource.msg('registrylist.duplicateName','account',null)}" />	
+		</isif>
+		
+		<div class="createmylist">		
+		<form action="${URLUtils.httpsContinue()}" name="create-new-list-form">	
+			<div class="address-select">
+					<fieldset>
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.event.name}" type="input" attribute1="placeholder" value1="${Resource.msg('registrylist.nameyournewlist','account',null)}" />
+						<div class="form-row form-row-button">
+							<input type="hidden" name="ajaxReq" value="ajax"/>
+							<isif condition="${pdict.ProductList == null}">
+								<button type="submit" class="createlistbutton" name="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}" value="${Resource.msg('global.confirm','locale',null)}"><span><isprint value="${Resource.msg('registrylist.create','account',null)}" /></span></button>
+							<iselse>
+								<button type="submit" class="createlistbutton" name="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}" value="${Resource.msg('global.apply','locale',null)}"><span><isprint value="${Resource.msg('registrylist.create','account',null)}" /></span></button>
+							</isif>
+						</div>	
+					</fieldset>
+			</div>
+		</form>
+		</div>
+	
+<script type="text/javascript">
+	app.pageRetentionURL = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+	app.shippingaddressdialog.init();
+</script>

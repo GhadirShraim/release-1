@@ -1,0 +1,5 @@
+<div class="videoContainer">
+
+	 <iframe src="${pdict.CurrentHttpParameterMap.videoURL}" width="700" height="700" frameborder="0" allowfullscreen></iframe>
+
+</div>

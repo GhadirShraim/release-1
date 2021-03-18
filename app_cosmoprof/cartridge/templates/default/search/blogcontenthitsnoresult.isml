@@ -1,0 +1,100 @@
+<isinclude template="util/modules"/>
+	
+<isset name="showResults" value="${false}" scope="page"/>
+<isset name="showNoResults" value="${true}" scope="page"/>
+<isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+	<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode.replace('00','')}" scope="page"/>
+<iselse/>
+	<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode.replace('00','')}" scope="page"/>
+</isif>
+
+<div class="Article-left">
+	<div class="result-messages">
+		<span class="search-results-text" <isif condition="${showResults}"> style='display:block' <iselse> style='display:none' </isif> >
+			<isprint value="${Resource.msg('account.blogresults','account',null)}"/>
+		</span>
+		<span class="no-search-results-text" <isif condition="${showNoResults}">  style='display:block' <iselse> style='display:none' </isif> >
+			<isprint value="${Resource.msg('account.noblogresults','account',null)}"/>
+		</span>
+	</div>
+</div>
+
+<div class="Article-right">
+	<div class="refinmentSection">
+		<iscomment>Blog search form</iscomment>
+		<isif condition="${pdict.CurrentHttpParameterMap.fdid.value != 'digitallibrary'}" > 
+			<div class="blog-search">
+				<form role="blogSearch" action="${URLUtils.url('Search-ShowContent')}" method="get" name="bolgSearchForm" id="bolgSearch">
+					<fieldset>
+						<div class="row">
+						<input autocomplete="off" type="text" id="q" name="q" value="" class="search-attr" placeholder="${Resource.msg('simplesearch.blogsearch','search',null)}" maxlength="25" />
+						<button class="blogSearchBtn" type="submit" value="${Resource.msg('global.goblog','locale',null)}" name="simplesearch">
+							${Resource.msg('global.goblog','locale',null)}
+						</button>
+						</div>
+						<div class="box">
+							<div id="suggesstion-box"></div>
+						</div>
+						<input type="hidden" id="chainCode" name="chainCode" value="${cCode}"/>
+						<isif condition="${!empty(displayArchive) && displayArchive}">
+							<input type="hidden" id="blogFolderID" name="blogFolderID" value="blog-archive-${cCode}"/>
+						<iselse/>
+							<input type="hidden" id="blogFolderID" name="blogFolderID" value="blog-${cCode}"/>	
+						</isif>
+					</fieldset>
+				</form>
+			</div>
+			<iselse>
+			<div class="blog-search">
+				<form role="blogSearch" action="${URLUtils.url('Search-ShowLibraryContent')}" method="get" name="bolgSearchForm" id="digitallibrary">
+					<fieldset>
+						<div class="row">
+						<input autocomplete="off" type="text" id="q" name="q" value="" class="search-attr" placeholder="${Resource.msg('simplesearch.digitallibrarysearch','search',null)}" maxlength="25" />
+						<button class="blogSearchBtn" type="submit" value="${Resource.msg('global.goblog','locale',null)}" name="simplesearch">
+							${Resource.msg('global.goblog','locale',null)}
+						</button>
+						</div>
+						<div class="box">
+							<div id="suggesstion-box"></div>
+						</div>
+							<input type="hidden" id="blogFolderID" name="blogFolderID" value="digitallibrary"/>
+					</fieldset>
+				</form>
+			</div>
+		 </isif>
+		<isinclude template="search/components/contentsearchrefinebar"/>
+		<isif condition="${pdict.CurrentHttpParameterMap.fdid.value != 'digitallibrary'}" >
+			<div class="back">
+				<isif condition="${empty(pdict.CurrentSession.custom.gotoURL)}">
+					<isset name="gotoURL" value="${URLUtils.https('Search-ShowContent','fdid','blog-' + cCode)}" scope="session"/>
+				</isif>
+				<a class="buttonstyle" href="${pdict.CurrentSession.custom.gotoURL}">
+					${Resource.msg('foldercontenthits.backtobeautyblog','rendering',null)}
+				</a>
+			</div>
+		    <iselse>
+		    <div class="back">
+				<a class="buttonstyle" href="${URLUtils.https('Search-ShowLibraryContent','fdid','digitallibrary')}">
+					${Resource.msg('foldercontenthits.backtobeautyblog','rendering',null)}
+				</a>
+			</div>
+		</isif>
+	</div>
+	<div class="socialPreview">
+		<div class="instragram">
+			<iscomment> 
+			<span class="SocialTilte">Instagram</span>
+			<a href="https://www.instagram.com/cosmoprofbeauty/" class="seeMore" target="_blank">See more</a>
+			</iscomment>
+			<img class="instragramImg" src="${URLUtils.staticURL('/images/blog/instagram.jpg')}"/>
+		</div>
+		
+		<div class="Pinterest">
+		    <iscomment>
+			<span class="SocialTilte">pinterest</span>
+			<a href="https://www.pinterest.com/cosmoprofbeauty/" class="seeMore" target="_blank">See more</a>
+			</iscomment>
+			<img class="instragramImg" src="${URLUtils.staticURL('/images/blog/pinterest.jpg')}"/>
+		</div>
+	</div>	
+  </div>

@@ -1,0 +1,15 @@
+<iscache status="off">
+<isdecorate template="content/home/pt_storefront">
+	<div class="welcome-msg">
+		<isprint value="${Resource.msg('mobilelogin.welcomemsg','components',null)}" />
+	</div>
+	<div class="new-customer-option-mobile">
+		<isif condition="${!pdict.CurrentCustomer.authenticated && !pdict.CurrentSession.custom.isPortalUser}">
+			<div class="mobile-new-customer">
+				<div class="header-login-form">
+					<isinclude url="${URLUtils.url('Home-HomeLogin')}"/>
+				</div>	
+			</div>	
+		</isif>
+	</div>	
+</isdecorate>

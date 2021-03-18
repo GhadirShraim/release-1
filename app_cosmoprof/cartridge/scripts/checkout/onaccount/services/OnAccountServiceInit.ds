@@ -1,0 +1,63 @@
+
+
+/** *******************************************************************************
+*
+* Description: 	Class for IBM iSeries HTTP Service Initialization,
+*
+/*********************************************************************************/
+var HashMap = require('dw/util/HashMap');
+var Logger = require('dw/system/Logger');
+var LocalServiceRegistry = require('dw/svc/LocalServiceRegistry');
+/**
+ *
+ *	HTTP Services
+**/
+
+/** *******************************************************************************
+* Service Name : onaccount.http.retrievecards
+* Input 	   : request object holds the input parameter for the respective service request(custom) Object
+*
+/*********************************************************************************/
+
+/*
+* Description  : Method to Initialize onaccount.http.retrievecards service
+* Input 	   : None
+* output	   : Service Client
+*
+/***/
+var OnAccountCardsRetrievalService = LocalServiceRegistry.createService("onaccount.http.retrievecards", {
+	createRequest: function(svc, params){
+		
+		var serviceURL = svc.URL?svc.URL.toString():'';
+		if(!empty(serviceURL) && !empty(params.salesforceAccountNumber)) {
+			//serviceURL = serviceURL.concat(params.salesforceAccountNumber);
+			serviceURL = serviceURL.concat('280');
+		}
+		
+		svc.setURL(serviceURL);
+		svc.setAuthentication('NONE');
+		svc.setRequestMethod("GET");
+		svc.addHeader('Cache-Control', 'no-cache');
+		svc.addHeader("Content-Type", "application/json; charset=utf-8");
+		svc.addHeader('Ocp-Apim-Subscription-Key', dw.system.Site.getCurrent().getCustomPreferenceValue('cardLookupServiceSubscriptionKey'));
+	},
+	parseResponse: function(svc, client) {
+		return client.text;
+	},
+	mockCall : function(service : dw.svc.HTTPService, request : Object) : Object {
+		var onAccountServiceMockResponse = "{}";
+		if (!empty(service.configuration.custom.mockResponse) && !empty(service.configuration.custom.mockResponse.markup)) {
+			onAccountServiceMockResponse = service.configuration.custom.mockResponse.markup;
+		}
+		
+		return {
+	        statusCode: 200,
+	        statusMessage: "Success",
+	        text: onAccountServiceMockResponse
+	    };
+	},
+});
+
+module.exports = {
+        OnAccountCardsRetrievalService: OnAccountCardsRetrievalService
+};

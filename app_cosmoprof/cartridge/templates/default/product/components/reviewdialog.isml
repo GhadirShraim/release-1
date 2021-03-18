@@ -1,0 +1,12 @@
+<div>
+	<isif condition="${!empty(pdict.ReviewSuccess)}">
+		${Resource.msg('reviews.success','product',null)}
+		<script type="text/javascript">
+			$("#ReviewForm")[0].reset();
+			$("input[name $= 'review_rating']").val(''); 
+			
+		</script>	
+	<iselse>
+		${Resource.msg('reviews.error','product',null)}				
+	</isif>
+</div>

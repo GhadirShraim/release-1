@@ -1,0 +1,81 @@
+/**
+* GetCardNumberForOnAccountCards.ds
+*
+*-Description - Pull the required credit card data from the on account payment method and pass it to the Pipeline Dictionary
+*
+*	@input CurrentHttpParameterMap : Object
+*   @input CustomerNo : String
+*   @output CardNumber : String
+*   @output WorldPayToken : String
+*	@output CardType : String
+*	@output StringCardType : String
+*	@output FlexToken : String
+*   @output IsPLCC : Boolean
+*   @output IsOnAccount : Boolean
+*/
+
+var Logger = require('dw/system/Logger');
+importPackage( dw.system );
+importPackage( dw.util);
+importPackage( dw.order );
+importPackage( dw.web );
+importPackage( dw.customer );
+function execute( pdict : PipelineDictionary ) : Number
+{	
+	var nextStep = PIPELET_ERROR;
+	var onAccountCardToken = pdict.CurrentHttpParameterMap.req_cybersource_token.stringValue;
+	var customerNo : String = pdict.CustomerNo;
+	var creditCardType: String = pdict.CurrentHttpParameterMap.on_account_card_type.stringValue;
+	
+	var worldPayToken = "";
+	if (!empty(pdict.CurrentHttpParameterMap.req_worldpay_token)) {
+		worldPayToken = pdict.CurrentHttpParameterMap.req_worldpay_token.stringValue;
+	}
+	if (!empty(onAccountCardToken)) {
+		var isPLCC : Boolean = false;
+		// map the id of the Credit Card to the correct brand.
+		var StringCardType = "";
+		if(creditCardType == '001') {
+			StringCardType = 'Visa';
+		} else if (creditCardType == '002') {
+			StringCardType = 'MasterCard';
+		} else if (creditCardType == '003') {
+			StringCardType = 'Amex';
+		} else if (creditCardType == '004' || creditCardType == '042') {
+			StringCardType = 'Discover';
+		}
+		
+		var maskedPAN : String = 'XXXXXXXXXXXX' + onAccountCardToken.substr(onAccountCardToken.length - 4);
+		pdict.CardNumber = maskedPAN;
+		pdict.CardType = creditCardType;
+		pdict.StringCardType = StringCardType;
+		pdict.FlexToken = onAccountCardToken;
+		var isBINVerification : Boolean;
+		if ('isBINVerification' in dw.system.Site.current.preferences.custom) {
+			isBINVerification = dw.system.Site.current.preferences.custom.isBINVerification;
+		}
+
+		if ( isBINVerification != null && isBINVerification && (!('isPortalUser' in session.custom) || !session.custom.isPortalUser)) {
+			var isOnAccountPLCC = pdict.CurrentHttpParameterMap.on_account_is_plcc.booleanValue;
+			if(!empty(isOnAccountPLCC) && isOnAccountPLCC == true) {
+				isPLCC= true;
+				Transaction.wrap(function () {
+					session.custom.PLCCCard = true;
+				});
+			} else {
+				isPLCC= false;
+				Transaction.wrap(function () {
+					session.custom.PLCCCard = false;
+				});
+			}
+		}
+		pdict.IsPLCC = isPLCC;
+		pdict.IsOnAccount = true;
+		pdict.WorldPayToken = worldPayToken;
+		nextStep = PIPELET_NEXT;
+	} else {
+		Logger.error("GetCardNumberForOnAccountCards.ds :: failed to pull all required credit card data from Flex Microform.");
+	}
+	
+	return nextStep;
+}

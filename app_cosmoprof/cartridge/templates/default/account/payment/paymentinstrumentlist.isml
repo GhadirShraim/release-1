@@ -1,0 +1,123 @@
+<isdecorate template="account/pt_account">
+	<isinclude template="util/modules"/>
+	<isset name="bctext2" value="Payment Settings" scope="pdict"/>
+	<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+	<iscomment>CP-558 </iscomment>
+		<isset name="disallowcardsaving" value="${false}" scope="Page" />
+		<isset name="custConsCode" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}" scope="Page" />
+		<isif condition="${!empty(custConsCode)}">
+			<isset name="DisallowConsCodes" value="${dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard}" scope="Page" />
+			<isloop items="${DisallowConsCodes}" var="conscode" > 
+				<isif condition="${conscode == custConsCode }">
+					<isset name="disallowcardsaving" value="${true}" scope="Page" />
+					<isbreak>
+				 </isif>
+			</isloop>
+		 </isif>
+	<div class="paymentSetting">
+		<h1 class="title h1"><isprint value="${Resource.msg('paymentinstrumentlist.header','account',null)}" /></h1>
+
+		<div class="backlink">
+ 
+			<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}"><isprint value="${Resource.msg('account.backtoaccountsetting','account',null)}" /></a>
+ 
+		</div>
+		<isif condition="${!disallowcardsaving}">
+		<isif condition="${pdict.PaymentInstruments.size() > 0}">
+			<ul class="payment-list">	
+			
+			<isloop items="${pdict.CurrentForms.paymentinstruments.creditcards.storedcards}" var="creditcard" status="loopstate">
+			
+			<isif condition="${customer.profile.custom.paymentDefault == creditcard.object.UUID }">
+				<li>
+					<div class="creditcard-info">
+ 
+						<isminicreditcard p_card="${creditcard.object}" p_show_expiration="${true}"/>
+						<isset name="enCC" value="${dw.util.StringUtils.encodeBase64(creditcard.object.creditCardNumber)}" scope="Page" />
+						<div class="btns-outer">	
+							<div class="btns">
+							<div class="default-card" ><isprint value="${Resource.msg('paymentinstrument.CCdefault','account',null)}" /></div>
+							<iscomment><div><a href="${URLUtils.url('PaymentInstruments-Edit','CardId',creditcard.object.UUID, 'cc', enCC)}" class="secondarybtn"><isprint value="${Resource.msg('paymentinstrument.edit','account',null)}" /></a></div></iscomment>
+							</div>
+							<div class="deletelink">
+								<a class="button-text" value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" name="${creditcard.remove.htmlName}">
+									<isprint value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" />
+								</a>
+							</div> 
+						</div>
+					</div>
+
+					<div class="deletecredit">				
+							<div class="deleteConfirmmessage">								
+									<isprint value="${Resource.msg('confirmdeletecard','account',null)}"/>
+							</div>
+							<div class="btns">
+								<a  href="${URLUtils.url('PaymentInstruments-Delete', 'uuid',creditcard.object.UUID )}" class="button-text primaryButtn deletecreditcard" value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" name="${creditcard.remove.htmlName}"><isprint value="${Resource.msg('account.yes','account',null)}" /></a>
+								<a href="" class="secondarybtn cancelcreditcard"><isprint value="${Resource.msg('account.no','account',null)}" /></a>
+						
+							</div>
+						</div>
+				</li>
+			 </isif>
+			</isloop>
+			<isloop items="${pdict.CurrentForms.paymentinstruments.creditcards.storedcards}" var="creditcard" status="loopstate">
+				<isif condition="${customer.profile.custom.paymentDefault != creditcard.object.UUID }">
+					<li class="<isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">
+ 		<div class="creditcard-info">
+ 
+						<isminicreditcard p_card="${creditcard.object}" p_show_expiration="${true}"/>
+						<isset name="enCC" value="${dw.util.StringUtils.encodeBase64(creditcard.object.creditCardNumber)}" scope="Page" />
+				<isscript>
+					var isDefault = !empty(pdict.CurrentHttpParameterMap.CardUUID) && (pdict.CurrentHttpParameterMap.CardUUID == creditcard.object.UUID) ;
+					var cssClass = "";
+					if (loopstate.first) { cssClass = "first"; } 
+					else if (loopstate.last) { cssClass = "last"; }
+					
+					if (isDefault) { cssClass+=" default"; }
+				</isscript>
+				<div class="btns-outer">
+					<div class="btns">
+					 	<isif condition="${!isDefault}">
+							<div><a href="${URLUtils.url('PaymentInstruments-SetDefault','CardUUID',creditcard.object.UUID)}" class="primaryButtn"><isprint value="${Resource.msg('paymentinstrument.setdefault','account',null)}" /></a></div>
+						</isif>
+								<iscomment><div class="edit" ><a href="${URLUtils.url('PaymentInstruments-Edit','CardId',creditcard.object.UUID, 'cc', enCC)}" class="secondarybtn"><isprint value="${Resource.msg('paymentinstrument.edit','account',null)}" /></a></div></iscomment>
+					</div>
+					<iscomment>
+					<form action="${URLUtils.url('PaymentInstruments-Delete')}" name="payment-remove" method="post" >
+						<fieldset>
+							<button type="submit" class="button-text delete" value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" name="${creditcard.remove.htmlName}">
+								<isprint value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" />
+							</button>	
+								<input type="hidden" name="${pdict.CurrentForms.paymentinstruments.secureKeyHtmlName}" value="${pdict.CurrentForms.paymentinstruments.secureKeyValue}"/>
+						</fieldset>
+					</form>
+					 </iscomment>
+					 <div class="deletelink">
+						 <a  class="button-text" value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" name="${creditcard.remove.htmlName}">
+	 
+							<isprint value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" />
+						</a>
+	 
+					</div>
+				</div>
+			</div>
+						<div class="deletecredit">				
+							<div class="deleteConfirmmessage">								
+									<isprint value="${Resource.msg('confirmdeletecard','account',null)}"/>
+							</div>
+							<div class="btns">
+								<a href="${URLUtils.url('PaymentInstruments-Delete', 'uuid',creditcard.object.UUID )}" class="button-text primaryButtn deletecreditcard" value="${Resource.msg('paymentinstrumentlist.deletecard','account',null)}" name="${creditcard.remove.htmlName}"><isprint value="${Resource.msg('account.yes','account',null)}" /></a>
+								<a href="" class="secondarybtn cancelcreditcard"><isprint value="${Resource.msg('account.no','account',null)}" /></a>
+							</div>
+						</div>
+				</li>
+				</isif>
+		    	</isloop>
+		    </ul>
+		</isif>
+		<a class="section-header-note primaryButtn" href="${URLUtils.url('PaymentInstruments-Add')}" title="${Resource.msg('paymentinstrumentlist.addpaymentmethod','account',null)}">
+			<isprint value="${Resource.msg('paymentinstrumentlist.addpaymentmethod','account',null)}" />
+		</a>
+		</isif>
+	</div>
+</isdecorate>

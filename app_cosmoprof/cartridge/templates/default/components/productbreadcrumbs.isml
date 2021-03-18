@@ -1,0 +1,144 @@
+<iscomment>
+	This template renders the bread crumb navigation for the product detail page.
+</iscomment>
+<isset name="gtmBreadCrumbVal" value="${Resource.msg('global.home','locale',null)}" scope="page"/>
+<isscript>
+	 importScript( "util/ViewHelpers.ds" );
+</isscript>
+<div class="breadcrumb-holder">
+	<ol class="breadcrumb">
+	
+		<li>
+			<a href="${URLUtils.httpHome()}">
+				${Resource.msg('pagecomponents.breadcrumbs.home','pagecomponents',null)}			
+			</a>
+		</li>
+	
+		<iscomment>
+			the category context is determined based on the product search
+			which was triggered or through the products primary category
+		</iscomment>
+		<isscript>
+			var category : dw.catalog.Category = null;
+			
+			// get category from search context
+			if( !empty(pdict.ProductSearchResult) )
+			{
+				category = pdict.ProductSearchResult.category;
+			}
+			
+			if(pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid'))
+			{
+				category = dw.catalog.CatalogMgr.getCategory(pdict.CurrentHttpParameterMap.cgid.value);
+			}
+		</isscript>
+	
+	   	<iscomment>if we have any category context, we show it</iscomment>
+	  	<isif condition="${category != null && category.online}">
+	
+			<isactivedatacontext category="${category}">
+			<isscript>
+				var path : dw.util.Collection = new dw.util.ArrayList();
+				while( category.parent != null )
+				{
+					if( category.online ) path.addAt( 0, category );
+					category = category.parent;
+				}
+			</isscript>
+
+			<isset name="cgid" value="" scope="page"/>
+			<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid') && !empty(pdict.CurrentHttpParameterMap.cgid.stringValue)}">
+				<isset name="cgid" value="${pdict.CurrentHttpParameterMap.cgid.stringValue}" scope="page" />
+	            <isset name="catfullname" value="${dw.catalog.CatalogMgr.getCategory(cgid).displayName}" scope="page" />	           
+	            <isif condition="${!empty(cgid)}">
+	               <isset name="breadcrumpdp" scope="page" value="${Resource.msg('pagecomponents.breadcrumbs.home','pagecomponents',null)}" />
+		            <isloop items="${path}" var="cat" status="loopstate" begin="0" >
+						<li class="bredcrum-pdp">
+							<a href="${dw.catalog.ProductSearchModel.urlForCategory('Search-Show',cat.ID)}">
+							 	${cat.displayName}								
+							</a>							
+							<isif condition="${!empty(breadcrumpdp) && breadcrumpdp != ' '}">
+								<isset name="breadcrumpdp" scope="page" value="${breadcrumpdp + ' / '+ cat.displayName}" />
+							<iselse>
+								<isset name="breadcrumpdp" scope="page" value="${cat.displayName}" />
+							</isif>
+						</li>
+					</isloop>
+					<isif condition="${!empty(breadcrumpdp) && breadcrumpdp != ' '}">
+					   <input type="hidden" id="breadcrumpdpID" value="${breadcrumpdp}"   />
+					</isif>
+	            </isif>
+	            
+				<isloop items="${getSubcategoriesInMenuForCategory(dw.catalog.CatalogMgr.getCategory(cgid))}" var="topCat" status="loopstate">
+			        <isset name="topCatID" value="${topCat.ID}" scope="page" />
+			        
+                    <isif condition="${!empty(cgid) && topCatID == cgid}">
+						
+					       <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(topCat)}" encoding="off"/>">
+					          <isprint value="${topCat.getDisplayName()}"/>
+					       </a></li>
+					    
+					</isif>
+					
+					<isloop items="${topCat.getOnlineSubCategories()}" var="subCat">
+					   <isset name="subCatID" value="${subCat.ID}" scope="page" />
+
+					   <isif condition="${!empty(cgid) && subCatID == cgid}">
+						   
+						       <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(topCat)}" encoding="off"/>">
+						          <isprint value="${topCat.getDisplayName()}"/>
+						       </a></li>
+						       <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(subCat)}" encoding="off"/>">								
+								   <isprint value="${subCat.getDisplayName()}"/>
+							  </a></li>
+						   
+                        </isif>
+                        
+						<isloop items="${subCat.getOnlineSubCategories()}" var="thirdCat">
+						   <isset name="thirdCatID" value="${thirdCat.ID}" scope="page" />
+						   <isset name="thirdCatName" value="${thirdCat.getDisplayName()}" scope="page" />
+						   
+						   <isif condition="${!empty(cgid) && thirdCatID == cgid}">
+							  <iscomment><!-- <isif condition="${('showInMenu' in thirdCat.custom) && thirdCat.custom.showInMenu.valueOf()}"> --> </iscomment>
+							       <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(topCat)}" encoding="off"/>">
+							          <isprint value="${topCat.getDisplayName()}"/>
+							          <isset name="gtmBreadcrumb" value="${gtmBreadcrumb.concat("/",topCat.getDisplayName())}" scope="page"/>
+							       </a></li>
+							       <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(subCat)}" encoding="off"/>">								
+									   <isprint value="${subCat.getDisplayName()}"/>
+									   <isset name="gtmBreadcrumb" value="${gtmBreadcrumb.concat("/",subCat.getDisplayName())}" scope="page"/>
+								  </a></li>
+								  <li><a href="<isprint value="${MainNavigationUtilities.getCategoryUrl(thirdCat)}" encoding="off"/>">
+								    <isprint value="${thirdCatName}"/>
+								    <isset name="gtmBreadcrumb" value="${gtmBreadcrumb.concat("/",thirdCatName)}" scope="page"/>
+								  </a></li>
+							   <iscomment><!--</isif> --> </iscomment>
+							</isif>
+						 </isloop>
+					</isloop>
+				</isloop>
+			<iselse/>
+			
+				<isloop items="${path}" var="cat" status="loopstate" begin="1" >
+					<li><a href="${dw.catalog.ProductSearchModel.urlForCategory('Search-Show',cat.ID)}">${cat.displayName}</a></li>
+					<isset name="breadcrumpdp" value="${breadcrumpdp.concat("/",cat.displayName)}" scope="page"/>
+				</isloop>
+				
+			</isif>
+		</isif>
+		
+		<iscomment>append product name</iscomment>
+		<li>
+			<span class="last">
+				${pdict.Product.name}
+				<isset name="breadcrumpdp" value="${breadcrumpdp.concat("/",pdict.Product.name)}" scope="page"/>
+			</span>
+		</li>
+	</ol>
+	<isif condition="${!empty(breadcrumpdp) && breadcrumpdp != ' '}">
+	   <isset name="breadcrumbpdp" value="${breadcrumpdp.concat("/",pdict.Product.name)}" scope="page"/>
+	<iselse/>
+		 <isset name="breadcrumbpdp" value="${gtmBreadCrumbVal.concat("/",pdict.Product.name)}" scope="page"/>	   
+	</isif>
+	<input type="hidden" id="gtmBreadCrumbValue" value="${breadcrumbpdp}" />
+</div>

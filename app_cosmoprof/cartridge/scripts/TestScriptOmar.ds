@@ -1,0 +1,9 @@
+
+
+var Logger = require('dw/system/Logger');
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	Logger.error("Hello there from Inside shit!");
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,65 @@
+<isinclude template="util/modules"/>
+<isset name="DecoratorTemplate" value="account/pt_account" scope="page"/>
+
+<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || pdict.CurrentHttpParameterMap.ajax.stringValue == 'true' }">
+	<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+</isif>
+<isdecorate template="${DecoratorTemplate}">
+	<div class="addCreditCard">
+	
+		<iscomment> <div class="dialog-required"> <span class="required-indicator">&#42;</span> <em><isprint value="${Resource.msg('global.requiredfield','locale',null)}" /></em></div></iscomment>
+		
+		<h1 class="title h1"><isprint value="${Resource.msg('paymentinstrumentlist.header','account',null)}" /></h1>
+		<div class="backlink">
+			<a href="${URLUtils.url('PaymentInstruments-List')}"><isprint value="${Resource.msg('account.backtopaymentsettings','account',null)}" /></a>
+		</div>
+		<iscomment>CP-558 </iscomment>
+			<isset name="disallowcardsaving" value="${false}" scope="Page" />
+			<isset name="custConsCode" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}" scope="Page" />
+			<isif condition="${!empty(custConsCode)}">
+				<isset name="DisallowConsCodes" value="${dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard}" scope="Page" />
+				<isloop items="${DisallowConsCodes}" var="conscode" > 
+					<isif condition="${conscode == custConsCode }">
+						<isset name="disallowcardsaving" value="${true}" scope="Page" />
+						<isbreak>
+					 </isif>
+				</isloop>
+			 </isif>
+	 		 <isif condition="${!disallowcardsaving}">
+					<form id="CreditCardForm" name="CreditCardForm" action="${URLUtils.https('PaymentInstruments-AddFlexMicroformCard')}"  method="post" id="newcreditcard">
+					<fieldset>
+								<isinclude template="account/myaccountcreditcardflexmicroformcontent" />
+					
+								<div class="makeDefault form-row label-inline">
+									<label><isprint value="${Resource.msg('paymentinstrument.makedefault','account',null)}" /></label>				
+									<input class="input-checkbox" type="checkbox" name="makedefault"/>					   
+								</div>	
+							
+							<div class="frombtns">	
+								<div class="btn">
+									<button class=" primaryButtn" id="applyBtn" type="submit" value="${Resource.msg('global.apply','locale',null)}" name="${pdict.CurrentForms.paymentinstruments.creditcards.save.htmlName}">
+										<isprint value="${Resource.msg('global.save','locale',null)}" />
+									</button>
+								</div>	
+								
+							<div class="btn">
+								<a href="${URLUtils.url('PaymentInstruments-List')}" class="button-secondary secondarybtn">
+										<isprint value="${Resource.msg('global.cancel','locale',null)}" />
+								</a>
+							</div>	
+								
+								
+							</div>
+							<input type="hidden" name="${pdict.CurrentForms.paymentinstruments.secureKeyHtmlName}" value="${pdict.CurrentForms.paymentinstruments.secureKeyValue}"/>
+						</fieldset>
+					</form>
+				</isif>
+			<iscomment>
+				<div class="confirmation-container dialog-content" id="confirmation-container" style="display:none;">
+					<div class="error-form"><isprint value="${Resource.msg('account.forbidden','account',null)}" /></div>
+					<button type="button"><isprint value="${Resource.msg('global.close','locale',null)}" /></button>			
+				</div>
+			</iscomment>
+	</div>
+</isdecorate>
+

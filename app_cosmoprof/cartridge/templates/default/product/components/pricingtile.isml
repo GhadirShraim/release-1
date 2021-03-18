@@ -1,0 +1,141 @@
+	<iscomment>Renders pricing information depending on the option or variation model, as well as scaled prices and so on.</iscomment>
+<isif condition="${pdict.CurrentCustomer.authenticated}">	
+	<isif condition="${Product.productSet}">
+		<iscomment>Product set pricing</iscomment>
+		<span class="product-set-price">
+			<isif condition="${'productSetCallout' in Product.custom && !empty(Product.custom.productSetCallout)}">
+				<isprint value="${Product.custom.productSetCallout}" encoding="off"/>
+			</isif>
+		</span>
+		
+	<iselseif condition="${Product.master && Product.priceModel.isPriceRange() && Product.variationModel.variants.size() > 0}"/>
+		<iscomment>Display Discount Model price range as first option, else show Product master price range depending on the represented variants</iscomment>	
+		<isscript>
+			importPackage( dw.campaign );
+			
+			var variants : Collection = pdict.Product.getVariants();
+			var lowPrice : Money = dw.value.Money.NOT_AVAILABLE;
+			var highPrice : Money = dw.value.Money.NOT_AVAILABLE;
+			var promos = PromotionMgr.activeCustomerPromotions.getProductPromotions(pdict.Product);
+			var discountModel = false;
+			
+			// for each variant in the product
+			for each (var variant : Product in variants) {
+				// if there are promos for this product
+				if (!empty(promos)) {    
+					var dmPrice : Money = dw.value.Money.NOT_AVAILABLE;
+				
+					// for each promo
+					for each (var promo : Promotion in promos) {
+						// if a promotion class product and it's the discount model
+						if (promo.getPromotionClass() != null && promo.getPromotionClass().equals(Promotion.PROMOTION_CLASS_PRODUCT) && promo.custom.discountModel) {
+							// price is the promotion price
+							dmPrice = promo.getPromotionalPrice(variant);
+							discountModel = true;
+							break;
+						}
+					}
+					if (dmPrice != dw.value.Money.NOT_AVAILABLE){
+						if (dmPrice < lowPrice || lowPrice == dw.value.Money.NOT_AVAILABLE){
+							lowPrice = dmPrice;
+						}
+						if (dmPrice > highPrice || highPrice == dw.value.Money.NOT_AVAILABLE){
+							highPrice = dmPrice;
+						}
+					}
+				}
+			}
+		</isscript>
+	
+		<isif condition="${discountModel}">
+			<span class="product-sales-price"><isprint value="${dw.util.StringUtils.formatMoney(lowPrice)}" /> - <isprint value="${dw.util.StringUtils.formatMoney(highPrice)}" /></span>
+		<iselse/>
+			<span class="product-sales-price"><isprint value="${dw.util.StringUtils.formatMoney(Product.priceModel.minPrice)}" /> - <isprint value="${dw.util.StringUtils.formatMoney(Product.priceModel.maxPrice)}" /></span>
+		</isif>
+	<iselse/>
+		<isset name="OrgProduct" value="${null}" scope="page"/>
+		<iscomment>For Product master without a price range get the pricing from firstRepresentedProduct </iscomment>
+		<isif condition="${Product.master && pdict.CurrentHttpParameterMap.pricerange.stringValue != 'true'}"/>
+			<iscomment>Preserve current product instance</iscomment>
+			<isset name="OrgProduct" value="${Product}" scope="page"/>
+			<isloop items="${OrgProduct.variationModel.variants}" var="variant" status="loopstatus">
+				<isset name="Product" value="${variant}" scope="page"/>
+				<isif condition="${Product.getAvailabilityModel().isInStock()}">
+					<isbreak />
+				</isif>
+			</isloop>
+		</isif>
+		<iscomment>
+			Regular pricing through price model of the product. If the product is an option product,
+			we have to initialize the product price model with the option model.
+		</iscomment>
+		<isif condition="${Product.optionProduct}">
+			<isset name="PriceModel" value="${Product.getPriceModel(Product.getOptionModel())}" scope="page"/>
+		<iselse/>
+			<isset name="PriceModel" value="${Product.getPriceModel()}" scope="page"/>
+		</isif>
+	
+		<iscomment>
+			Check whether the product has price in the sale pricebook. If so, then
+			display two prices: crossed-out standard price and sales price.
+		</iscomment>
+		<isinclude template="product/components/standardprice"/>
+		<isset name="SalesPrice" value="${PriceModel.getPrice()}" scope="page"/>
+		<isset name="ShowStandardPrice" value="${StandardPrice.available && SalesPrice.available && StandardPrice.compareTo(SalesPrice) == 1}" scope="page"/>
+		
+		<iscomment>Promotion pricing</iscomment>
+		<isset name="promos" value="${dw.campaign.PromotionMgr.activeCustomerPromotions.getProductPromotions(Product)}" scope="page"/>
+		<isset name="PromotionalPrice" value="${dw.value.Money.NOT_AVAILABLE}" scope="page"/>
+		<isset name="isPromoPrice" value="${false}" scope="page"/>
+		<isset name="productTileCallout" value="${''}" scope="page"/>
+		<isset name="DiscountPrice" value="${dw.value.Money.NOT_AVAILABLE}" scope="page"/>
+		
+		<isif condition="${!empty(promos)}">
+			<isloop items="${promos}" var="promo">
+				<isif condition="${promo.custom.discountModel}">
+					<isset name="DiscountPrice" value="${promo.getPromotionalPrice(Product, pdict.CurrentOptionModel)}" scope="page"/>
+				</isif>
+				<isif condition="${promo.getPromotionClass() != null && promo.getPromotionClass().equals(dw.campaign.Promotion.PROMOTION_CLASS_PRODUCT)}">
+					<isif condition="${Product.optionProduct}">
+						<isif condition="${pdict.CurrentOptionModel != null}">
+							<isset name="PromotionalPrice" value="${promo.getPromotionalPrice(Product, pdict.CurrentOptionModel)}" scope="page"/>
+						<iselse>
+							<isset name="PromotionalPrice" value="${promo.getPromotionalPrice(Product, Product.getOptionModel())}" scope="page"/>
+						</isif>
+					<iselse>
+						<isset name="PromotionalPrice" value="${promo.getPromotionalPrice(Product)}" scope="page"/>
+					</isif>
+					<isif condition="${'productTileCallout' in promo.custom && !empty(promo.custom.productTileCallout)}">
+						<isset name="productTileCallout" value="${promo.custom.productTileCallout}" scope="page"/>
+					</isif>
+					<isbreak/>
+				</isif>
+			</isloop>
+			
+			<isif condition="${PromotionalPrice.available && SalesPrice.compareTo(PromotionalPrice) != 0}">
+				<isset name="ShowStandardPrice" value="${true}" scope="page"/>
+				<isset name="StandardPrice" value="${SalesPrice}" scope="page"/>
+				<isset name="SalesPrice" value="${PromotionalPrice}" scope="page"/>
+				<isset name="isPromoPrice" value="${true}" scope="page"/>
+			</isif>
+			
+		</isif>
+	
+		<isif condition="${DiscountPrice != dw.value.Money.NOT_AVAILABLE}">
+			<span class="product-standard" title="Standard Price"><isprint value="${DiscountPrice}"/></span>
+		<iselseif condition="${ShowStandardPrice}">
+			<div class="product-discounted-price">
+				<span class="product-standard-price-strike" title="Regular Price"><isprint value="${StandardPrice}"/></span>
+				<span class="product-sales-price" title="Sale Price"><isprint value="${SalesPrice}"/> <small>${Resource.msg('item.sale','product',null)}</small></span>
+			</div>
+		<iselse/>
+			<span class="product-standard" title="Standard Price"><isprint value="${StandardPrice}"/></span>
+		</isif>
+		
+		<isif condition="${typeof OrgProduct !== 'undefined' && !empty(OrgProduct)}">
+			<iscomment>Restore current product instance</iscomment>
+			<isset name="Product" value="${OrgProduct}" scope="page"/>
+			<isset name="OrgProduct" value="${null}" scope="page"/>
+		</isif>
+	     </isif>
+	</isif>

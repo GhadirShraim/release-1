@@ -1,0 +1,70 @@
+/**
+* This script is used to take in a content ID list and break it apart into an array, retrieve the content 
+* object using the CID, and then output an array of content objects.
+* The script allows for a dynamic block size by passing in a number to limit the size of the content object array.
+*
+*   @input blockSize : String
+*	@input cidString : String
+*
+*   @output contentArray : Array
+*   @output gridSize : String
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.content );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		//cidString is an a string delimited by a colon not a comma
+		var cidString : String = pdict.cidString;
+		
+		//Break the string apart into an array
+		var splitArray = cidString.split(':');
+		
+		//This array will contain the content objects
+		var outputArray : Array = [];
+		
+		//This variable will count the loop iterations
+		var counter = 0;
+		
+		//Pass in the block size which controls how many product objects will be in the array
+		var blockSize = !empty(pdict.blockSize) ? pdict.blockSize : '0';
+		
+		//Convert string to integer if blockSize http parameter is passed into the script
+		var gridSize = parseInt(blockSize); 
+		
+		var product = null;
+		
+		//Loop through all content IDs in the array 
+		for each(var cid in splitArray)
+		{
+			if(counter < gridSize)
+			{
+				//Retrieve the content object
+				content = ContentMgr.getContent(cid);
+				
+				if(content != null)
+				{
+					//Add content object to the new array
+					outputArray.push(content);
+				}
+			}
+			else
+			{
+				break;
+			}
+			counter++;
+		}
+		pdict.contentArray = outputArray;
+		pdict.gridSize = gridSize;
+	}
+	catch(e)
+	{
+		Logger.error('GetContentArray.ds has failed with the following error' + e);
+		return PIPELET_ERROR;	
+	}
+   return PIPELET_NEXT;
+}

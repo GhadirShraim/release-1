@@ -1,0 +1,7 @@
+<isset name="addedToFavorite" value="${pdict.addedToFavorite}" scope="page" />
+<isif condition="${pdict.CurrentCustomer.authenticated}"> 
+	<div class="favorite-container">
+			<a href="${!addedToFavorite ? URLUtils.url('Wishlist-Add','pid',pdict.CurrentHttpParameterMap.pid.value):URLUtils.url('Wishlist-Remove','pid',pdict.CurrentHttpParameterMap.pid.value)}" class="favoriteList ${addedToFavorite ? 'added':'remove'}" data-prodid="${pdict.CurrentHttpParameterMap.pid.value}" data-userauth="${customer.authenticated}"></a>		
+	</div>
+</isif>	
+ 

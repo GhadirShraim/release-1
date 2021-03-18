@@ -1,0 +1,138 @@
+/**
+*
+*   @input OrderNo : String 
+*   @output historyDetailsResponse : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.order );
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+   try {
+	   //Get The Order Number.
+		var order : Order = dw.order.OrderMgr.getOrder(args.OrderNo);
+		
+		//Create a Constructor for Order Object
+		function ProtoOrder(order : Order) {
+			this.orderNo = order.orderNo;
+			this.creationDate = StringUtils.formatCalendar(new Calendar(order.creationDate),"yyyy-MM-dd");
+			var pliList : ArrayList = new ArrayList()
+			var lineItemsItr : dw.util.Iterator=  order.getShipments()[0].productLineItems.iterator();
+			//ProductLineItem Prototype
+			function ProtoLineItem(pli : ProductLineItem) {
+				this.itemNo = pli.productID;
+				this.productName = pli.productName;
+				if(!empty(order.custom.splitShipmentTotalAmt)) {
+					this.quantity = pli.custom.qtyShipped;
+					this.totalCost = pli.custom.lineItemTotal;
+					if(pli.custom.lineItemTotal <= 0) {
+						this.lineItemTax = '0.0';
+					} else {
+						this.lineItemTax = pli.adjustedTax.value;
+					}
+				} else {
+					this.quantity = pli.quantity.value;
+					this.totalCost = pli.adjustedPrice.value;
+					this.lineItemTax = pli.adjustedTax.value;
+				}
+			}
+			while(lineItemsItr.hasNext()) {
+				var pli = lineItemsItr.next();
+				pliList.add(new ProtoLineItem(pli));
+			}
+			this.lineItems = pliList;
+			this.orderChannel = "WEB";
+			
+			if(!empty(order.custom.splitShipmentTotalAmt)) {
+				this.orderStatus = order.status.displayValue;
+			} else {
+				this.orderStatus = order.status.displayValue == "CANCELLED" ? "cancelled" : "Processing";
+			}
+			
+			var shippingStatus = order.shippingStatus;
+			if(shippingStatus == dw.order.Shipment.SHIPPING_STATUS_NOTSHIPPED) {
+				this.shippingStatus = 'Not Shipped';
+			} else if(shippingStatus == dw.order.Shipment.SHIPPING_STATUS_SHIPPED) {
+				this.shippingStatus = 'Shipped';
+			} else {
+				this.shippingStatus = 'Not Known';
+			}
+			
+			this.orderTotal = order.getTotalGrossPrice().value;
+			this.orderSubtotal = order.adjustedMerchandizeTotalPrice.value;
+			this.orderSubtotalWithAdjustment = order.getAdjustedMerchandizeTotalPrice().value;
+			//Calculate Discount As we are calculating on Cart.
+			var merchTotalExclOrderDiscounts : dw.value.Money = order.getAdjustedMerchandizeTotalPrice(false);
+			var merchTotalInclOrderDiscounts : dw.value.Money = order.getAdjustedMerchandizeTotalPrice(true);
+			var orderDiscount : dw.value.Money = merchTotalExclOrderDiscounts.subtract( merchTotalInclOrderDiscounts );
+			this.discountPrice = orderDiscount;
+			
+			this.shippingTotalPrice = order.getAdjustedShippingTotalPrice().value;
+			this.totalTax = order.totalTax.value;
+			//Payment Method Object
+			function PaymentMethod(pi : PaymentInstrument) {
+				this.cardExp = pi.creditCardExpirationYear;
+				this.cardNumber = pi.creditCardNumber;
+				this.cardType = pi.creditCardType;
+				this.nameoncard = pi.creditCardHolder;
+				this.type = pi.paymentMethod;
+			}
+			this.paymentMethod = new PaymentMethod(order.getPaymentInstruments()[0]);
+			this.shipMethod = order.shipments[0].shippingMethod.displayName;
+			//Shipping Address Object
+			function ShippingAddress(address : OrderAddress) {
+				this.address1 = address.address1;
+				this.address2 = address.address2;
+				this.city = address.city;
+				this.company = address.companyName;
+				this.country = address.countryCode.value;
+				this.firstName = address.firstName;
+				this.lastName = address.lastName;
+				this.phone = address.phone;
+				this.state = address.stateCode;
+				this.zip = address.postalCode;
+			}
+			this.shippingAddress = new ShippingAddress(order.getShipments()[0].shippingAddress);
+			//BillingAddress Object
+			function BillingAddress(address : OrderAddress) {
+				this.address1 = address.address1;
+				this.address2 = address.address2;
+				this.city = address.city;
+				this.company = address.companyName;
+				this.country = address.countryCode.value;
+				this.firstName = address.firstName;
+				this.lastName = address.lastName;
+				this.phone = address.phone;
+				this.state = address.stateCode;
+				this.zip = address.postalCode;
+			}
+			this.billingAddress = new BillingAddress(order.getBillingAddress());
+			this.isJSON = "false";
+			
+			if(!empty(order.custom.splitShipmentData)) {
+				this.splitShipmentData = JSON.parse(order.custom.splitShipmentData);
+			}
+			
+			if(!empty(order.custom.splitShipmentTotalAmt)) {
+				this.splitShipmentTotalAmt = JSON.parse(order.custom.splitShipmentTotalAmt);
+			}
+			
+			if(!empty(order.custom.InvoiceData)) {
+				var invoiceInfo = order.custom.InvoiceData.toString().split('|||');
+				this.cosmoOrderID = invoiceInfo[0];
+				this.cosmoInvoiceID = invoiceInfo[1];
+			}
+		}
+		var orderDetail = new ArrayList();
+		orderDetail.add(new ProtoOrder(order));
+		args.historyDetailsResponse = orderDetail;
+   }
+   catch(e) {
+	   var error = e;
+	   return PIPELET_ERROR;
+   }
+   return PIPELET_NEXT;
+}

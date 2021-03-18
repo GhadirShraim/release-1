@@ -1,0 +1,49 @@
+/**
+* RemoveProductLineItemsFromCart
+* Removes products from the cart that were unshippable
+*
+*   @input CurrentCustomer : dw.customer.Customer  This is the current customer
+*	@input Basket : dw.order.Basket  This is the current basket
+*	@input pli_ID : String Line Item ID to be removed 
+*
+*/
+var Basket = require('dw/order').Basket;
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+var ProductLineItem = require('dw/order').ProductLineItem;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try 
+	{
+		var basket = args.Basket;
+			
+		if ( !empty(args.CurrentCustomer) ) 
+		{
+			for each ( let pli : ProductLineItem in basket.productLineItems ) 
+			{
+				if ( !empty(pli) && !empty(args.pli_ID) && pli.productID == args.pli_ID) 
+				{
+					basket.removeProductLineItem(pli);
+					break;
+				} 
+			}
+			
+			args.Basket.custom.isSDDBasket = false;
+			for each ( let pli : ProductLineItem in basket.productLineItems ) {
+				// Only Check for OPted Line Item
+	            if ('sddOpted' in pli.custom && !empty(pli.custom.sddOpted) && pli.custom.sddOpted == true) {
+	                args.Basket.custom.isSDDBasket = true;
+	                break;
+	            }
+			}
+		}
+	} 
+	catch ( ex ) 
+	{
+		Logger.error("[RemoveProductLineItemsFromCart] There was an error getting the unshippable products: {0}",ex);
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

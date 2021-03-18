@@ -1,0 +1,282 @@
+<iscomment>mobile has a different layout than desktop </iscomment>
+<isinclude template="util/modules" />
+<isscript>
+	importScript( "util/ViewHelpers.ds" );
+</isscript>
+
+<!-- Get the Shop all Brand Link from Site PRef. -->
+<isif condition="${pdict.CurrentCustomer.authenticated}">
+	<isset name="cCode" value="${'C' + pdict.CurrentCustomer.profile.custom.chainCode}" scope="page"/>
+<iselseif condition="${'tempChainCode' in pdict.CurrentSession.custom}">
+	<isset name="cCode" value="${pdict.CurrentSession.custom.tempChainCode}" scope="page"/>
+<iselse/>
+	<isset name="cCode" value="${'C00' + dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+</isif>
+<isset name="viewAllBrandLink" value="${'viewAllBrandLink' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.viewAllBrandLink : ''}" scope="Page" />
+
+<isif condition="${!empty(cCode)}">
+	<isset name="viewAllBrandLinkURL" value="${JSON.parse(viewAllBrandLink)[cCode]}" scope="Page" />
+</isif>
+<!-- Safty case If no URL is configured for specific portal -->
+<isif condition="${empty(viewAllBrandLinkURL)}">
+	<isset name="cCode" value="${'DEFAULT'}" scope="page"/>
+	<isset name="viewAllBrandLinkURL" value="${JSON.parse(viewAllBrandLink)[cCode]}" scope="Page" />
+</isif>
+
+<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+    <isinclude template="search/customsearchmobilepage" />
+    <iselse/>
+	    <isdecorate template="search/pt_productsearchresult_content">
+	        <isscript>
+	            var ojson = pdict.Suggestions;
+	        </isscript>
+	        <!-- No search Found Case -->
+	        <isif condition="${!ojson.category.available && !ojson.brand.available && !ojson.bestSelerproduct.available && !ojson.content.available && !ojson.products.available}">
+			 	<div class="cutsom-search-no-results">
+					<div class="msg1">
+						<h1><isprint value="${Resource.msgf('search.noresultfoundstumpedmsg','search',null, pdict.SearchedPhrase)}" /></h1>
+					</div>
+					<div class="msg2">
+						<p><isprint value="${Resource.msgf('search.didyoumean','search',null)}" /><span><isprint value="${pdict.SearchedPhrase}" /></span>?</p>
+				    </div>
+					<iscontentasset aid="no-search-result-content" />
+					<form role="search" class="nosearch-result "action="${URLUtils.url('Search-Show')}" method="get" name="simpleSearch">
+						<fieldset>
+							<input type="text" id="q" name="q" value=""  placeholder="${Resource.msg('simplesearch.searchagaintext','search',null)}" maxlength="2047" />		
+							<input type="submit" value="go" />
+						</fieldset>
+					</form>
+
+					<isslot id="no-search-results-msg" description="No Results Search Msg" context="global" />
+
+				    <div class="enishtine-recomndations">
+				     	<isslot id="no-search-results-recommendations" description="NO Search Results Recommendations" context="global" />
+		            </div>
+				   
+				</div>
+            <iselse>
+                <isif condition="${pdict.ViewAllBlog}">
+                    <isif condition="${ojson.content}">
+                        <isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+                            <isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="page" />
+                            <iselse/>
+                            <isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page" />
+                        </isif>
+                        <isset name="suggestedContents" value="${ojson.content.content.asList()}" scope="Page" />
+                        <isset name="fdid1" value="${'blog-'+ cCode}" scope="Page" />
+                        <isset name="fdid2" value="${'blog-archive-'+ cCode}" scope="Page" />
+                        <isset name="count" value="${0}" scope="Page" />
+                        <!-- Find Blog Count -->
+                        <div class="allresultspage">
+	                        <div class="blog-container allresultspage">
+	                            <isloop items="${suggestedContents}" var="suggestedContent" >
+	                                <isloop items="${suggestedContent.getContent().folders}" var="folder">
+	                                    <isif condition="${folder.ID == fdid1 || folder.ID == fdid2}">
+	                                        <div class="listArticle ${(count % 4 == 0) ? 'new-row' : ''}">
+	                                            <div class="listArticle-left">
+	                                                <a href="${URLUtils.url('Page-Show','cid', suggestedContent.getContent().ID, 'src', ojson.keyword)}">
+	                                                    <img class="contentThumbnail" src="${suggestedContent.getContent().custom.thumbnailImage.getAbsURL()}" />
+	                                                </a>
+	                                            </div>
+	                                            <div class="listArticle-right">
+	                                                <a href="${URLUtils.url('Page-Show','cid', suggestedContent.getContent().ID, 'src', ojson.keyword)}">
+														<h3> <isprint value="${suggestedContent.getContent().custom.title}"/> </h3>
+	                                                </a>
+	                                                <p class="description">
+	                                                <isprint value="${suggestedContent.getContent().description}" />
+		                                            </p>
+		                                            <a href="${URLUtils.url('Page-Show','cid', suggestedContent.getContent().ID, 'src', ojson.keyword)}" class="readmore">
+		                                                <isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" />
+		                                            </a>
+	                                            </div>
+	                                        </div>
+	                                         <isset name="count" value="${count + 1}" scope="Page" />
+	                                    </isif>
+	                                </isloop>
+	                            </isloop>
+	                        </div>
+	                        <isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('allBlog') && !empty(pdict.CurrentHttpParameterMap.allBlog.stringValue)}">
+	                            <div class="backto-search">
+	                                <a href="${URLUtils.url('Search-Show', 'q', pdict.CurrentHttpParameterMap.q.stringValue)}" title="${Resource.msg('productpage.backto','search',null)}">
+	                                	<isprint value="${Resource.msg('productpage.backto','search',null)}" />
+	                                </a>
+	                            </div>
+	                        </isif>
+                        </div>
+                    </isif>
+                    <!-- End of Blog Show -->
+                    <!-- Video Blog -->
+                    <iselseif condition="${pdict.VeiwAllVideos}" >
+                       <isif condition="${ojson.videos}">
+                        <isset name="suggestedContents" value="${ojson.videos.content.asList()}" scope="Page" />
+                        <isset name="fdid" value="${'digitallibrary'}" scope="page" />
+                        <isset name="count" value="${0}" scope="Page" />
+                        <!-- Find Blog Count -->
+                        <div class="allresultspage">
+	                        <div class="video-container customsearchcategory">
+	                            <isloop items="${suggestedContents}" var="suggestedContent" status="">
+	                                <isloop items="${suggestedContent.getContent().folders}" var="folder">
+	                                    <isif condition="${folder.ID == fdid}">
+	                                        <iscomment>make sure we have an asset at all</iscomment>
+											<isif condition="${suggestedContent.getContent() != null}">
+												<isif condition="${'body' in suggestedContent.getContent().custom && suggestedContent.getContent().custom.body != null}">
+													<iscomment>don't remove or rename DIV and Marker, necessary for mark and editing, no css attributes defined</iscomment>
+													<div class="content-asset video-list-section ${(count % 2 == 0) ? 'new-row' : ''}">
+														<isprint value="${suggestedContent.getContent().custom.body.toString().replace('cosmo-blog.css', '')}" encoding="off"/>
+													</div> <!-- End content-asset -->
+													 <isset name="count" value="${count + 1}" scope="Page" />
+												<iselse>
+													${Resource.msg('global.nocontent','locale',null)}
+												</isif>
+											</isif>
+	                                    </isif>
+	                                </isloop>
+	                            </isloop>
+	                        </div>
+	                        <isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('allVideos') && !empty(pdict.CurrentHttpParameterMap.allVideos.stringValue)}">
+	                            <div class="backto-search">
+	                                <a href="${URLUtils.url('Search-Show', 'q', pdict.CurrentHttpParameterMap.q.stringValue)}" title="${Resource.msg('productpage.backto','search',null)}">
+	                                	<isprint value="${Resource.msg('productpage.backto','search',null)}" />
+	                                </a>
+	                            </div>
+	                        </isif>
+                        </div>
+                    </isif>
+               <!-- End of Video Blog -->
+		           <iselse>
+		             <iscomment>Product Section </iscomment>
+		             <!-- Display Product -->
+		             <isif condition="${ojson.products && ojson.products.available}">
+		                   <isset name="productSearchHits" value="${ojson.products.products.asList()}" scope=Page />
+		                   <isif condition="${productSearchHits.length > 0}">
+		                       <isset name="count" value="${0}" scope="Page" />
+		                       <div class="products-results customsearchcategory">
+			                       <div class="product-found search-category-heading">
+			                           <isprint value="${Resource.msgf('search.producthitscount','search',null, ojson.bestSelerproduct.productHits.asList().size())}" />
+			                       </div>
+			                       <div class="product-block product-block only-desktop">
+			                           <ul class="search-result-items tiles-container">
+			                               <isloop items="${productSearchHits}" alias="productSearchHit" status="loopstate">
+			                                   
+			                                       <li class="grid-tile ${(loopstate.index % 4 == 0) ? 'new-row' : ''}" gtm-product-position="${loopstate.count}">
+			                                       	   <iscustomproductgrid producthits="${productSearchHit.productSearchHit}" wishlistitems="${pdict.WishListItems}" />
+			                                       </li>
+			                                       
+			                                   <isset name="count" value="${count + 1}" scope="Page" />
+			                               </isloop>
+			                           </ul>
+			                       </div>
+			                       <div class="product-block product-block only-mobile">
+			                       <isset name="mobilecount" value="${0}" scope="Page" />
+			                           <ul class="search-result-items tiles-container">
+			                               <isloop items="${productSearchHits}" alias="productSearchHit" status="loopstate">
+			                                   
+			                                       <li class="grid-tile ${(loopstate.index % 4 == 0) ? 'new-row' : ''}">
+			                                            <iscustomproductgrid producthits="${productSearchHit.productSearchHit}" wishlistitems="${pdict.WishListItems}" />
+			                                       </li>
+			                                       
+			                                   <isset name="mobilecount" value="${mobilecount + 1}" scope="Page" />
+			                               </isloop>
+			                           </ul>
+			                       </div>
+			                      
+			                       </div>
+		                   </isif>
+		               </isif>
+		               
+		       		<iscomment>Video Section </iscomment>
+		       		<isif condition="${ojson.videos}">
+		                   <isset name="suggestedContents" value="${ojson.videos.content.asList()}" scope="Page" />
+		                   <isset name="fdid" value="${'digitallibrary'}" scope="page" />
+		                   <isset name="suggestionSize" value="${10}" scope="Page" />
+		                   <isset name="videocount" value="${0}" scope="Page" />
+		                   <!-- Find Blog Count -->
+		                   <div class="video-container customsearchcategory">
+		                       <isloop items="${suggestedContents}" alias="suggestedContent">
+		                           <isloop items="${suggestedContent.getContent().folders}" var="folder">
+		                               <isif condition="${folder.ID == fdid}">
+		                                   <isset name="videocount" value="${videocount + 1}" scope="Page" />
+		                               </isif>
+		                           </isloop>
+		                       </isloop>
+		                       <isif condition="${videocount > 0}">
+		                           <div class="video-found search-category-heading">
+		                               <isprint value="${Resource.msgf('search.videohitscount','search',null, videocount.toFixed())}" />
+		                           </div>
+		                       </isif>
+			                   <isset name="count" value="${0}" scope="page" />
+			                   <div class="video-container customsearchpage only-desktop">
+			                       <isloop items="${suggestedContents}" var="suggestedContent">
+			                           <isloop items="${suggestedContent.getContent().folders}" var="folder">
+			                               <isif condition="${folder.ID == fdid}">
+			                                 <isif condition="${count < 2}"> 
+			                                   <iscomment>make sure we have an asset at all</iscomment>
+												<isif condition="${suggestedContent.getContent() != null}">
+													<isif condition="${'body' in suggestedContent.getContent().custom && suggestedContent.getContent().custom.body != null}">
+														<iscomment>don't remove or rename DIV and Marker, necessary for mark and editing, no css attributes defined</iscomment>
+														<div class="content-asset video-list-section">
+															<isprint value="${suggestedContent.getContent().custom.body.toString().replace('cosmo-blog.css', '')}" encoding="off"/>
+														</div> <!-- End content-asset -->
+													<iselse>
+														${Resource.msg('global.nocontent','locale',null)}
+													</isif>
+												</isif>
+			                                   <isset name="count" value="${count + 1}" scope="page" />
+			                                 </isif> 
+			                               </isif>
+			                           </isloop>
+			                       </isloop>
+			                       <isif condition="${videocount > 2}">
+			                           <div class="view-all">
+			                               <isset name="folderIDs" value="${fdid}" scope="PAGE" />
+			                               <a href="${URLUtils.url('Search-Show', 'q', pdict.SearchedPhrase, 'allVideos', 'true')}" title="${Resource.msg('searchrefinebar.viewall','search',null)}">
+			                                 	 <isprint value="${Resource.msg('searchrefinebar.viewall','search',null)}" />
+			                               </a>
+			                           </div>
+			                       </isif>
+			                   </div>
+			                    
+			                   <div class="video-container customsearchpage only-mobile">
+			                   <isset name="mobilecount" value="${0}" scope="page" />
+			                       <isloop items="${suggestedContents}" var="suggestedContent">
+			                           <isloop items="${suggestedContent.getContent().folders}" var="folder">
+			                               <isif condition="${folder.ID == fdid}">
+			                                 <isif condition="${mobilecount < 1}"> 
+			                                   <iscomment>make sure we have an asset at all</iscomment>
+												<isif condition="${suggestedContent.getContent() != null}">
+													<isif condition="${'body' in suggestedContent.getContent().custom && suggestedContent.getContent().custom.body != null}">
+														<iscomment>don't remove or rename DIV and Marker, necessary for mark and editing, no css attributes defined</iscomment>
+														<div class="content-asset video-list-section">
+															<isprint value="${suggestedContent.getContent().custom.body.toString().replace('cosmo-blog.css', '')}" encoding="off"/>
+														</div> <!-- End content-asset -->
+													<iselse>
+														${Resource.msg('global.nocontent','locale',null)}
+													</isif>
+												</isif>
+			                                   <isset name="mobilecount" value="${mobilecount + 1}" scope="page" />
+			                                 </isif> 
+			                               </isif>
+			                           </isloop>
+			                       </isloop>
+			                       <isif condition="${videocount > 1}">
+			                           <div class="view-all">
+			                               <isset name="folderIDs" value="${fdid}" scope="PAGE" />
+			                               <a href="${URLUtils.url('Search-Show', 'q', pdict.SearchedPhrase, 'allVideos', 'true')}" title="${Resource.msg('searchrefinebar.viewall','search',null)}">
+			                                 	<isprint value="${Resource.msg('searchrefinebar.viewall','search',null)}" />
+			                               </a>
+			                           </div>
+			                       </isif>
+			                   </div>
+			                   
+			                   
+			                   
+		                   </div>
+		       		</isif>
+		       		
+		            <!-- TBD PI Recommendation -->
+                    <isinclude template="search/customsearchrecommendation"/>    
+                </isif>
+	        </isif>
+	      
+	    </isdecorate>
+</isif>

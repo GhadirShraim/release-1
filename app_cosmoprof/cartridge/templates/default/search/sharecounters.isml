@@ -1,0 +1,21 @@
+<!--- TEMPLATENAME: sharecounters.isml --->
+	
+	<isset name="isblog" value="${pdict.CurrentHttpParameterMap.isblog.value}" scope="page" />
+	<isset name="loopstatecount" value="${pdict.CurrentHttpParameterMap.loopstatecount}" scope="page" />
+	<isset name="loopindex" value="${pdict.CurrentHttpParameterMap.loopindex}" scope="page" />
+	
+	<isset name="divID" value="${loopindex+'-'+loopstatecount}" scope="page" />
+	<isif condition="${isblog}">
+		<isset name="contentURL" value="${URLUtils.abs('Page-Show','cid', pdict.folderID)}" scope="page"/>
+	<iselse/>
+		<isset name="contentURL" value="${URLUtils.abs('Page-Show','cid', pdict.folderID)}" scope="page"/>
+	</isif>
+	
+	<script type="text/javascript">
+		if (window.jQuery) {
+			jQuery(document).ready(function(){
+				app.addthisblog.getShares('${contentURL}', '${divID}');
+			});
+		}
+	</script>
+	<span id="${loopindex+'-'+loopstatecount}-shareCount"> shares</span>

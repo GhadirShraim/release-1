@@ -1,0 +1,178 @@
+<isdecorate template="checkout/pt_checkout"/>
+	<isinclude template="util/modules"/>
+	
+	<isset name="isMobileDevice" value="${pdict.CurrentSession.custom.device == 'mobile'}" scope="page" />
+	
+	<iscomment>
+		This template visualizes the billing step of both checkout scenarios.
+		It provides selecting a payment method, entering gift certificates and
+		specifying a separate billing address.
+		Depending on the checkout scenario (single or multi shipping) it is
+		either the second or third checkout step.
+	</iscomment>
+	
+	<iscomment>Report this checkout step</iscomment>
+	<isreportcheckout checkoutstep="4" checkoutname="${'Billing'}"/>
+<div class="billing-wrapper step-2">
+    <isif condition="${!pdict.CurrentForms.multishipping.entered.value}">
+    	<ischeckoutprogressindicator step="2" multishipping="false" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	<iselse>
+		<ischeckoutprogressindicator step="3" multishipping="true" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	</isif>
+	
+	<isset name="activeAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID)}" scope="page" />
+	<isset name="OrderTotal" value="${pdict.Basket.totalGrossPrice.value}" scope="pdict"/>
+	<isset name="isAccountHolder" value="${!empty(pdict.CurrentCustomer.profile.custom.customerType) && pdict.CurrentCustomer.profile.custom.customerType == 'A'}" scope="page"/>
+	<isset name="SelectedAddressID" value="${!empty(pdict.CurrentCustomer.profile.custom.activeShipAddressID) ? pdict.CurrentCustomer.profile.custom.activeShipAddressID : ''}" scope="pdict" />
+
+	<div class="account-terms-content">
+		<label class="account-terms-label hide">
+			<input type="radio" name="onAccountMCard" class="on-account-terms" checked/>
+			<iscontentasset aid="on-account-terms" encoding="off"/>
+		</label>
+	</div>
+	<form action="${URLUtils.continueURL()}" method="post" id="${pdict.CurrentForms.billing.htmlName}" class="checkout-billing address">
+	
+ 	<iscomment> ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		payment methods
+	 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	 
+
+	<iscomment>payment method area</iscomment>
+	<isinclude template="checkout/shipping/shippingsummary"/>
+	<isif condition="${!empty(pdict.CurrentSession.custom.isPlccFirst) && pdict.CurrentSession.custom.isPlccFirst}" >
+	 	<isinclude template="checkout/billing/paymentmethodsplcc"/>
+	<iselse>
+		<isinclude template="checkout/billing/paymentmethods"/>
+	</isif>
+	<input type="hidden" class="card-type" name="${pdict.CurrentForms.billing.paymentMethods.selectedPaymentMethodID.htmlName}" />	
+	<div class="paymentformhide">	
+	<div id="billing-forms-container" class="${isMobileDevice ? 'visually-hidden' : ''}">	
+		<iscomment> ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			billing address
+		 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+		<fieldset id="fieldset_billing_address_select" >
+			
+			<iscomment>billing address area</iscomment>
+	
+			<iscomment>hidden input with action to trigger for the address form</iscomment>
+			<input type="hidden" name="${pdict.CurrentForms.billing.save.htmlName}" value="true" />
+    
+			<div class="checkout-subheader">
+				${Resource.msg('billing.addressheader','checkout',null)}
+			</div>
+			<iscomment>display select box with stored addresses if customer is authenticated and there are saved addresses</iscomment>
+			<isif condition="${pdict.CurrentCustomer.authenticated && pdict.CurrentCustomer.profile.addressBook.addresses.size() > 0}">
+				<div class="form-row  label-inline form-indent sameasaddress ">
+					<label>${Resource.msg('shipment.sameasshippingaddr','checkout',null)}</label>
+					<input type="checkbox" name="sameasshippingadd" id="sameasshippingadd">
+				</div>		
+				<div class="select-address">		
+					<div class="form-row">				
+						<label for="${pdict.CurrentForms.billing.addressList.htmlName}">
+							<span class="required-indicator">&#42;</span><isprint value="${Resource.msg('billing.ChooseAddress','checkout',null)}" />
+						</label>
+						<isscript>
+							importScript("cart/CartUtils.ds");	
+							var customerAddresses = CartUtils.getAddressList(pdict.Basket, pdict.CurrentCustomer, false);		
+						</isscript>
+						<isaddressselectlist p_listId="${pdict.CurrentForms.billing.addressList.htmlName}" p_listaddresses="${pdict.SortedAddress}" p_isbillingaddr="true"/>
+						<button type="button" class="secondarybtn edit-address-button"><isprint value="${Resource.msg('billing.editaddress','checkout',null)}" /></button>	
+					</div>
+		
+					<div class="form-row form-row-button">
+						<button id="address-select-go-button" name="${pdict.CurrentForms.billing.selectAddress.htmlName}" type="submit" value="Go" class="simple-submit">Select</button>
+					</div>
+	
+				</div>
+			
+			</isif>
+			
+		</fieldset>
+		<label class="missing-fields-billing-error hide">${Resource.msg('billing.missingfields','checkout',null)}</label>
+		<fieldset id="fieldset_billing_address_details">
+			
+			<div class="hide form-field-container">
+			    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.companyName}" type="input" xhtmlclass="companyname-checkout specialcharrestrict"/>
+			</div>
+			
+	    	<div class="hide form-field-container">
+			    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.firstName}" type="input" xhtmlclass="restrictChar first-name-billing"/>
+			</div>
+	    	
+	        <div class="hide form-field-container">
+                <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.lastName}" type="input" xhtmlclass="restrictChar last-name-billing"/>
+		    </div>
+	    	
+	    	<div class="hide form-field-container">
+                <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.address1}" type="input" xhtmlclass="specialcharrestrict address1-billing"/>
+			</div>
+
+            <div class="hide form-field-container">
+                <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.address2}" type="input" xhtmlclass="specialcharrestrict address2-billing"/>
+            </div>
+
+	    	<div class="hide form-field-container">
+	    		<isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.country}" type="select" xhtmlclass="country-billing"/>
+	    	</div>
+
+            <div class="hide form-field-container">
+	    	<isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.city}" type="input" xhtmlclass="specialcharrestrict city-billing"/>
+			</div>
+
+            <div class="hide form-field-container">
+	    	<isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.states.state}" type="select" xhtmlclass="state-billing"/>,
+			</div>
+	    	
+	    	<iscomment>
+		    	States will be populated via javascript in rich ui.
+		    	Solution for simple ui is still required.
+		    
+		    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.states.stateUS}" type="select"/>
+		    
+		    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.states.stateCA}" type="select"/>
+		    
+		    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.states.stateDE}" type="select"/>
+		    </iscomment>
+		    
+			
+	    	<div class="hide form-field-container">
+	    	    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.zip}" type="input" xhtmlclass="zip zip-billing" rowclass="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA' ? '' : 'select-zip-CA noerror'}"/>
+			</div>
+
+	    	<div class="hide form-field-container">
+	    	    <isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.addressFields.phone}" type="input" xhtmlclass="billingphone"/>	 
+			</div>
+	    	   	
+    		<iscomment>
+    			<isinputfield formfield="${pdict.CurrentForms.billing.billingAddress.email.emailAddress}" xhtmlclass="email" type="input"/>
+    		</iscomment>
+    			
+	    </fieldset>
+	    
+	    <input type="hidden" name="${pdict.CurrentForms.billing.secureKeyHtmlName}" value="${pdict.CurrentForms.billing.secureKeyValue}"/>
+	    
+		<isbonusdiscountlineitem p_alert_text="${Resource.msg('billing.bonusproductalert','checkout',null)}" p_discount_line_item="${pdict.BonusDiscountLineItem}"/>
+	</div>
+	<iscomment>Included Paypal ISML and initialized variable to display PayPal window in popup </iscomment>
+	<isset name="billingFormSubmitButtonID" value="billingSubmitButton" scope="page" />
+	<isinclude template="paypal/expressbilling"/>
+		<div id="checkout-button" class="checkout-button">
+			<button  id="${billingFormSubmitButtonID}" class="button-fancy-large" type="submit" name="${pdict.CurrentForms.billing.save.htmlName}" value="${Resource.msg('global.continuecheckoutbrief','locale',null)}"><span>${Resource.msg('global.continuecheckoutbrief','locale',null)}</span></button>
+		</div>
+	</div>
+  </div>
+</form>
+<isscript>
+	importScript("util/ViewHelpers.ds");
+	var stateForm = pdict.CurrentForms.billing.billingAddress.addressFields.states;
+	var countryField = pdict.CurrentForms.billing.billingAddress.addressFields.country; 
+	var countries = ViewHelpers.getCountriesAndRegions(countryField, stateForm, "forms");	
+	var json = JSON.stringify(countries);	
+</isscript>
+<script>
+	if (window.app) {app.countries = <isprint value="${json}" encoding="off"/>;}
+	
+	var isAccountHolder = <isprint value="${isAccountHolder}" encoding="off"/>;
+</script>	
+</isdecorate>

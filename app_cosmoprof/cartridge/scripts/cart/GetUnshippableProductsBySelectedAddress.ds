@@ -1,0 +1,44 @@
+/**
+* GetUnshippableProductsBySelectedAddress
+* Returns, if any, an array of products that can't be shipped to the currently selected shipping address
+*
+*
+*   @input CurrentCustomer : dw.customer.Customer  This is the current customer
+*	@input Basket : dw.order.Basket  This is the current basket
+*   @output UnshippableProducts : Array
+*
+*/
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+var ProductLineItem = require('dw/order').ProductLineItem;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var unshipProductsArray : Array = [];
+
+	try {
+		if ( !empty(args.CurrentCustomer) && !empty(args.CurrentCustomer.profile.custom.activeShipAddressID) ){
+			for (var pli : ProductLineItem in args.Basket.productLineItems){
+				// TODO:  Check against PAV
+				// TODO:  Check against warehouse code of address
+				/*
+					if (excluded || unavailable){
+						unshipProductsArray.push(pli.productID);
+					}
+
+				*/
+				//TESTING:  
+				//unshipProductsArray.push(pli.productID);
+			}
+		}
+	}
+	catch (ex){
+		Logger.error("[GetUnshippableProductsBySelectedAddress] There was an error getting the unshippable products: {0}",ex);
+		
+		return PIPELET_ERROR;
+	}
+
+	args.UnshippableProducts = unshipProductsArray;
+
+   return PIPELET_NEXT;
+}

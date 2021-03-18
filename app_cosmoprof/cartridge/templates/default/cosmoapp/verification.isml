@@ -1,0 +1,6 @@
+<isif condition="${!empty(pdict.JSONRes) && pdict.JSONRes}"><iscontent type="application/json" charset="UTF-8" compact="true"/><isscript>var ojson = JSON.parse(pdict.Content);</isscript><isprint value="${JSON.stringify(ojson, null, 2)}" encoding="off"/>
+<iselse>
+	<isif condition="${!empty(pdict.GoogleFile) && !empty(pdict.Content)}">
+		<isprint value="${pdict.Content}" />
+	</isif>
+</isif>

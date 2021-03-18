@@ -1,0 +1,7 @@
+<isdecorate template="content/content/pt_content">
+	
+	<isinclude template="util/modules"/>
+
+	<isslot id="brand-portfolio-landing" description="Brand Portfolio Landing Page" context="global"/>
+	
+</isdecorate>

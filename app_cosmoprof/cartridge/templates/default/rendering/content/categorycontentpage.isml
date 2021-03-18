@@ -1,0 +1,18 @@
+<isdecorate template="content/content/pt_content">
+	
+	<isinclude template="util/modules"/>
+	
+	<iscomment>
+		Configured as rendering template for the general category landing page.
+		Displays four category specific slots containing configurable content within the slot.
+	</iscomment>
+
+	<isslot id="cat-landing-top" context="category" description="Large Category Landing Banner" context-object="${pdict.ProductSearchResult.category}"/>
+	
+	<isslot id="cat-landing-nav" context="category" description="Category Landing Navigation" context-object="${pdict.ProductSearchResult.category}"/>
+	
+	<isslot id="cat-landing-bottom-left" context="category" description="Category Landing Bottom Left Content" context-object="${pdict.ProductSearchResult.category}"/>
+	
+	<isslot id="cat-landing-bottom-right" context="category" description="Category Landing Bottom Right Content" context-object="${pdict.ProductSearchResult.category}"/>
+
+</isdecorate>

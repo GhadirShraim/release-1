@@ -1,0 +1,78 @@
+<!-- Display all the items in the Store Pick Up List -->
+<isinclude template="util/modules"/>
+<input type="hidden" name="productListID" value="${pdict.ProductList.ID}" />
+
+<isset name="itemCount" value="${0}" scope="page"/>
+<isset name="CurrencyCode" value="${dw.system.Site.getCurrent().getCurrencyCode()}" scope="pdict" />
+<isset name="storeItemsTotal" value="${dw.value.Money(0, pdict.CurrencyCode)}" scope="Page" />
+<isloop items="${pdict.CurrentForms.giftregistry.event.listitems}" var="item" status="loopstate">
+		<isset name="prod" value="${item.object}" scope="page"/>
+		<!-- Start Display Item in Product -->
+		<div class="store-lineItems ${loopstate.index > 2 ? 'hide' : ''}">						
+			<!-- Item Image -->
+			<div class="mini-cart-image">				
+				<isdisplayproductimage p_productli="${prod}" p_size="large" />
+			</div>
+			<div class="minicart-rightwrap">
+				<isif condition="${!empty(prod.product.brand)}">
+					<div class="product-brand" itemprop="name"><isprint value="${prod.product.brand}" /></div>
+				 </isif>
+				<div class="mini-cart-name">
+					<isset name="itemUrl" value="${URLUtils.http('Product-Show','pid', prod.product.ID)}" scope="page"/>
+					<a href="${itemUrl}"><isprint value="${prod.product.name}"/></a>
+				</div>
+	
+				<div class="mini-cart-attributes">
+					<isdisplayvariationvalues product="${prod.product}"/>
+	
+					<isif condition="${!empty(prod.product) && !prod.product.isVariant() && !prod.product.isMaster() && 'size' in prod.product.custom && !empty(prod.product.custom.size)}">
+						<div class="attribute">
+							<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+							<span class="value"><isprint value="${prod.product.custom.size}"/></span>
+						</div>
+					</isif>
+					<div class="sku attribute">
+						${Resource.msg('global.sku','locale',null)}<isprint value="${prod.product.ID.substring(prod.product.ID.lastIndexOf('-')+1)}"/>
+					</div>
+				</div>
+				
+				
+				
+				<div class="mini-cart-pricing">
+					<isset name="Product" value="${prod.product}" scope="pdict"/>
+				    <span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+				    <span class="value"><isprint value="${prod.quantity.value.toFixed(0)}"/></span>
+					<span class="mini-cart-price"> <isprint value="${Resource.msg('global.totalprice','locale',null)}  " />
+					<isset name="isStorePickupCart" value="${true}" scope="Page" />
+					<isset name="thisqty" value="${prod.quantity}" scope="Page" />
+					<span><isinclude template="product/components/pricing"/></span>
+				</div>
+				
+				<a class="remove-isstore-item attribute" data-sli="${prod.ID}">
+					<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+				</a>
+				
+			</div><!-- End of minicart-rightwrap -->
+		</div>
+	<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+</isloop>
+
+<isif condition="${pdict.ProductList.items.size()>3}" >
+	<div class="minicart-viewmore-items">
+		<isif condition="${pdict.ProductList.items.size() == 4}"> 
+			<isprint value="${Resource.msgf('minicart.morelineitem','checkout',null,(pdict.ProductList.items.size()-3).toFixed(0))}" />
+		<iselse>
+			<isprint value="${Resource.msgf('minicart.morelineitems','checkout',null,(pdict.ProductList.items.size()-3).toFixed(0))}" />
+		</isif>
+		
+	</div>
+</isif>
+
+<!-- Sub Totals -->
+
+<div class="mini-cart-totals">
+	<div class="mini-cart-subtotals">
+		<span class="label">${Resource.msg('ordersummary.subtotal','components',null)}</span>
+		<span class="value"><isprint value="${storeItemsTotal}"/></span>
+	</div>
+</div>

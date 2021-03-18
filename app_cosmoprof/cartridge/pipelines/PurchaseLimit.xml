@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?demandware-pipeline version="2.0"?>
+
+<pipeline type="view">
+  <branch basename="Start">
+    <segment>
+      <node>
+        <start-node name="Start" secure="false"/>
+        <node-display x="1" y="1"/>
+      </node>
+      <simple-transition>
+        <transition-display>
+          <bend-point relative-to="source" x="0" y="1"/>
+        </transition-display>
+      </simple-transition>
+      <node>
+        <pipelet-node pipelet-name="Search" pipelet-set-identifier="bc_api">
+          <config-property key="SearchProduct" value="true"/>
+          <config-property key="SearchContent" value="true"/>
+          <config-property key="DisallowOfflineCategory" value="true"/>
+          <config-property key="RecursiveCategorySearch" value="true"/>
+          <config-property key="RecursiveFolderSearch" value="false"/>
+          <key-binding alias="&quot;hair|hair-color&quot;" key="SearchPhrase"/>
+          <key-binding alias="ProductSearchModel" key="ProductSearchModel"/>
+          <key-binding alias="null" key="SortBy1"/>
+          <key-binding alias="null" key="SortBy3"/>
+          <key-binding alias="null" key="SortBy2"/>
+          <key-binding alias="null" key="SortBy1Direction"/>
+          <key-binding alias="null" key="SortBy2Direction"/>
+          <key-binding alias="null" key="SortBy3Direction"/>
+          <key-binding alias="null" key="PriceMax"/>
+          <key-binding alias="null" key="PriceMin"/>
+          <key-binding alias="null" key="RefineBy1Name"/>
+          <key-binding alias="null" key="RefineBy1Phrase"/>
+          <key-binding alias="null" key="RefineBy1Min"/>
+          <key-binding alias="null" key="RefineBy1Max"/>
+          <key-binding alias="null" key="RefineBy2Name"/>
+          <key-binding alias="null" key="RefineBy2Phrase"/>
+          <key-binding alias="null" key="RefineBy2Min"/>
+          <key-binding alias="null" key="RefineBy2Max"/>
+          <key-binding alias="null" key="RefineBy3Name"/>
+          <key-binding alias="null" key="RefineBy3Phrase"/>
+          <key-binding alias="null" key="RefineBy3Min"/>
+          <key-binding alias="null" key="RefineBy3Max"/>
+          <key-binding alias="null" key="RefineBy4Name"/>
+          <key-binding alias="null" key="RefineBy4Phrase"/>
+          <key-binding alias="null" key="RefineBy4Min"/>
+          <key-binding alias="null" key="RefineBy4Max"/>
+          <key-binding alias="null" key="RefineBy5Name"/>
+          <key-binding alias="null" key="RefineBy5Phrase"/>
+          <key-binding alias="null" key="RefineBy5Min"/>
+          <key-binding alias="null" key="RefineBy5Max"/>
+          <key-binding alias="null" key="ProductID"/>
+          <key-binding alias="null" key="FolderID"/>
+          <key-binding alias="null" key="ContentID"/>
+          <key-binding alias="null" key="ContentSearchModel"/>
+          <key-binding alias="null" key="RefineByNamePrefix"/>
+          <key-binding alias="null" key="RefineByPhrasePrefix"/>
+          <key-binding alias="null" key="RefineByMinPrefix"/>
+          <key-binding alias="null" key="RefineByMaxPrefix"/>
+          <key-binding alias="null" key="OrderableProductsOnly"/>
+          <key-binding alias="null" key="SortingRuleID"/>
+          <key-binding alias="null" key="PromotionID"/>
+          <key-binding alias="null" key="PromotionProductType"/>
+          <key-binding alias="null" key="TrackingEmptySearchesEnabled"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+      </node>
+      <simple-transition>
+        <transition-display>
+          <bend-point relative-to="source" x="0" y="1"/>
+        </transition-display>
+      </simple-transition>
+      <node>
+        <interaction-node transaction-required="false">
+          <template buffered="true" dynamic="false" name="util/successjson"/>
+        </interaction-node>
+        <node-display x="0" y="1"/>
+      </node>
+    </segment>
+  </branch>
+  <branch basename="StoreRecord">
+    <segment>
+      <node>
+        <start-node call-mode="private" name="StoreRecord" secure="false"/>
+        <node-display x="2" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <pipelet-node pipelet-name="Script" pipelet-set-identifier="bc_api">
+          <config-property key="Transactional" value="true"/>
+          <config-property key="OnError" value="PIPELET_ERROR"/>
+          <config-property key="ScriptFile" value="orders/RecordBrandsForPurchaseLimit.ds"/>
+          <key-binding alias="ScriptLog" key="ScriptLog"/>
+          <key-binding alias="Order" key="Order"/>
+          <key-binding alias="CurrentCustomer.profile" key="Profile"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+        <branch basename="b2" source-connector="error">
+          <transition target-connector="in2" target-path="./+1"/>
+        </branch>
+      </node>
+      <transition target-connector="in1" target-path="./+1"/>
+    </segment>
+    <segment>
+      <node>
+        <join-node/>
+        <node-display x="0" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <pipelet-node pipelet-name="Assign" pipelet-set-identifier="bc_api">
+          <config-property key="Transactional" value="true"/>
+          <key-binding alias="false" key="From_0"/>
+          <key-binding alias="Order.custom.cancelledOrderTracked" key="To_0"/>
+          <key-binding alias="null" key="From_1"/>
+          <key-binding alias="null" key="To_1"/>
+          <key-binding alias="null" key="From_2"/>
+          <key-binding alias="null" key="To_2"/>
+          <key-binding alias="null" key="From_3"/>
+          <key-binding alias="null" key="To_3"/>
+          <key-binding alias="null" key="From_4"/>
+          <key-binding alias="null" key="To_4"/>
+          <key-binding alias="null" key="From_5"/>
+          <key-binding alias="null" key="To_5"/>
+          <key-binding alias="null" key="From_6"/>
+          <key-binding alias="null" key="To_6"/>
+          <key-binding alias="null" key="From_7"/>
+          <key-binding alias="null" key="To_7"/>
+          <key-binding alias="null" key="From_8"/>
+          <key-binding alias="null" key="To_8"/>
+          <key-binding alias="null" key="From_9"/>
+          <key-binding alias="null" key="To_9"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <end-node/>
+        <node-display x="0" y="1"/>
+      </node>
+    </segment>
+  </branch>
+  <branch basename="Test">
+    <segment>
+      <node>
+        <start-node name="Test" secure="false"/>
+        <node-display x="5" y="1"/>
+      </node>
+      <simple-transition>
+        <transition-display>
+          <bend-point relative-to="source" x="0" y="1"/>
+        </transition-display>
+      </simple-transition>
+      <node>
+        <pipelet-node pipelet-name="GetOrder" pipelet-set-identifier="bc_api">
+          <key-binding alias="&quot;00022301&quot;" key="OrderNo"/>
+          <key-binding alias="Order" key="Order"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+        <branch basename="b2" source-connector="error">
+          <transition target-connector="in">
+            <transition-display>
+              <bend-point relative-to="source" x="1" y="0"/>
+            </transition-display>
+          </transition>
+          <segment>
+            <node>
+              <interaction-node transaction-required="false">
+                <template buffered="true" dynamic="false" name="util/successjson"/>
+              </interaction-node>
+              <node-display orientation="horizontal" x="1" y="0"/>
+            </node>
+          </segment>
+        </branch>
+      </node>
+      <transition target-connector="in1" target-path="./+1"/>
+    </segment>
+    <segment>
+      <node>
+        <join-node/>
+        <node-display x="0" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <call-node start-name-ref="PurchaseLimit-StoreRecord"/>
+        <node-display x="0" y="1"/>
+      </node>
+      <simple-transition/>
+      <node>
+        <interaction-node transaction-required="false">
+          <template buffered="true" dynamic="false" name="util/successjson"/>
+        </interaction-node>
+        <node-display x="0" y="1"/>
+      </node>
+    </segment>
+  </branch>
+</pipeline>

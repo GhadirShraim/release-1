@@ -1,0 +1,265 @@
+/**
+importScript('search/ProductGridUtils.ds');
+*/
+importPackage ( dw.system );
+importPackage ( dw.util );
+importPackage ( dw.catalog );
+importPackage ( dw.web );
+importPackage( dw.customer );
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+
+/**
+*	Provides functions to make work around the product grid easier and better readable
+*	@namespace 
+*
+*/
+function ProductGridUtils(){};
+
+/*
+*	Gets a list of variation attribute values, which are referenced by a given product search hit
+* 	@param  productHit 				the product search hit, given by the Scripting API
+* 	@param	variationAttributeID  	ID of the varitiation attribute
+*/
+ProductGridUtils.getRepresentedVariationValueIDs = function (productHit : ProductSearchHit, variationAttributeID : String) {
+	var representedColors = new Array();
+	var colorValues = productHit.getRepresentedVariationValues(variationAttributeID);
+	for each (var colorValue in colorValues) { 
+		representedColors.push(colorValue.ID);
+	}
+	
+	return representedColors;
+}
+
+/*
+*	Build the URL used for the product grid to include a hit tile.
+* 	Use with care, as this is essential to the caching strategy. It should just use parameters gathered from the search hit. 
+* 	@param  productHit 				the product search hit, given by the Scripting API
+*/
+ProductGridUtils.buildHitTileURL = function (productHit : ProductSearchHit,  cgidValue : String, addedToWishList : Boolean) {
+	var productHitURL : URL = URLUtils.url('Product-HitTile');
+	if (productHit.product.isVariant()) {
+		productHitURL.append('pid',  productHit.product.masterProduct.ID);	
+	} else {
+		productHitURL.append('pid',  productHit.product.ID);
+	}
+	if(!empty(cgidValue)){
+		productHitURL.append('cgid',  cgidValue);
+	}	
+	productHitURL.append('vpid', productHit.firstRepresentedProduct.ID);
+	productHitURL.append('maxprice', productHit.maxPrice);
+	productHitURL.append('minprice', productHit.minPrice);
+	/* 
+		Relies on the fact that the represented product is a variant if color slicing is enabled 
+	 	See script API doc @ProductSearchHit.product
+	*/
+	productHitURL.append('showswatches', productHit.product.isMaster());
+	productHitURL.append('pricerange', productHit.isPriceRange());
+	
+	//Append if added to wishlist
+	if(addedToWishList && addedToWishList == true) {
+		productHitURL.append('addedToWishList', 'true');
+	}
+	
+	return productHitURL;
+}
+/*
+*	Build the URL used for the product grid to include a hit tile.
+* 	Use with care, as this is essential to the caching strategy. It should just use parameters gathered from the search hit. 
+* 	@param  productHit 				the product search hit, given by the Scripting API
+*/
+ProductGridUtils.getCompareClass = function (category : Category) {
+	if (category && 'enableCompare' in category.custom && category.custom.enableCompare) {
+		return 'show-compare'; 
+	} else {
+		return 'hide-compare';
+	}
+}
+
+/**
+* Sort the PLP page based on Promotion, and other Product Attribute like intros and deals and Out of stock product
+*
+*/
+ProductGridUtils.sortPLPPage = function(pageElement : Iterator, thisCustomer : Customer, bannerSlot: Array, assetConfig: Object) {
+	var existingProduct : ArrayList = new ArrayList(pageElement);
+	var existingProductItr : Iterator = existingProduct.iterator();
+	var promoProducts : ArrayList = new ArrayList();
+	var introProducts : ArrayList = new ArrayList();
+	var openStockProducts : ArrayList = new ArrayList();
+	var outOfStockProducts : ArrayList = new ArrayList();
+	var completeProducts : ArrayList = new ArrayList();
+	
+	
+	//Check if customer is Authenticated.
+	var isAuthCustomer : Boolean = thisCustomer.authenticated;
+	
+	//Perform all sorting if user is authenticated.
+	if(isAuthCustomer) {
+	
+	//Get Promotion Category
+		var promoCat : Category = CatalogMgr.getCategory("promotions");
+		var introCat : Category = CatalogMgr.getCategory("intros");
+	//Get Product Availability in Customer Warehouse form customer default shipping address.
+		var warehouseno : String = thisCustomer.addressBook.preferredAddress.custom.warehouseCode;
+	
+		
+		while(existingProductItr.hasNext()) {
+			var ele = existingProductItr.next();
+			if(!empty(ele) && !empty(ele.product)) {
+				var currentProduct :Product = ele.product;
+			
+				//CHECK if Product Belongs to Promotion Category.
+				var isPromoProduct : Boolean = false;
+				var isIntroProduct : Boolean = false;
+				if(currentProduct.categorized) {
+					var isPromoProduct  = currentProduct.categories.contains(promoCat) ? true : false;
+					var isIntroProduct  = currentProduct.categories.contains(introCat) ? true : false;
+				}
+				var inStock :  Boolean = false;
+				//CHECK if Product is in Stock in Customer warehouse.
+				if(currentProduct.master) {
+					//Get All Varients
+					var varientsItr : Iterator = currentProduct.variants.iterator();
+					while(varientsItr.hasNext() ) {
+						var thisVarient = varientsItr.next();
+						var av = ProductUtils.getAvailability(thisVarient, false);
+						if(av.status == dw.catalog.ProductAvailabilityModel.AVAILABILITY_STATUS_IN_STOCK) {
+							//If Any Varient is In Stock Make it In stock true; So that we can move varients in Top
+							inStock = true;
+							break;
+						}
+					}
+				}
+				else {
+					var av = ProductUtils.getAvailability(currentProduct, false);
+					inStock = av.status == dw.catalog.ProductAvailabilityModel.AVAILABILITY_STATUS_IN_STOCK ? true : false;
+				}
+				
+				
+				
+				//If Product is Out of stock add to outOfStock ArrayList
+				if(!inStock) {
+					outOfStockProducts.add(ele);
+					continue;
+				}
+				
+				if(inStock) {
+					//If Product belongs to Promotional Product Based on either custom attribute Product Line having value "deals" or Merchandised in the "Promotions" category
+					if(currentProduct.custom.productLine == "*Deals*" && isPromoProduct) {
+						//Add this ProductSearchHit to promoProduct ArrayList.
+						promoProducts.add(ele);
+						
+					}
+					else if(currentProduct.custom.productLine == "*Intros*" && isIntroProduct) {
+						//Add this ProductSearchHit to promoProduct ArrayList.
+						introProducts.add(ele);
+						
+					}
+					else {
+						//Open stock
+						openStockProducts.add(ele);
+					}
+				}
+			}
+			
+		}//End of While
+		//Add All Sorted Product in CompleteProducts.
+		if(promoProducts.size() > 0) {
+			completeProducts.addAll(promoProducts);
+		}
+		if(openStockProducts.size() > 0) {
+			completeProducts.addAll(openStockProducts);
+		}
+		if(introProducts.size() > 0) {
+			completeProducts.addAll(introProducts);
+		}
+		if(outOfStockProducts.size() > 0) {
+			completeProducts.addAll(outOfStockProducts);
+		}
+	}
+	else {
+		//completeProducts.addAll(existingProduct);
+		while(existingProductItr.hasNext()) {
+			var ele = existingProductItr.next();
+			if(!empty(ele) && !empty(ele.product)) {
+				completeProducts.add(ele);
+			}
+		}
+	}
+	
+	try {
+		// Finally Add Banner Position in the ProductHits
+		if(!empty(bannerSlot) && bannerSlot.length > 0 ) {
+			
+			if(!empty(assetConfig)) {
+				var assets = assetConfig.assets.split("|");
+				for (let i=0; i< bannerSlot.length; i++) {
+					let index = parseInt(bannerSlot[i]);
+					var assetObj = {
+						assetsID: assets[i]
+					}
+					if(index - 1 >= completeProducts.length) {
+						completeProducts.addAt(completeProducts.length, assetObj);
+					} else {
+						completeProducts.addAt(index - 1, assetObj);
+					}
+					
+				}
+			} else {
+				for (let i=0; i< bannerSlot.length; i++) {
+					let index = parseInt(bannerSlot[i]);
+					var slotObj = {
+						slotPos: index - 1
+					}
+					if(index - 1 >= completeProducts.length) {
+						completeProducts.addAt(completeProducts.length, slotObj);
+					} else {
+						completeProducts.addAt(index - 1, slotObj);
+					}
+				}
+			}
+			
+		}
+	} catch(e) {
+		dw.system.Logger.error("SortPLP failed while excuting banner slot logic");
+	}
+	
+	return completeProducts; 
+}
+
+ProductGridUtils.checkIfAddedInWishList = function(wishListItems : ArrayList, productID : String) {
+	
+	//if No Item is in WishList return false;
+	if (wishListItems.length > 0) {
+		//Check IF this Product exist
+		var contain = false;
+		for each(var pli : dw.customer.ProductListItem in wishListItems) {
+			if (pli.product.ID == productID) {
+				contain = true;
+			}
+		}
+		return contain;
+	} else {
+		return false;
+	}
+};
+
+ProductGridUtils.checkPDPWishListItems = function(productID : String) {
+	
+	//Get all the Product List of TYPE WishList
+	var wishlist : ProductList = ProductListMgr.getProductLists(customer, ProductList.TYPE_WISH_LIST)[0];
+	var items : Collection = wishlist.items;
+	
+	//if No Item is in WishList return false;
+	if (items.length > 0) {
+		//Check IF this Product exist
+		var contain = false;
+		for each(var pli : ProductListItem in items) {
+			if (pli.product.ID == productID) {
+				contain = true;
+			}
+		}
+		return contain;
+	} else {
+		return false;
+	}
+};

@@ -1,0 +1,37 @@
+function OrderList() { 
+// providing constructor
+}
+
+OrderList.prototype = {
+	initFromWebservice : function(response) {
+		//this.processXML(response);
+	},
+	dummy : function() {
+			
+		//**Do the following in the regular function, NOT dummy**
+		
+		//Biztalk returns an encoded string
+		
+		//De-code (replace encoded characters with < and >)
+		
+		//xmlToJSON
+		
+		//return JSON
+		
+		var WebServiceUtils = require("bc_serviceframework/cartridge/scripts/util/WebServiceUtils").WebServiceUtilities;
+
+		var theXML = "<GetOrderDetailsResponse> <order> <header> <customerNumber>COS12345678</customerNumber> <webOrderNumber>COS0000001</webOrderNumber> <bsgOrderNumber>00000000</bsgOrderNumber> <orderStatus>Shipped</orderStatus> <orderDate>1/1/2014</orderDate> <billingAddress> <firstName>Chris</firstName> <lastName>Spellman</lastName> <address1>15 Park Row West</address1> <address2>Suite 202</address2> <city>Providence</city> <state>RI</state> <zip>02720</zip> <country>US</country> <email>cspellman@precisiondesignstudios.com</email> <phone>(401)-555-5555</phone> </billingAddress> <orderTotals> <subtotal>200</subtotal> <shipping>20</shipping> <tax>15</tax> <total>235</total> </orderTotals> <paymentMethod> <type>card</type> <paypalAccount>test@cosmoprofbeauty.com</paypalAccount> <nameOnCard>Test Card</nameOnCard> <cardType>Visa</cardType> <cardNumber>************1111</cardNumber> <cardExp>01/14</cardExp> </paymentMethod> </header> <shipment> <shipMethod>Ground</shipMethod> <shipStatus>Shipped</shipStatus> <trackingNumber>ZF00000000000</trackingNumber> <shippingAddress> <firstName>Chris</firstName> <lastName>Spellman</lastName> <address1>15 Park Row West</address1> <address2>Suite 202</address2> <city>Providence</city> <state>RI</state> <zip>02720</zip> <country>US</country> <phone>(401)-555-5555</phone> </shippingAddress> <lineItems> <lineItem> <productID>00000000</productID> <productName>Shampoo/Conditioner Combo Box</productName> <quantityOrdered>10</quantityOrdered> <quantityShipped>10</quantityShipped> <totalCost>100</totalCost> </lineItem> <lineItem> <productID>CD4567</productID> <productName>Hair Gel</productName> <quantityOrdered>10</quantityOrdered> <quantityShipped>10</quantityShipped> <totalCost>100</totalCost> </lineItem></lineItems></shipment></order></GetOrderDetailsResponse>";
+	
+		jsonObj = WebServiceUtils.xmlToJson(new XML(theXML));
+		
+		this.myXML = jsonObj;
+		
+	},
+
+	processXML : function (xmlObject) {
+		
+	}
+	
+}
+
+module.exports = OrderList;

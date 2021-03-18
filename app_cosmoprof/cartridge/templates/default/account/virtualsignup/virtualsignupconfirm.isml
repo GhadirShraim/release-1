@@ -1,0 +1,90 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+
+	<div class="vsu-congrats">
+		<h2>${Resource.msg('virtualsignup.congrats', 'account', null)} ${pdict.CurrentForms.profile.address.firstname.htmlValue}</h2>
+		<isif condition="${!empty(session.custom.vsuemployee) && session.custom.vsuemployee}">
+			<p>${Resource.msgf('virtualsignup.membershipnumber', 'account', null, pdict.CardNumber)}</p>
+		<iselse>
+			<p>${Resource.msgf('virtualsignup.tempmembershipnumber', 'account', null, pdict.newCardNumber)}</p>
+			<p>${Resource.msg('virtualsignup.textmessage', 'account', null)}</p>
+		</isif>
+	</div>
+
+	<div class="vsu-congrats-confirm">
+	<isif condition="${!empty(session.custom.vsuemployee) && session.custom.vsuemployee}">
+		<div class="vsu-congrats-message">
+			<iscontentasset aid="vsu-congrats-message-vsuemployee"/>
+		</div>
+	<iselse>
+		<div class="vsu-congrats-message">
+			<isslot id="vsu-congrats-message" description="Message for the virtual account signup congrats page" context="global" />
+		</div>
+	</isif>
+		<isif condition="${pdict.LoginExistsError}">
+			<!---TODO: Make into content asset --->
+			<div class="account-error"><iscontentasset aid="virtualsignup-loginexists"/></div>
+		<iselseif condition="${pdict.CreateAccountError}">
+			<!---TODO: Make into content asset --->
+			<div class="account-error"><iscontentasset aid="virtualsignup-createfailed"/></div>
+		</isif>
+		
+		<!--  the 'Shop Now' link needs to be fixed. Should go to login and pass along credentials from this page.  -->
+		<div class="vsu-returntoshop">
+			<div class="vsu-confirm vsu-confirm-password-step">
+				<div class="vsu-confirm-password-step-title">${Resource.msg('virtualsignup.finalsteps', 'account', null)}</div>
+				<div class="vsu-confirm-password-step-description">${Resource.msg('virtualsignup.completelogin', 'account', null)}</div>
+			</div>
+			<form action="${URLUtils.httpsContinue()}" method="post" id="virtualsignupconfirm">
+				<div class="vsu-required">${Resource.msg('global.requiredfieldstar','locale',null)}</div>
+				<div class="passwordrequired error">${Resource.msg('form.requiredfield', 'forms', null)}</div>
+			<isif condition=" ${pdict.CurrentForms.profile.customer.email.value !=null}"> 
+				<div class="confirm-passwordEmail">
+					<span class="emailLabel">Email</span>
+					<input type="text" value="${pdict.CurrentForms.profile.customer.email.value}" disabled="disabled">
+				</div>
+			<iselse>	
+				<isinputfield formfield="${pdict.CurrentForms.profile.customer.email}" type="input" xhtmlclass="email email1" rowclass="email-row"  />						
+			</isif>
+				<isinputfield formfield="${pdict.CurrentForms.profile.login.password}" type="password" xhtmlclass="validatepassword range8_255" rowclass="" labelvalue="Enter Password"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.login.passwordconfirm}" type="password" xhtmlclass="passwordmatch" rowclass="" labelvalue="Re-enter Password"/>
+				<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+				
+				<button type="submit" class="js-vsu-shop-now" name="${pdict.CurrentForms.profile.save.htmlName}" value="true">${Resource.msg('virtualsignup.shopnow', 'account', null)}</button>
+			</form>
+			
+			<div class="vsu-hidden-fields">
+				<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+				<isif condition="${pdict.CurrentForms.profile.vsu.emailmessage.checked == 'true'}">
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+			 	<iselse>
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+				</isif>
+			</div>
+		</div>
+	</div>
+	
+	<div class="vsu-congrats-banner">
+		<isslot id="vsu-congrats-banner" description="Banner for the virtual account signup congrats page" context="global" />
+	</div>
+	
+	<iscomment>Bing ADS for CosmoProf Virtual SignUp Page #CP-138 </iscomment>
+	<isif condition="${'bingAdsCode' in dw.system.Site.getCurrent().preferences.custom}"> 
+		<isprint value="${dw.system.Site.getCurrent().getCustomPreferenceValue('bingAdsCode')}" encoding="off"/>
+	</isif>
+	
+	<iscomment>Google Code for CosmoProf Virtual SignUp Conversion Page #CP-138 </iscomment>
+	<isif condition="${'googleAdwordcode' in dw.system.Site.getCurrent().preferences.custom}"> 
+		<isprint value="${dw.system.Site.getCurrent().getCustomPreferenceValue('googleAdwordcode')}" encoding="off"/>
+	</isif>
+	
+</isdecorate>

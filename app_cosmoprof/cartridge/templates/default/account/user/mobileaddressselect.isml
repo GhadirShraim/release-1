@@ -1,0 +1,53 @@
+<isdecorate template="account/pt_account"/>
+<isinclude template="util/modules"/>
+
+	<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+	<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+		<h1>
+			${Resource.msg('account.header','account',null)} | 
+			<isprint value="${pdict.CurrentCustomer.profile.firstName}"/>&nbsp;<isprint value="${pdict.CurrentCustomer.profile.lastName}"/>
+			<span class="account-logout">(<a title="Logout" class="logout-btn" href="${URLUtils.https('Login-Logout')}">${Resource.msg('global.logout','locale',null)}</a>)</span>
+		</h1>
+	</isif>
+	
+	<isset name="preferredAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress()}" scope="page" />
+	<isif condition="${preferredAddress != null}">
+		<ul class="mobile-user">
+			<li class="mobile-my-account back">
+				<a href="${URLUtils.https('Account-Show')}" title="${Resource.msg('global.accountlink','locale',null)} " class="user-account">
+					<div>
+						<span class="header">${Resource.msg('headercustomerinfo.shipto','components',null)}</span></br>
+						<isif condition="${'addressLabel' in preferredAddress.custom && !empty(preferredAddress.custom.addressLabel)}">
+							<isprint value="${preferredAddress.custom.addressLabel}"/></br>
+						</isif>
+						<isprint value="${preferredAddress.firstName}"/> <isprint value="${preferredAddress.lastName}"/></br>
+						<isprint value="${preferredAddress.address1}"/></br>
+						<isprint value="${preferredAddress.address2}"/><isif condition="${preferredAddress.address2 != null}"></br></isif>
+						<isprint value="${preferredAddress.city}"/>, 
+						<isprint value="${preferredAddress.stateCode}"/> 
+						<isprint value="${preferredAddress.postalCode}"/>
+					</div>
+				</a>
+			</li>
+		</ul>
+	</isif>
+	<div class="mobile-Address">
+	<a class="address-create link-button" title="${Resource.msg('addresslist.addnew','account',null)}" href="${URLUtils.url('Address-Add', 'mobileAdd')}" >${Resource.msg('addresslist.addnew','account',null)}</a>
+	
+	<h2>${Resource.msg('address.or','account',null)}</h2>
+	<h2>${Resource.msg('address.selectsaved','account',null)}</h2>
+
+	<form action="${URLUtils.httpsContinue()}" name="ship-address-select-form">
+		<isif condition="${!empty(pdict.ShippingAddresses)}">
+			<isaddressselectlist p_listId="shop_address_list" p_listaddresses="${pdict.ShippingAddresses}" />
+		</isif>
+		
+		<button type="submit" value="submit">
+			${Resource.msg('addressselect.shop','account',null)}
+		</button>
+	</form>
+	</div>
+	
+	<div class="shipping-pavmsg">${Resource.msg('addressselect.manufactuererdismessage','account',null)}</div>
+	
+</isdecorate>

@@ -1,0 +1,27 @@
+<iscache type="relative" hour="24"/>
+<isdecorate template="content/home/pt_storefront">
+<iscomment>this is the template rendering the homepage</iscomment>
+	
+	<div class="home-top-slots homepageclass cp_Slot1">
+		<isslot id="promotionalMessaging" description="PromotionalMessaging" context="global" />
+		<isslot id="heroImage" description="" context="global" />
+		<isslot id="featuredProducts" description="" context="global" />
+	</div>
+	
+	<div class="home-bottom-slots homepageclass cp_Slot2 ${pdict.CurrentCustomer.authenticated?'nologinrequired':''}">
+		<div class="home-bottom-left">
+			 <isslot id="home-bottom-left" description="Bottom content below flash banner - left side" context="global" />
+		</div>
+	 	<isslot id="trendingNow" context="global" description=""/>
+	 	<isslot id="quickOrder" context="global" description=""/>
+    </div>
+	
+	<div class="home-bottom">
+		<isslot id="home-bottom" description="Bottom content below flash banner " context="global" />
+	</div>
+	
+	<div class="home-spreadfast">
+		<isslot id="home-spreadfast" description="Home Page spreadfast Content" context="global" />
+	</div>
+
+</isdecorate>

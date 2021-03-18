@@ -1,0 +1,85 @@
+/**
+ * Creates a shipping address for the given shipment and copies
+ * the address details stored in the given address form to the
+ * created shipment address.
+ * The method additionally sets the given gift options to the 
+ * shipment.
+ *
+ * @input Shipment : dw.order.Shipment The shipment to create the address for.
+ * @input Address : dw.customer.CustomerAddress 
+ * @input GiftOptionsForm : dw.web.FormGroup The gift options form.
+ * @input AddressForm : dw.web.FormGroup The address form.
+ * 
+ * @output ShippingAddress : dw.order.OrderAddress The shipment's shipping address.
+ */
+importPackage( dw.system );
+importPackage( dw.order );
+importPackage( dw.web );
+importPackage( dw.customer ) ;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	var shipment : Shipment = pdict.Shipment;
+	var giftOptions : FormGroup = pdict.GiftOptionsForm;
+	var shippingAddress : OrderAddress = shipment.shippingAddress;
+	var addressFields : FormGroup = pdict.AddressForm.addressFields;
+	// if the shipment has no shipping address yet, create one
+	if( shippingAddress == null )
+	{
+		shippingAddress = shipment.createShippingAddress();	
+	}
+	
+	var defaultAddress : CustomerAddress = pdict.Address;
+	if(addressFields != null) {
+		shippingAddress.setCompanyName( addressFields.companyName.value );
+		shippingAddress.setFirstName( addressFields.firstName.value );
+		shippingAddress.setLastName( addressFields.lastName.value );
+		shippingAddress.setAddress1( addressFields.address1.value );
+		shippingAddress.setAddress2( addressFields.address2.value );
+		shippingAddress.setCity( addressFields.city.value );
+		shippingAddress.setPostalCode( addressFields.zip.value );
+		shippingAddress.setStateCode( addressFields.states.state.value );
+		shippingAddress.setCountryCode( addressFields.country.value );
+		shippingAddress.setPhone( addressFields.phone.value );
+		if(!empty(addressFields.companyname.value)){
+			shippingAddress.setCompanyName(addressFields.companyname.value);
+		}
+		/** As we Shipping Address Form Does not have Attention to field.
+		if (!empty(addressFields.object) && 'attentionTo' in addressFields.object.custom && !empty(addressFields.object.custom.attentionTo)){
+			shippingAddress.custom.attentionTo = addressFields.object.custom.attentionTo;
+		} **/
+	} else {
+			// copy the address details
+		shippingAddress.setCompanyName( defaultAddress.companyName );
+		shippingAddress.setFirstName( defaultAddress.firstName );
+		shippingAddress.setLastName( defaultAddress.lastName );
+		shippingAddress.setAddress1( defaultAddress.address1 );
+		shippingAddress.setAddress2( defaultAddress.address2 );
+		shippingAddress.setCity( defaultAddress.city );
+		shippingAddress.setPostalCode( defaultAddress.postalCode );
+		shippingAddress.setStateCode( defaultAddress.stateCode );
+		shippingAddress.setCountryCode( defaultAddress.countryCode );
+		shippingAddress.setPhone( defaultAddress.phone );
+		if(!empty(defaultAddress.companyName)){
+			shippingAddress.setCompanyName( defaultAddress.companyName );
+		}
+		/**
+		if ('attentionTo' in defaultAddress.custom && !empty(defaultAddress.custom.attentionTo)){
+			shippingAddress.custom.attentionTo = defaultAddress.custom.attentionTo;
+		} **/
+	}
+	
+	
+	
+	// copy the gift options
+	if( giftOptions != null)
+	{
+		shipment.setGift( giftOptions.isGift.value );
+		shipment.setGiftMessage( giftOptions.giftMessage.value );
+	}
+	
+	// output shipping address
+	pdict.ShippingAddress = shippingAddress;
+		
+    return PIPELET_NEXT;
+}

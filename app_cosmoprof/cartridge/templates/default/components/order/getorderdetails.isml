@@ -1,0 +1,37 @@
+<isdecorate template="account/orderhistory/pt_orderhistory">
+<isinclude template="util/modules"/>
+
+	<isif condition="${!empty(pdict.orderObj)}">
+
+	<iscomment>
+		all orders are in the pcist.ordersObj and in json format - do not use pdict.Order as this will not return any results - all order history is being pulled in from external source
+	</iscomment>
+		<isorderdetails order="${pdict.orderObj}" orderstatus="true"/>
+		
+		<div class="form-row order-detail-options">
+			<isif condition="${pdict.CurrentCustomer.authenticated}">
+				<a href="${URLUtils.https('Order-History')}" title="${Resource.msg('orderdetails.returnorder','account',null)}">
+					${Resource.msg('orderdetails.returnorder','account',null)}
+				</a>
+			</isif>
+			<a href="${URLUtils.httpHome()}" title="${Resource.msg('orderdetails.returnshopping','account',null)}">
+				${Resource.msg('orderdetails.returnshopping','account',null)}
+			</a>	
+		</div>
+		
+	<iselse>
+	
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<div class="back">
+				<a href="${URLUtils.https('Order-History')}" title="${Resource.msg('orderdetails.returnorder','account',null)}">
+					${Resource.msg('orderdetails.returnorder','account',null)}
+				</a>
+			</div>
+		</isif>
+		<div class="not-found">
+			${Resource.msg('orders.notfound','account',null)}
+		</div>
+	
+	</isif>
+
+</isdecorate>

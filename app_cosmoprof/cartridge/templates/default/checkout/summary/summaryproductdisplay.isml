@@ -1,0 +1,121 @@
+<iscomment>Show Products On Summary Page</iscomment>
+<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+<div class="showthisitem <isif condition="${pliloopstate.index > 2}">togglelessmore hide</isif> <isif condition="${!pdict.CurrentSession.custom.isPortalUser && productLineItem.custom.deliveryMethod == 'SDD' && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">SSD_prod-items <iselse/>Non_SDD_prod-item</isif>">
+	<div class="cart-row <isif condition="${pliloopstate.first}"> first <iselseif condition="${pliloopstate.last}"> last</isif>">
+		<div class="item-image image-col">
+			<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+		</div>
+		
+		<div class="details-col">
+			<div class="item-details">
+				<iscomment>Display product line and product using module</iscomment>
+				<isdisplayliproduct p_productli="${productLineItem}" p_editable="${true}" p_hideprice="${true}" p_nameredirect="false"/>
+				
+				<iscomment> redesign
+				<div class="item-quantity-details item-availability-details">
+					<div class="editdetails"><a href="${URLUtils.url('Cart-Show')}">${Resource.msg('global.editdetails','locale',null)}</a></div>
+					<div class="item-stock">
+						<isdisplayproductavailability p_productli="${productLineItem}"/>
+					</div>
+			    </div>
+			    </iscomment>
+			</div>
+			<div class="col3-wrap">	
+				<div class="item-price column">
+					<!-- Start of item-price -->
+					<div class="item-price column pricesec">
+						<isif condition="${productLineItem.bonusProductLineItem}">
+							<div class="summary-bonus-price">
+								<span class="bonus-item">
+									${Resource.msg('global.bonus','locale',null)}
+								</span>
+							</div>
+						<iselseif condition="${productLineItem.product != null}">
+	
+							<iscomment>
+								StandardPrice: quantity-one unit price from the configured list price
+								book. SalesPrice: product line item base price. If these are
+								different, then we display crossed-out StandardPrice and also
+								SalesPrice. 
+							</iscomment> 
+							
+							
+							<iscomment> this is to get the discount price on the item </iscomment>
+							<isset name="promos" value="${dw.campaign.PromotionMgr.activeCustomerPromotions.getProductPromotions(productLineItem.product)}" scope="page"/>
+							<isset name="DiscountPrice" value="${null}" scope="page"/>
+							<isif condition="${! empty(promos)}">
+								<isloop items="${promos}" var="promo">
+									<isif condition="${promo.custom.discountModel}">
+										<isset name="DiscountPrice" value="${promo.getPromotionalPrice(productLineItem.product)}" scope="page"/>
+										<isbreak/>
+									</isif>
+									
+								</isloop>
+								
+							</isif>
+							
+							<iscomment>Get the price model for this	product.</iscomment>
+							<isset name="PriceModel" value="${productLineItem.product.getPriceModel()}" scope="page" />
+							
+							<iscomment>Get StandardPrice from list price book.</iscomment>
+							<isinclude template="product/components/standardprice" />
+							
+							<iscomment>Get SalesPrice from line item itself.</iscomment>
+							<isset name="StandardPrice" value="${productLineItem.basePrice}" scope="page" />
+							<isset name="SalesPrice" value="${productLineItem.adjustedPrice / productLineItem.quantity.value}" scope="page" />
+							<iscomment>Get the tax Basis Price </iscomment>
+							<isset name="taxBasis" value="${productLineItem.taxBasis.divide(productLineItem.quantity.value)}" scope="Page" />
+							<!-- Rounding Off Sales Price -->
+							<isset name="SalesPrice" value="${Math.round(SalesPrice * 100.0)/100}" scope="page" />
+							<isif condition="${!empty(DiscountPrice) && (DiscountPrice != dw.value.Money.NOT_AVAILABLE)}">
+								<span class="<isif condition="${DiscountPrice > SalesPrice }">price-standard</isif>"><isif condition="${pdict.CurrentSession.custom.device == 'mobile'}"><span>${Resource.msg('cart.yourprice','checkout',null)}</span></isif>Price <span class="mobile-your-price"><isprint value="${SalesPrice}" /></span></span>
+								<br>
+								<isif condition="${DiscountPrice > SalesPrice && taxBasis > SalesPrice }">
+									<span class="price-sales"><isif condition="${pdict.CurrentSession.custom.device == 'mobile'}"><span>${Resource.msg('cart.promoprice','checkout',null)}</span></isif> <span class="mobile-your-price">${Resource.msg('global.dollar','locale',null)}<isprint value="${SalesPrice}" /></span></span>
+								</isif>
+							<iselseif condition="${StandardPrice.available && StandardPrice > SalesPrice}">
+								<iscomment>StandardPrice and SalesPrice are different, show standard</iscomment>
+								<div class="price-promotion">
+									Price <span class="price-standard"><isif condition="${pdict.CurrentSession.custom.device == 'mobile'}"><span>${Resource.msg('cart.salonprice','checkout',null)}</span></isif><span class="mobile-your-price"><isprint value="${StandardPrice}" /></span></span>
+									<br>
+									<span class="price-sales"><isif condition="${pdict.CurrentSession.custom.device == 'mobile'}"><span>${Resource.msg('cart.promoprice','checkout',null)}</span></isif><span class="mobile-your-price">${Resource.msg('global.dollar','locale',null)}<isprint value="${SalesPrice}" /></span></span>
+								</div>
+							<iselse>
+								<span>${Resource.msg('global.price','locale',null)}</span>
+								<span class="price-standard"><isprint value="${StandardPrice}" /></span>
+							</isif>
+						</isif>
+					</div><!-- END of item-price -->
+				</div>
+				<div class="item-quantity column">
+					<div class="bg-sdd-image"></div>
+					<div>${Resource.msg('global.qty2','locale',null)} <isprint value="${productLineItem.quantity}" /></div>
+				</div>
+				<div class="item-total column"><isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">${Resource.msg('summary.itemtotal','checkout',null)}</isif>
+					<isif condition="${productLineItem.bonusProductLineItem}">
+					   <iscomment>
+						    <span class="bonus-item">
+						    	${Resource.msg('global.bonus','locale',null)}
+						    </span>
+					    </iscomment>
+					<iselse>
+						<iscomment>Otherwise, render price using call to adjusted price </iscomment>
+						<isif condition="${lineItem.priceAdjustments.length > 0}">
+				    		 ${Resource.msg('cart.totalprice','checkout',null)} <isprint value="${productLineItem.getAdjustedPrice()}"/>
+				    	<iselse>
+				    		 ${Resource.msg('cart.totalprice','checkout',null)} <isprint value="${productLineItem.getAdjustedPrice()}" />
+				    	</isif>
+					</isif>								
+					<isif condition="${productLineItem.optionProductLineItems.size() > 0}">
+						<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+							<isif condition="${optionLI.price > 0}">
+								<p>+ <isprint value="${optionLI.adjustedPrice}"/></p>
+							</isif>
+						</isloop>
+					</isif>
+				</div>
+			</div><!-- end: col3-wrap  -->
+		</div><!-- end: details-col -->
+	
+	</div><!--end: cart-row  -->
+</div><!-- End : see All div -->

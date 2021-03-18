@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19">
+
+	<list formid="products">
+		<field formid="quantity" type="string" max-length="5" binding="quantity"/>
+		<field formid="sku" type="string" max-length="15" binding="sku"/>
+		<field formid="description" type="string" binding="description"/>
+	</list>
+	
+	<!-- functional button -->
+	<action formid="submitOrder" valid-form="false"/>
+	<action formid="wishlistadd" valid-form="false"/>
+	<action formid="mylistsadd" valid-form="false"/>
+	
+</form>

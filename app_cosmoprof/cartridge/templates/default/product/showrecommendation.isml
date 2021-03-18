@@ -1,0 +1,91 @@
+<isif condition="${!empty(pdict.Recommendation) && 'items' in pdict.Recommendation[0] && !empty(pdict.Recommendation[0].items)}">
+	<isinclude template="util/modules" />
+	<isimagesizes />
+	<isset name="recProducts" value="${pdict.Recommendation[0].items}" scope="Page" />
+	<div class="global-slick-wrapper">	
+		<div class="recommendation-title">
+			<isprint value="${pdict.Recommendation[0].title}" />
+		</div>
+		<div class="recommendations cross-sell">
+			<div id="carousel-recomendations" class="slick-slider-global">
+				<isloop items="${recProducts}" var="rec">
+					<isset name="productID" value="${rec.sku_id}" scope="Page" />
+					<isset name="Product" value="${dw.catalog.ProductMgr.getProduct(rec.sku_id)}" scope="pdict"/>
+					<isif condition="${!Product.master && Product.hasOwnProperty('masterProduct')}">
+						<isset name="pName" value="${Product.masterProduct.name}" scope="page"/>
+					<iselse>
+						<isset name="pName" value="${rec.name}" scope="page"/>
+					</isif>
+					
+					<iscomment> Let's Get the Product details From JSON Response only
+						<isif condition="${!empty(pdict.Product.getImage('large',0))}">
+							<isset name="imageUrl" value="${pdict.Product.getImage('large', 0).getAbsImageURL(imageConfig.pdpYouMightAlsoLike != null ? imageConfig.pdpYouMightAlsoLike : imageConfig)}" scope="page"/>
+							<isset name="imageAlt" value="${pdict.Product.getImage('large', 0).alt}" scope="page"/>
+							<isset name="imageTitle" value="${pdict.Product.getImage('large', 0).title}" scope="page"/>
+						<iselse>
+							<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+							<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+							<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+						</isif>
+					 </iscomment>
+					 <isset name="noFoundimageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+					<isif condition="${pdict.Product.master}"> 
+						<isset name="imageUrl" value="${pdict.Product.variationModel.defaultVariant.getImage('large', 0).getHttpsImageURL(imageConfig.pdpYouMightAlsoLike != null ? imageConfig.pdpYouMightAlsoLike : imageConfig)}" scope="page"/>
+					<iselse>
+						<isset name="imageUrl" value="${pdict.Product.getImage('large', 0).getHttpsImageURL(imageConfig.pdpYouMightAlsoLike != null ? imageConfig.pdpYouMightAlsoLike : imageConfig)}" scope="page"/>
+					</isif>
+					<isset name="imageAlt" value="${pName}" scope="page"/>
+					<isset name="imageTitle" value="${pName}" scope="page"/>
+					<div>
+						<div class="product-tile recommendation-product-tile ${pdict.CurrentHttpParameterMap.PAGE == 'PDP' ? 'naquickview' : ''}">
+							<iscomment> Removed The Wishlist heart Symbols.
+								<isset name="showfavicon" value="${(pdict.Product.master ? 'hideFavIcon' : 'showFavIcon')}" scope="page" />
+								<div class="favorite-wrapper ${showfavicon}">	
+									<isinclude url="${URLUtils.url('Wishlist-FavoriteListPDP','pid', pdict.Product.ID)}"/>											
+								</div>
+							 </iscomment>
+							<div class="analytics capture-product-id"><isprint value="${pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1)}"/></div>
+							<div class="product-image recommendation_image">
+							<iscomment>Product Image Overlay</iscomment>
+							<isif condition="${('ProductImageOverlay' in pdict.Product.custom && pdict.Product.custom.ProductImageOverlay) && ('overlayFrom' in pdict.Product.custom && pdict.Product.custom.overlayFrom) && ('overlayTo' in pdict.Product.custom && pdict.Product.custom.overlayTo)}">
+								<isinclude url="${URLUtils.url('Product-ProductBadges','productid', pdict.Product.ID)}"/>
+							</isif>
+								<a href="${URLUtils.http('Product-Show', 'pid', productID)}" ></a>
+								<a href="${rec.link}" alt="${imageAlt}" title="${imageTitle}" >
+									<img src="${!empty(imageUrl) ? imageUrl : noFoundimageUrl}" alt="${imageAlt}" title="${imageTitle}"/>
+								</a>
+							</div>
+														
+							
+							<div class="product-brand custom-scroll" itemprop="name">
+								<a href="${rec.link}" title="${pName}"><isprint value="${rec.brand_name}" /></a>									
+							</div>
+							<div class="product-name-rec custom-scroll">
+								<a href="${rec.link}" title="${pName}"><isprint value="${pName}"/></a>
+							</div>
+							<isinclude template="product/components/reviews-stars"/>
+							<iscomment> Product Details Not required in Tool Tip
+								<div class="tooltip-content" data-layout="medium">
+									<div class="recommendation-tooltip-header">
+										<div class="product-name"><isprint value="${pName}"/></div>
+										<isif condition="${pdict.CurrentCustomer.authenticated}"> 	
+										<isset name="GridValue" value="${false}" scope="page" />
+											<div class="product-pricing"><isinclude template="product/components/pricing.isml"/></div>
+										<iselse>
+											<a  class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+										</isif>
+										
+									</div>
+									<div class="recommendation-tooltip-description">
+										<span class="label">${Resource.msg('global.description','locale',null)}</span>
+										<p class="value"><isif condition="${! empty(pdict.Product.longDescription)}"><isprint value="${pdict.Product.longDescription}" encoding="off" /><iselse></isif></p>
+									</div>
+								</div>
+							</iscomment>
+						</div>
+					</div>
+				</isloop>
+			</div>
+		</div>
+	</div><!-- ENDS global-slick-wrapper-->
+</isif>

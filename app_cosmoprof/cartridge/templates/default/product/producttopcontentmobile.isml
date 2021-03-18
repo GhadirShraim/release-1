@@ -1,0 +1,86 @@
+<iscomment>In the product pipeline, if a product was not found for the selected attributes, we need to refresh the ProductVariationModel using the default selected variant</iscomment>
+
+<isset name="isQuickView" value="${pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist'}" scope="page"/>
+
+<!-- dwMarker="product" dwContentID="${pdict.Product.UUID}" -->
+<h2 class="product-brand" itemprop="brand"><isprint value="${pdict.Product.brand}"/></h2>
+<h1 class="product-name" itemprop="name"><isprint value="${pdict.Product.name}"/></h1>
+
+<iscomment>
+		# SAL-651 - Display badge on PDP
+		Show it here Only for Mobile. For desktop, we show it under Prev & Next (right hand side)
+	</iscomment>
+	<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+		<isif condition="${'badgeBody' in pdict.Product.custom && !empty(pdict.Product.custom.badgeBody)}">
+			<div class="product-pdp-badge">
+				<isprint value="${pdict.Product.custom.badgeBody}" encoding="off"/>
+			</div>
+		</isif>
+	</isif>
+	
+<div class="product-col-1 product-image-container">
+	<isinclude template="product/components/productimages"/>	
+</div>
+
+<div class="product-col-2  product-detail">
+	<div id="product-content">
+		<isinclude template="product/productcontent"/>
+	</div>
+	<isif condition="${!isQuickView}">
+	
+		<div class="description accordion">
+			<isif condition="${! empty(pdict.Product.longDescription) && pdict.Product.longDescription.markup.length > 0}">
+				<div class="panel">
+					<div class="toggled">${Resource.msg('product.description','product',null)}</div>
+					<div class="cnt" itemprop="description">
+						<isprint value="${pdict.Product.getLongDescription()}" encoding="off">
+					</div>
+				</div>
+			</isif>
+			<isif condition="${! empty(pdict.Product.custom['directions']) && pdict.Product.custom['directions'].markup.length > 0}">
+				<div class="panel">
+					<div class="toggled">${Resource.msg('product.directions','product',null)}</div>
+					<div class="cnt">
+						<isprint value="${pdict.Product.custom['directions']}" encoding="off">
+					</div>
+				</div>
+			</isif>
+			<isif condition="${! empty(pdict.Product.custom['features_benefits']) && pdict.Product.custom['features_benefits'].markup.length > 0}">
+				<div class="panel">
+					<div class="toggled">${Resource.msg('product.features','product',null)}</div>
+					<div class="cnt">
+						<isprint value="${pdict.Product.custom['features_benefits']}" encoding="off">
+					</div>
+				</div>
+			</isif>
+			<isif condition="${! empty(pdict.Product.custom['ingredients']) && pdict.Product.custom['ingredients'].markup.length > 0}">
+				<div class="panel">
+					<div class="toggled">${Resource.msg('product.ingredients','product',null)}</div>
+					<div class="cnt">
+						<isprint value="${pdict.Product.custom['ingredients']}" encoding="off">
+					</div>
+				</div>
+			</isif>
+			<div class="panel">
+				<div class="toggled">${Resource.msg('product.reviews','product',null)}</div>
+				<div class="cnt">					
+					<isinclude url="${URLUtils.url('Product-GetReviews', 'pid', pdict.Product.ID)}"/>
+				</div>
+			</div>
+			<iscomment>
+				# SAL-657 - Display Product Awards on the PDP, within their own tab.
+			</iscomment>
+			<isif condition="${'productAwards' in pdict.Product.custom && !empty(pdict.Product.custom['productAwards']) && pdict.Product.custom['productAwards'].length > 0}">
+				<div class="panel">
+					<div class="toggled">${Resource.msg('product.awards','product',null)}</div>
+					<div class="cnt">
+						<isloop iterator="${pdict.Product.custom['productAwards']}" alias="award">
+							<iscontentasset aid="${award}"/>
+						</isloop>
+					</div>
+				</div>
+			</isif>
+		</div>
+	</isif>
+
+</div>

@@ -1,0 +1,95 @@
+<isinclude template="util/modules"/>
+<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">
+
+	<isimagesizes />
+	
+	<iscomment>calculated correct index position to separate the result columns</iscomment>
+	<isscript>
+		var beginIndex = pdict.ContentPagingModel.start;
+		var endIndex = pdict.ContentPagingModel.end;
+	</isscript>
+	<iscomment>
+		When filters are applied Pull the contents of the search result from the ContentSearchResult object.
+		
+		e.g. "ContentSearchResult.content"
+		
+		These values are assigned to the 'contentToDisplay' variable and passed further down for rendering onto the
+		blog page.
+	</iscomment>
+		
+	<isset name="contentToDisplay" value="${pdict.ContentSearchResult.getContent().asList()}" scope="page"/>
+	
+	<isset name="showResults" value="${false}" scope="page"/>
+	<isset name="showNoResults" value="${false}" scope="page"/>
+	
+	<isif condition="${pdict.ContentSearchResult.count > 0}">
+		<isset name="showResults" value="${true}" scope="page"/>
+		<isset name="showNoResults" value="${false}" scope="page"/>
+	<iselseif condition="${pdict.ContentSearchResult.count == 0}">
+		<isset name="showResults" value="${false}" scope="page"/>
+		<isset name="showNoResults" value="${true}" scope="page"/>
+	</isif>
+	<isscript>
+		importScript( "util/ViewHelpers.ds" );
+	</isscript>
+	<div class="Article-left digital-library-content">
+		<div class="left">
+			<ul class="Article-folder-content-list">
+				<isset name="contentCount" value="${Number(0)}" scope="page" />
+				<isscript>
+					importPackage ( dw.util );
+					var sortbylastmodified = new dw.util.PropertyComparator('lastModified', false);
+					var sortedContentList : dw.util.ArrayList = new ArrayList();
+					sortedContentList.addAll(contentToDisplay);
+					sortedContentList.sort(sortbylastmodified);
+				</isscript>
+				<isloop items="${sortedContentList}" var="folderContent" status="loopstate" begin="${beginIndex}" end="${endIndex}" >
+					<isif condition="${folderContent != null}">
+						<isif condition="${'body' in folderContent.custom && folderContent.custom.body != null}">
+							<isif condition="${checkIfOnlineFromTo(folderContent.custom.onlineFrom,folderContent.custom.onlineTo)}">
+								<isset name="contentCount" value="${contentCount+1}" scope="page" />
+								<li class="list-${contentCount.toString()} ${(contentCount > 1 && contentCount < 7) ? 'mainArticles' : ''} ${contentCount == 1 ? 'mainArticles1' : ''} ${contentCount < 7 ? '': 'hide'}">
+									<div class="listArticle"><!-- dwMarker="content" dwContentID="${folderContent.UUID}" -->
+										<isprint value="${folderContent.custom.body}" encoding="off"/>
+									</div>
+									<a href="${URLUtils.url('Page-Show','cid', folderContent.ID , 'digitalLib','true')}" class="readmore">
+										<isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" />
+									</a>
+								</li>
+							</isif>
+						</isif>
+					</isif>
+				</isloop>
+			</ul>
+			<isif condition="${contentCount > 7}">
+				<button class="show-more">Show more</button>
+			</isif>
+		</div>
+	</div>
+	
+	
+	
+	<div class="Article-right">
+		<div class="refinmentSection digital-library-refine">
+			<iscomment>Blog search form</iscomment>
+			<div class="blog-search">
+				<form role="digitallibrarySearch" action="${URLUtils.url('Search-ShowLibraryContent')}" method="get" name="bolgSearchForm" id="digitallibrarySearch">
+					<fieldset>
+						<div class="row">
+						<input autocomplete="off" type="text" id="q" name="q" value="" class="search-attr" placeholder="${Resource.msg('simplesearch.digitallibrarysearch','search',null)}" maxlength="25" />
+						<button class="blogSearchBtn" type="submit" value="${Resource.msg('global.goblog','locale',null)}" name="simplesearch">
+							${Resource.msg('global.goblog','locale',null)}
+						</button>
+						</div>
+						<div class="box">
+							<div id="suggesstion-box"></div>
+						</div>
+						<input type="hidden" id="blogFolderID" name="blogFolderID" value="digitallibrary"/>	
+					</fieldset>
+				</form>
+			</div>
+			<isinclude template="search/components/contentsearchrefinebar"/>
+		</div>
+	</div>
+	
+</isif>

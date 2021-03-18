@@ -1,0 +1,37 @@
+/**
+*
+*   @input PIList : dw.util.Collection 
+*   @input CBasket : dw.order.LineItemCtnr
+*/
+
+importPackage( dw.order );
+importPackage( dw.system );
+importPackage( dw.util);
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var instruments : Collection = args.PIList;
+	var instrumentsIter : Iterator = instruments.iterator();
+    var hasPlccCard = false;
+    var currentBasket : Basket = args.CBasket;
+    
+    if(instruments == null || instruments.empty)
+	{
+		return PIPELET_ERROR;
+	}
+	
+    while( instrumentsIter.hasNext() ) {
+		creditCardInstrument = instrumentsIter.next();
+		
+		if(creditCardInstrument.custom.isPLCC == true) {
+            hasPlccCard = true;
+            break;
+        }
+	}
+	
+ 	if ((session.custom.PLCCCard == true) && !empty(currentBasket)) {	    	
+	    session.custom.PLCCCard = hasPlccCard;
+    }
+
+   return PIPELET_NEXT;
+}

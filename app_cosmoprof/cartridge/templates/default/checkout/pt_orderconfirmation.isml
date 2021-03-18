@@ -1,0 +1,75 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+    <isscript>var pageContext={title:'Order Confirmation', type:'orderconfirmation', ns:'account'};</isscript>
+	<isinclude template="util/modules"/>
+	
+	<iscomment>Include all important information globally , e.g. meta-data, link information, and javascript.</iscomment>
+	<isscript>var pageContext={title:'Order Confirmation', type:'orderconfirmation', ns:'orderconfirmation'};</isscript>
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="checkout/pt_orderconfirmation_UI"/>
+	
+	<iscomment>Add template-specific header information here.</iscomment>	
+	
+</head>
+
+<body>
+	<isinclude template="gtm/bodytrackingcode" />
+	<iscomment> inclusion of static-header classname will remove absolute position for header </iscomment>
+	<div id="wrapper" class="pt_order-confirmation static-header">
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		<div id="main" role="main" class="clearfix primary-focus">
+			<div class="top-wrapper show-on-desktop">
+				<h1 class="order-conf-header cart-checkout-header">${Resource.msg('confirmation.thankyou','checkout',null)}</h1>
+				<div class="confirmation-message">
+					<iscontentasset aid="confirmation-message" />
+				</div>
+				<iscomment>
+					<div class="print-page-wrap">
+						<a class="print-page">${Resource.msg('confirmation.print','checkout',null)}</a>
+					</div>
+				</iscomment>
+			</div>
+			
+			<iscomment>Below top-wrapper changes the strure for mobile design</iscomment>
+			<div class="top-wrapper-mobile show-on-mobile">
+				<h1 class="order-conf-header cart-checkout-header"><b>${Resource.msg('confirmation.thankyou','checkout',null)}</b></h1>
+				<iscomment>
+					<div class="print-page-wrap">
+						<a class="print-page">${Resource.msg('confirmation.print','checkout',null)}</a>
+					</div>
+				</iscomment>
+				<div class="confirmation-message">
+					<iscontentasset aid="confirmation-message" />
+				</div>
+			</div>
+			<div id="primary" class="primary-content order-primary-content">
+				<isreplace/>
+			</div>
+			
+			<div id="secondary" class="nav summary">
+				<iscomment>  Redesign
+					<isinclude template="checkout/confirmation/confirmationregister"/>
+				</iscomment>	
+				
+			</div>
+			
+		</div>
+		
+		<isscript>
+			session.custom.pageRetention = dw.web.URLUtils.https('Home-Show');
+		</isscript>
+	
+		<isinclude template="components/footer/footer"/>		
+		<isinclude template="checkout/pt_orderconfirmation_VARS"/>
+		
+	</div>
+</body>
+</html>

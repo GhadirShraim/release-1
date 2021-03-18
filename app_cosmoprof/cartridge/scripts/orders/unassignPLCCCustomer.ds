@@ -1,0 +1,15 @@
+
+importPackage( dw.system );
+importPackage( dw.util);
+importPackage( dw.customer );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+   // delete PLCC related session variables
+   if (!empty(session.custom)) {
+        if (!empty(session.custom.PLCCCard)) {
+            delete session.custom.PLCCCard;
+      }
+   }
+   return PIPELET_NEXT;
+}

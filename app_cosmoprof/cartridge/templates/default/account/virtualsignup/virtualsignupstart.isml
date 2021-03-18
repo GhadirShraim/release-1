@@ -1,0 +1,232 @@
+<isdecorate template="account/pt_virtualsignup"/>
+	<isinclude template="util/modules"/>
+	<isset name="PasswordResetLink" value="${URLUtils.https('Account-PasswordResetDialog')}" scope="page" />
+	<isif condition="${pdict.ExistingCustomerError || !pdict.validateForm || pdict.MisMatchEmailError || pdict.CaptchaErrorCode || pdict.CallCC || pdict.CardNotFound }">
+		<isset name="isValid" value="true" scope="page" />
+	</isif>
+	<form method="post" action="${URLUtils.continueURL()}" id="vsu-start-form" name="${pdict.CurrentForms.profile.htmlName}">
+		<fieldset class="vsu-profession-options <isif condition="${isValid}">hide-vsu-profession-options</isif>">
+			<legend>${Resource.msg('virtualsignup.describe','account',null)}</legend>
+			<div class="option-error-vsu"></div>
+			<isset name="selectedType" value="${pdict.CurrentForms.profile.cosmoProfession.professionType.htmlValue}" scope="page"/>
+			<isloop items="${pdict.CurrentForms.profile.cosmoProfession.professionType.options}" var="professionType">
+				<div class="form-row professionbox">
+					<isset name="radioID" value="${professionType.value}" scope="page"/>
+					<isset name="isChecked" value="${radioID == selectedType ? 'checked' : ''}" scope="page"/>
+					<label for="profession-${radioID}" class="professionlabel"><isprint value="${Resource.msg(professionType.label,'forms',null)}"/></label> 
+					<input type="radio"  class="input-radio profession-${radioID}" ${isChecked} name="${pdict.CurrentForms.profile.cosmoProfession.professionType.htmlName}" value="${professionType.htmlValue}" id="profession-${radioID}"/>
+				</div>
+			</isloop>
+			<div class="vsu-professiontype">
+				<a href="" id="submitButton" class="primarybtn">${Resource.msg('global.nextarrow','locale',null)}</a>
+			</div>
+		</fieldset>
+		<div class="vsu-mainform-student">
+			<isslot id="vsu-student-signup" description="VSU Student Signup" context="global" />
+		</div>
+		
+		<div class="vsu-mainform <isif condition="${isValid}">show-mainform</isif>">
+		<isif condition="${!session.custom.vsuemployee}">
+				<fieldset class="vsu-proclub">
+				<isif condition="${pdict.CallCC && !pdict.PrevBtn}">
+					<div class="callcc error"  >
+						<p> <isprint value="${Resource.msg('vsu.ccerrormsg','account',null)}" /> </p>
+					</div>
+				<iselseif condition="${pdict.CardNotFound && !pdict.PrevBtn}" >
+					<div class="callcc error" >
+						<h4> <isprint value="${Resource.msg('vsu.invalidcard','account',null)}" /> </h4>
+					</div>
+				 </isif>
+					<legend>${Resource.msg('virtualsignup.proclub','account',null)}</legend>
+					 
+					<isset name="yesChecked" value="${pdict.CurrentHttpParameterMap.isParameterSubmitted('proclubmember') && pdict.CurrentHttpParameterMap.proclubmember.stringValue == 'yes' ? 'checked' : ''}" scope="page"/>
+					<isset name="noChecked" value="${pdict.CurrentHttpParameterMap.isParameterSubmitted('proclubmember') && pdict.CurrentHttpParameterMap.proclubmember.stringValue == 'no' ? 'checked' : ''}" scope="page"/>
+					
+					<ul>
+					<isset name="selectedProType" value="${pdict.CurrentForms.profile.customer.proclubmember.htmlValue}" scope="page"/>
+					<isloop items="${pdict.CurrentForms.profile.customer.proclubmember.options}" var="proclubmember">
+						<isset name="radioID" value="${proclubmember.value}" scope="page"/>
+						<isset name="isChecked" value="${(radioID == selectedProType || (empty(selectedProType) && radioID != 'Yes')) ? 'checked' : ''}" scope="page"/>
+						<li>
+						<input type="radio"  class="input-radio" ${isChecked} name="${pdict.CurrentForms.profile.customer.proclubmember.htmlName}" value="${proclubmember.htmlValue}" id="proclubmember-${radioID}">
+							<isif condition="${radioID == 'Yes'}"> 
+								<label for="proclubmember-yes"><isprint value="${Resource.msg('global.yes','locale',null)}" /></label>
+							<iselse>
+								<label for="proclubmember-no"><isprint value="${Resource.msg('global.no','locale',null)}" /> </label>
+							</isif>
+						</input>
+						</li>
+					</isloop>
+					<iscomment> 
+						<li><input type="radio" class="input-radio" name="proclubmember" id="proclubmember-yes" value="yes" ${yesChecked} /><label for="proclubmember-yes">${Resource.msg('global.yes','locale',null)}</label></li>
+						<li><input type="radio" class="input-radio" name="proclubmember" id="proclubmember-no" value="no" ${noChecked} /><label for="proclubmember-no">${Resource.msg('global.no','locale',null)}</label></li>
+					</iscomment>
+					</ul>
+					<isinputfield formfield="${pdict.CurrentForms.profile.customer.proclub}" type="input"  attribute1="placeholder" value1="${Resource.msg('profile.cosmocardnumber', 'forms', null )}"/>
+				</fieldset>
+			</isif>
+			<input type="hidden" value="${selectedType}" id="hiddenProfBusinessInfo"/>
+			<fieldset class="vsu-proinfo">
+				<legend class="professiona professinalinfo">${Resource.msg('virtualsignup.professioninfo','account',null)}</legend>
+				<legend class="business businessinfo">${Resource.msg('virtualsignup.businessinfo','account',null)}</legend>
+				<div class="vsu-required">${Resource.msg('global.requiredfieldstar','locale',null)}</div>
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.firstname}" type="input" xhtmlclass="restrictChar"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.lastname}" type="input" rowclass="vsu-lastname" xhtmlclass="restrictChar"/>
+	
+				<div class="professinalinfo <isif condition="${(selectedType == 'BO' || selectedType == 'LI') && empty(pdict.StartEdit)}"> show-content</isif> ">
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.beautylicense}" type="input" astrickfornonmandatory="true" xhtmlclass="beauty-license"/>
+					<isif condition="${dw.system.Site.getCurrent().ID == 'CosmoProf-CA'} ">
+						<isinputfield formfield="${pdict.CurrentForms.profile.business.beautylicensestateCA}" type="select" astrickfornonmandatory="true" xhtmlclass="beauty-license"/>
+					<iselse/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.business.beautylicensestateUS}" type="select" astrickfornonmandatory="true" xhtmlclass="beauty-license"/>
+					</isif>
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.licenseexpiration}" type="input" attribute1="placeholder" value1="MM/DD/YYYY" xhtmlclass="licenseexpiration licenseexpirationdate" rowclass="inline-field licenseexpiration" astrickfornonmandatory="true"/>
+				</div>
+		
+				<div class="businessinfo <isif condition="${(selectedType == 'BO' || selectedType == 'SA') && empty(pdict.StartEdit) }">show-content</isif>">
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.businessname}" type="input" rowclass="business-name" />
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.businesslicense}" type="input" xhtmlclass="beauty-license required" astrickfornonmandatory="true"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.businesstype}"  type="select" defaultforselect = "Select..." astrickfornonmandatory="true"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.business.businessyears}" type="input" xhtmlclass="UptoThreeNum dontAllowSpace required" rowclass="years-in-biz" astrickfornonmandatory="true"/>
+				</div>
+				
+				<div class="vsu-selectall">${Resource.msg('virtualsignup.selectall','account',null)}</div>
+				<div class="employee-type-container">
+					<div class="caption"><isprint value="${Resource.msg('profile.employeetypeVSU', 'forms', null)}"/></div>
+					<div class="checkbox-container">
+						<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+					</div>
+				</div>
+				<div class="professional-type-container">
+					<div class="caption"><isprint value="${Resource.msg('profile.professionaltype', 'forms', null)}"/></div>
+					<div class="checkbox-container">
+						<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+						<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+					</div>
+				</div>
+			</fieldset>
+			
+			
+			<fieldset class="vsu-contactinfo">
+				<legend>${Resource.msg('virtualsignup.contact','account',null)}</legend>
+				<div class="overall-missing-fields">Please complete all required fields to continue</div>
+				<div class="vsu-emails">
+					<isset name="emailError" value="${''}" scope="page"/>
+					<isif condition="${pdict.hasOwnProperty('ExistingCustomerError') && pdict.ExistingCustomerError}">
+						<isset name="emailError" value="${'error'}" scope="page"/>
+						<div class="valid-error"><iscontentasset aid="vsu-login-exists-error"/></div>
+					</isif>
+					<isinputfield formfield="${pdict.CurrentForms.profile.customer.email}" type="input" xhtmlclass="email email1" rowclass="email-row"/>
+					
+					<isinputfield formfield="${pdict.CurrentForms.profile.customer.emailconfirm}" type="input" xhtmlclass="email email2" rowclass="email-row email-confirm"/>
+					<span class="italic">${Resource.msg('virtualsignup.emailrequired','account',null)}</span>
+					<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" attribute1="${dw.system.Site.current.ID == 'CosmoProf-CA' ? "" : "checked"}" value1="${dw.system.Site.current.ID == 'CosmoProf-CA' ? "" : "checked"}" rowclass=""/>
+										
+				</div>
+				<isif condition="${dw.system.Site.current.ID == 'CosmoProf-CA'}">
+					<input class="country visually-hidden" value="CA"/>
+				<iselse>
+					<input class="country visually-hidden" value="US"/>
+				</isif>
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.vsu.address1}" type="input" rowclass="address1 noerror" xhtmlclass="street-addr"/>
+				
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.vsu.address2}" type="input"  rowclass="address2" xhtmlclass="specialcharrestrict"/>
+				
+				<isif condition="${dw.system.Site.current.ID != 'CosmoProf-CA'}">
+					<isinputfield formfield="${pdict.CurrentForms.profile.customer.puertorico}" type="input"/>
+				</isif>
+				
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.city}" type="input" rowclass="select-city noerror" xhtmlclass="specialcharrestrict"/>
+				
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.states.shortstate}" type="select" rowclass="select-state noerror"/>
+				
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.zip}" type="input" xhtmlclass="zip" rowclass="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA' ? 'select-zip noerror' : 'select-zip-CA noerror'}"/>
+
+				<isinputfield formfield="${pdict.CurrentForms.profile.address.workphone}" type="input" xhtmlclass="phone" rowclass="select-phone work-phone noerror"/>				
+				
+				<span class="required-indicator"></span><isinputfield formfield="${pdict.CurrentForms.profile.phonetypeBusiness}" type="select" xhtmlclass="phone-type" rowclass="phone-type noerror"/>
+				
+				<div class="SelectBO">
+				
+				</div>
+				<div class="text-messaging-option">
+					<fieldset class="messaging-options">
+						<legend>${Resource.msg('virtualsignup.stayupdated','account',null)}</legend>
+						<p>${Resource.msg('virtualsignup.stayupdatedtext','account',null)}</p>
+						<div class="input-options">
+							<span class="input-options-left">
+								<isif condition="${dw.system.Site.getCurrent().ID == 'CosmoProf-CA'} ">
+									<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass=""/>
+								<iselse>
+									<isif condition="${pdict.onPageLoad}"> 
+										<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass=""/>
+									<iselseif condition="${pdict.CurrentForms.profile.vsu.textmessage.checked=='true'}">
+										<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass=""/>
+									<iselse>
+										<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass=""/>										
+									</isif>
+								</isif>
+								<p class="optout">${Resource.msg('virtualsignup.stayupdatedoptout','account',null)}</p>
+							</span>
+							<isif condition="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA'} ">
+								<span class="input-options-right"><isinputfield formfield="${pdict.CurrentForms.profile.address.mobilephone}" type="input" xhtmlclass="phone" astrickfornonmandatory="true" rowclass="select-phone mobilephone noerror"/></span>
+							<iselse/>
+								<span class="input-options-right"><isinputfield formfield="${pdict.CurrentForms.profile.address.mobilephone}" type="input" xhtmlclass="phone" rowclass="select-phone mobilephone noerror"/></span>
+							</isif>					
+						</div>
+						
+					</fieldset>
+				</div>
+				<div class="clearboth">
+					<isinputfield formfield="${pdict.CurrentForms.profile.vsu.birthdayoffers}" type="input" xhtmlclass="birthdaylub" rowclass="inline-field select-bday" attribute1="placeholder" value1="${Resource.msg('profile.mmdd', 'forms', null )}" maxlength="5"/>
+					<div class="vsu-birthday">${Resource.msg('virtualsignup.receiveoffers', 'account', null)}</div>
+				</div>
+				
+				<iscomment>Ticket# CP-262 hiding Preferred Method of Communication </iscomment>
+				<div class="vsu-comm-options hide">
+					<div class="vsu-comm">${Resource.msg('virtualsignup.preferredcommunication','account',null)}</div>
+					<isset name="selectedType" value="${pdict.CurrentForms.profile.preferedCommunication.communicationType.htmlValue}" scope="page"/>
+					<isloop items="${pdict.CurrentForms.profile.preferedCommunication.communicationType.options}" var="communicationType">
+						<div class="form-row professionbox">
+							<isset name="radioID" value="${communicationType.value}" scope="page"/>
+							<isset name="isChecked" value="${radioID == selectedType ? 'checked' : ''}" scope="page"/>
+							<label for="comm-${radioID}" class="communicationlabel"><isprint value="${Resource.msg(communicationType.label,'forms',null)}"/></label>
+							<input type="radio"  class="input-radio" ${isChecked} name="${pdict.CurrentForms.profile.preferedCommunication.communicationType.htmlName}" value="${communicationType.htmlValue}" id="communication-${radioID}"/>
+						</div>
+					</isloop>
+				</div>
+			</fieldset>
+			
+			<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+			<isif condition="${!session.custom.vsuemployee}">
+				<isif condition="${pdict.CaptchaErrorCode}"> 
+					<div class="captchaerror error">${Resource.msg('virtualsignup.googlerecaptcha','account',null)}</div>
+				</isif>
+				<script>
+					function recaptchaCallback() {
+						if($(".captchaerror").length > 0) {
+							$(".captchaerror").remove();
+						}
+					};
+				</script>
+				<isif condition="${'recatchaSiteKey' in dw.system.Site.getCurrent().preferences.custom}"> 
+					<div class="g-recaptcha" data-callback="recaptchaCallback" data-sitekey="${dw.system.Site.getCurrent().preferences.custom.recatchaSiteKey}"></div> 
+				</isif>
+			</isif>
+			<div class="form-row form-row-button ">
+				<button type="submit" class="VSUverifyAddress" name="${pdict.CurrentForms.profile.save.htmlName}" value="true">
+					${Resource.msg('global.nextarrow','locale',null)}
+				</button>
+			</div>
+		</div>
+		<div class="vsu-emailexistspopup hide"> <isprint value="${Resource.msgf('vsu.emailexist.text','account',null , PasswordResetLink)}" encoding="off"/> <div class="vsuok-button"> <button type="submit">${Resource.msg('vsu.emailexistconfirm.text','account',null)}</button></div> </div>
+	
+	</form>
+</isdecorate>

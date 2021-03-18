@@ -1,0 +1,166 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+	
+	<iscomment> show page layout depending on Web/Store entry point</iscomment>
+	<iscomment>
+		<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-license-form"  name="${pdict.CurrentForms.profile.htmlName}" <isif condition="${!session.custom.vsuemployee}"> enctype="multipart/form-data" </isif>>
+	 </iscomment>	
+	<form method="post" action="${URLUtils.https('VirtualSignup-UploadLicense')}" id="vsu-license-form"  name="${pdict.CurrentForms.profile.htmlName}" <isif condition="${!session.custom.vsuemployee}"> enctype="multipart/form-data" </isif>>	
+		<fieldset class="vsu-profession-options">
+			<isif condition="${!empty(session.custom.vsuemployee) && session.custom.vsuemployee}">
+				
+				<legend flass="card-number">${Resource.msg('virtualsignup.pleaseverify','account',null)}</legend>
+
+				<isif condition="${!empty(pdict.CurrentForms.profile.vsu.cardNumber.value) && pdict.CurrentForms.profile.vsu.cardNumber.value != null}">
+					<isset name="firstVal" value="${pdict.CurrentForms.profile.vsu.cardNumber.value.substring(0,4)}" scope="Page" />
+					<isset name="secVal" value="${pdict.CurrentForms.profile.vsu.cardNumber.value.substring(4,8)}" scope="Page" />
+					<isset name="thirdVal" value="${pdict.CurrentForms.profile.vsu.cardNumber.value.substring(8)}" scope="Page" />
+				 </isif>
+				 <isif condition="${!empty(pdict.CurrentForms.profile.vsu.cardNumberconfirm.value) && pdict.CurrentForms.profile.vsu.cardNumberconfirm.value != null}">
+					<isset name="confirstVal" value="${pdict.CurrentForms.profile.vsu.cardNumberconfirm.value.substring(0,4)}" scope="Page" />
+					<isset name="consecVal" value="${pdict.CurrentForms.profile.vsu.cardNumberconfirm.value.substring(4,8)}" scope="Page" />
+					<isset name="conthirdVal" value="${pdict.CurrentForms.profile.vsu.cardNumberconfirm.value.substring(8)}" scope="Page" />
+				 </isif>
+				<div id="firstCardNumber" class="form-row  cardnumber firstCardNumber cn1">
+				<label>${Resource.msg('profile.vsu.entercard','forms',null)}:</label>
+					<isif condition="${!empty(firstVal)}">
+						<input  type="text" class="inputs1" maxlength="4" value="${firstVal}"/>
+					<iselse>
+						<input  type="text" class="inputs1" maxlength="4" value=""/>
+					 </isif>
+					 <isif condition="${!empty(secVal)}">
+						<input  type="text" class="inputs2" maxlength="4" value="${secVal}"/>
+					 <iselse>
+					 	<input  type="text" class="inputs2" maxlength="4" value=""/>
+					 </isif>
+					 <isif condition="${!empty(thirdVal)}">
+						<input  type="text" class="inputs3" maxlength="4" value="${thirdVal}"/>
+					 <iselse>
+					 	<input  type="text" class="inputs3" maxlength="4" value=""/>
+					 </isif>
+				
+					<span class="italic cardnum-input-error">
+						<isprint value="${Resource.msg('profile.vsu.invalidcardnumber', 'forms', null)}"/>
+					</span>
+				</div>
+				
+				<div id="secondCardNumber" class="form-row  cardnumber firstCardNumber cn2">
+				<label>${Resource.msg('profile.vsu.reentercard','forms',null)}:</label>
+					<isif condition="${!empty(confirstVal)}">
+						<input  type="text" class="inputs1" maxlength="4" value="${confirstVal}"/>
+					<iselse>
+						<input  type="text" class="inputs1" maxlength="4" value=""/>
+					 </isif>
+					 <isif condition="${!empty(consecVal)}">
+						<input  type="text" class="inputs2" maxlength="4" value="${consecVal}"/>
+					 <iselse>
+					 	<input  type="text" class="inputs2" maxlength="4" value=""/>
+					 </isif>
+					 <isif condition="${!empty(conthirdVal)}">
+						<input  type="text" class="inputs3" maxlength="4" value="${conthirdVal}"/>
+					 <iselse>
+					 	<input  type="text" class="inputs3" maxlength="4" value=""/>
+					 </isif>
+					<span class="italic cardnum-input-error">
+						<isprint value="${Resource.msg('profile.vsu.invalidcardnumber', 'forms', null)}"/>
+					</span>
+				</div>
+
+				<isinputfield formfield="${pdict.CurrentForms.profile.vsu.cardNumber}" label="profile.vsu.entercard" type="input" rowClass="cardnumber-hidden hcn1"/>
+				<isinputfield formfield="${pdict.CurrentForms.profile.vsu.cardNumberconfirm}" label="profile.vsu.reentercard" type="input" rowClass="cardnumber-hidden hcn2"/>
+				
+			<iselse>
+				<isif condition="${pdict.CurrentForms.profile.cosmoProfession.professionType.htmlValue=='LI'}">
+					<legend class="image-legend"><isprint value="${Resource.msg('virtualsignup.pleaseuploadLI','account',null)}" /></legend>
+					<span class="legitimate-header"><isprint value="${Resource.msg('virtualsignup.onlylegitimateimageLI','account',null)}" /></span>
+				<iselseif condition="${pdict.CurrentForms.profile.cosmoProfession.professionType.htmlValue=='BA'}" >
+					<legend class="image-legend"><isprint value="${Resource.msg('virtualsignup.pleaseuploadBA','account',null)}" /></legend>
+					<span class="legitimate-header"><isprint value="${Resource.msg('virtualsignup.onlylegitimateimageBA','account',null)}" /></span>
+				<iselse>
+					<legend class="image-legend"><isprint value="${Resource.msg('virtualsignup.pleaseupload','account',null)}" /></legend>
+					<span class="legitimate-header"><isprint value="${Resource.msg('virtualsignup.onlylegitimateimage','account',null)}" /></span>
+				</isif>
+				<div class="form-row  imageupload">
+					<isif condition="${'UpdatedimageFileName' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.UpdatedimageFileName)}">
+						<isset name="licenseImgUrl" value="${'https://'+ request.httpHost + '/on/demandware.servlet/webdav/Sites/Impex/vsuimages/'+ pdict.CurrentSession.custom.UpdatedimageFileName}" scope="Page" />
+					<iselse>
+						<isset name="licenseImgUrl" value="" scope="Page" />
+					 </isif>
+					<div class="while-upload-image">
+						<span class="upload-holder hide">
+							<input class="input-text valid" id="license_file" type="file" name="license_file"/>
+						</span>
+						<label class="file-label">File <span class="required-indicator">*</span></label>
+						<span class="choseFile">
+							<button class="chooseFileBtn" id="chooseFileBtn" name="chooseFileBtn"><isprint value="${Resource.msg('profile.vsu.imageFilechoose', 'forms', null)}"/> </button>
+						</span>
+						<isif condition="${'imageFileName' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.imageFileName)}"> 
+							<isset name="ImagefileName" value="${pdict.CurrentSession.custom.imageFileName}" scope="Page" />
+						<iselse>
+							<isset name="ImagefileName" value="" scope="Page" />
+						</isif>
+						<span id="originalFileLabel"><isprint value="${ImagefileName}"/></span>
+					</div>
+					<div class="after-upload-images">
+						<img id="imagePreview" src="#"  class="hide" alt="License"  height="300px" width="200px"/>
+						<div id="pdfContainer">
+						     <canvas id="pdfCanvas" class="hide"></canvas>
+						</div>
+						
+						
+					</div>
+				</div>
+			</isif>
+			<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" accept="image" value="${pdict.CurrentForms.profile.secureKeyValue}"  placeholder="Upload one or more files"/>
+		</fieldset>
+		
+		<div class="vsu-hidden-fields">
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+			<isif condition="${pdict.CurrentForms.profile.vsu.emailmessage.checked == 'true'}">
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+			 	<iselse>
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+			 </isif>
+		</div>
+
+		<isif condition="${session.custom.vsuemployee}">
+			<div class="form-row form-row-button card-number">
+				<button type="button" value="bupkiss" name="go-to-prev" id="go-to-prev" title="Previous">
+					${Resource.msg('global.previousarrow','locale',null)}
+				</button>
+				<button type="submit" value="bupkiss" name="${pdict.CurrentForms.profile.save.htmlName}" id="uploadAjax" title="Next">
+					${Resource.msg('global.nextarrow','locale',null)}
+				</button>
+			</div>
+		<iselse>	
+			<div class="form-row form-row-button next-button">
+				<button type="button" value="bupkiss" name="go-to-prev" id="go-to-prev" title="Previous">
+					${Resource.msg('global.previousarrow','locale',null)}
+				</button>
+				<button type="submit" value="bupkiss" name="${pdict.CurrentForms.profile.save.htmlName}" id="continueSubmit"  style="display:none;" title="Next">
+					${Resource.msg('global.nextarrow','locale',null)}
+				</button>
+				<button type="submit" value="bupkiss" id="validateRequiredImage" class="img-upload-nxtbutton" title="Next">
+					${Resource.msg('global.nextarrow','locale',null)}
+				</button>
+				<span style="display:none;" id="imageUploadError">Please select the Licence Image in pdf, jpeg, png, img, gif format</span>
+			</div>
+		</isif>
+	</form>
+	<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-license-form-prev"  name="prev-button-form">
+		<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}"  value="${pdict.CurrentForms.profile.secureKeyValue}"  placeholder="Go To Prev"/>
+			<button type="submit" value="bupkiss" name="${pdict.CurrentForms.profile.previous.htmlName}" id="go-to-prev" class="hide" >
+					${Resource.msg('global.previousarrow','locale',null)} 
+			</button>
+	</form>
+	
+</isdecorate>

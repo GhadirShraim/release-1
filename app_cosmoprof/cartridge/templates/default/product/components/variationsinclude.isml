@@ -1,0 +1,51 @@
+<isif condition="${!empty(pdict.Product)}">
+	<isscript>
+		//two attirbutes needed to pass along the selected color to the pdp/quickview
+		var colorAttributeID = 'dwvar_'+pdict.Product.ID+'_color';
+		var productColorValue = '';
+		
+		//helper variables 
+		var requestQueryStringArray = pdict.CurrentRequest.getHttpHeaders().get("x-is-query_string").split('&');
+		var x = 0;
+		var PMapValue = '';
+		
+		for(x = 0; x < requestQueryStringArray.length ;x++){
+		
+			PMapValue = requestQueryStringArray[x];
+			
+			if(PMapValue.indexOf('color') != -1){
+				productColorValue = PMapValue.split('=')[1];
+			}
+		}
+	</isscript>
+	
+	<isset name="showColorSelector" value="${!empty(pdict.Product.variationModel.getProductVariationAttribute('color'))}" scope="page"/>
+	<isset name="showSizeSelector" value="${!empty(pdict.Product.variationModel.getProductVariationAttribute('size'))}" scope="page"/>
+	
+	<isscript>
+	
+		var excludeVOC = "";
+	
+		var cosmoProfUtils = require('app_cosmoprof/cartridge/scripts/util/CosmoProfUtils').CosmoProfUtils;
+		
+		var binarySearchResult = cosmoProfUtils.execBinarySearch(pdict.CurrentCustomer.profile.custom.accountNumber, pdict.CurrentCustomer.profile.custom.consolidationCode, pdict.CurrentCustomer.profile.custom.activeShipAddressID != null ? pdict.CurrentCustomer.getAddressBook().getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID) : null, dw.system.Site.getCurrent().getCustomPreferenceValue('sitePrefix').value);
+	
+		if(!empty(binarySearchResult))
+		{
+			excludeVOC = '|'+ binarySearchResult.vocExclusionVal +'|';		
+		}
+    </isscript>
+    
+  	<isif condition="${pdict.CurrentSession.custom.incSearchConsolidation == 'false' || (pdict.CurrentSession.custom.incSearchConsolidation == 'true' && !empty(pdict.CurrentCustomer.profile.custom.consolidationCode) && !empty(pdict.Product.custom.includeConsolidation) && ((pdict.Product.custom.includeConsolidation).indexOf(pdict.CurrentCustomer.profile.custom.consolidationCode) > -1) && !empty(excludeVOC) && !empty(pdict.Product.custom.excludeVOC) && ((pdict.Product.custom.excludeVOC).indexOf(excludeVOC) == -1)) || (!empty(pdict.CurrentCustomer.profile.custom.consolidationCode) && !empty(pdict.Product.custom.includeConsolidation) && ((pdict.Product.custom.includeConsolidation).indexOf(pdict.CurrentCustomer.profile.custom.consolidationCode) > -1) && pdict.CurrentSession.custom.incSearchConsolidation == 'true' && empty(pdict.Product.custom.excludeVOC))}">
+	<isif condition="${showColorSelector}">
+		<isif condition="${!empty(productColorValue)}">
+			<isinclude url="${URLUtils.url('Product-Variations', 'pid', pdict.Product.ID, colorAttributeID, productColorValue, 'isQuickView', isQuickView)}"/>
+		<iselse>
+			<isinclude url="${URLUtils.url('Product-Variations', 'pid', pdict.Product.ID, 'isQuickView', isQuickView)}"/>
+		</isif>
+	<iselse>
+		<isinclude template="product/components/variations"/>
+	</isif>
+	
+	</isif>
+</isif>

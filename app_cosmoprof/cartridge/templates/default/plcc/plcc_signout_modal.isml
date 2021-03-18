@@ -1,0 +1,11 @@
+<isinclude template="util/modules"/>
+
+<div class="modal hide" id="plcc_seesion_logout_modal" tabindex="-1" role="dialog" aria-labelledby="plcc_session" aria-hidden="true"  data-backdrop="static" data-keyboard="false">
+ 	<div class="modal-dialog" role="document">
+       	<div class="modal-content">
+           	<div class="modal-header">
+           		<iscontentasset aid="plcc-signout-modal" />
+           	</div>
+       	</div>
+   	</div>
+</div>

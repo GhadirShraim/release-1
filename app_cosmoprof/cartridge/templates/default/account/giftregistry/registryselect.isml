@@ -1,0 +1,29 @@
+<isdecorate template="account/giftregistry/pt_giftregistry">
+<isinclude template="util/modules"/>	
+<h1 class="registryselectheader"><isprint value="${Resource.msg('registryselect.header','account',null)}" /></h1>
+
+	<div id="registry-results">
+	<div class="dialog-required Padding-Right"> 
+			<span class="required-indicator">&#42; required</span>
+	</div>
+		<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.productlists.search.newselect.htmlName}" id="${pdict.CurrentForms.productlists.search.newselect.htmlName}">
+			<fieldset>
+			<isinputfield formfield="${pdict.CurrentForms.productlists.search.listType}" type="select" xhtmlclass="js-list-type" />
+			<button type="submit" name="${pdict.CurrentForms.productlists.search.newselect.htmlName}" value="${Resource.msg('global.apply','locale',null)}" id="${pdict.CurrentForms.productlists.search.newselect.htmlName}"><span>${Resource.msg('global.apply','locale',null)}</span></button>
+			</fieldset>
+		</form>
+		<form action="${URLUtils.httpsContinue()}" method="post" id="${pdict.CurrentForms.giftregistry.event.htmlName}" name="${pdict.CurrentForms.giftregistry.event.htmlName}" autocomplete="off">
+			<input type="hidden" name="${itemObject.confirm.htmlName}"/>
+			<fieldset>				
+				<isinputfield formfield="${pdict.CurrentForms.giftregistry.event.name}" type="input"/>
+				<div class="form-row form-row-button">
+						<isif condition="${pdict.ProductList == null}">
+							<button type="submit" name="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}" value="${Resource.msg('global.confirm','locale',null)}" id="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}"><span><isprint value="${Resource.msg('global.save','locale',null)}" /></span></button>
+						<iselse>
+							<button type="submit" name="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}" value="${Resource.msg('global.apply','locale',null)}" id="${pdict.CurrentForms.giftregistry.event.confirm.htmlName}"><span><isprint value="${Resource.msg('global.apply','locale',null)}" /></span></button>
+						</isif>
+				</div>	
+			</fieldset>
+		</form>
+	</div>
+</isdecorate>

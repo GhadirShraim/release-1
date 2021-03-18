@@ -1,0 +1,13 @@
+/**
+* This script deletes the session variable "pageRentention"
+*/
+importPackage( dw.system );
+importPackage( dw.net );
+importPackage( dw.util );
+
+function execute( pdict : PipelineDictionary ) : Number
+{	
+		delete session.custom.pageRetention;
+		
+		return PIPELET_NEXT;
+}

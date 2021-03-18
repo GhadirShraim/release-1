@@ -1,0 +1,87 @@
+/**
+* GetApplicablePriceBooks.ds
+* Checks against the current customer for groups they're in that get special price books
+* Outputs a collection of price books
+*
+*   @input 	CurrentCustomer			: dw.customer.Customer		 	Customer
+*	@input	SelectedAddress			: dw.customer.CustomerAddress	
+*	@output ApplicablePriceBooks		: dw.util.Collection			pricebooks to apply
+*	@output DscPricebookID			: String						ID of dsc pricebook that was found; used for PDP dynamic pricing model
+*/
+var ArrayList = require('dw/util').ArrayList;
+var Customer = require('dw/customer').Customer;
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Collection = require('dw/util').Collection;
+var PriceBookMgr = require('dw/catalog').PriceBookMgr;
+var PDSUtils = require("bc_pdsutils/cartridge/scripts/PDSUtils").PDSUtils;
+var StringUtils = require('dw/util').StringUtils;
+
+var Logger = require('dw/system').Logger;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try {
+		var priceBookAllocation : Collection = new ArrayList();
+		var basePriceBookID : String = !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('baseSitePriceBookID')) ? dw.system.Site.getCurrent().getCustomPreferenceValue('baseSitePriceBookID') : "";
+		var dscNumber : String = !empty(pdict.SelectedAddress.custom.dscNumber) ? pdict.SelectedAddress.custom.dscNumber : "";
+		var flyerComdiv : String = !empty(pdict.CurrentCustomer.profile.custom.flyerComdiv) ? pdict.CurrentCustomer.profile.custom.flyerComdiv : pdict.SelectedAddress.custom.comdiv;
+		
+		// Base Price Book Determination
+		if (!empty(basePriceBookID) && !empty(PriceBookMgr.getPriceBook(basePriceBookID)) ){
+			priceBookAllocation.push(basePriceBookID);
+		}
+		
+		// DSC Number Price Book Determination		
+		if (!empty(dscNumber)){
+			// ensure dscNumber is of proper 5 character length
+			while (dscNumber.length < 5){
+				dscNumber = "0"+dscNumber;
+			}
+			
+			// do binary search against site prefs
+			// use value to get compute dscPricebookIdentifier
+			var dsc_customObject = dw.object.CustomObjectMgr.getCustomObject("PAVData","DSC_txt");
+			if (!empty(dsc_customObject) && 'binarySearchString' in dsc_customObject.custom && !empty(dsc_customObject.custom.binarySearchString)){
+				var dsc_stringToSearch = dsc_customObject.custom.binarySearchString;
+				if (!empty(dsc_stringToSearch)){
+					
+					var dscPricebookIdentifier = PDSUtils.binarySearch(dsc_stringToSearch,dscNumber,5,9);
+					dscPricebookIdentifier = dscPricebookIdentifier != null ? dscPricebookIdentifier.replace('D','') : dscPricebookIdentifier;
+					
+					var dscPricebookID : String = StringUtils.format("cosmo_DSC_{0}",dscPricebookIdentifier);
+
+					if ( !empty(PriceBookMgr.getPriceBook(dscPricebookID)) ){
+						priceBookAllocation.push(dscPricebookID);
+						// pricebook was found for DSC so pass that along to store in session
+						pdict.DscPricebookID = dscPricebookID;
+					} else {
+						// Couldn't find DSC
+						pdict.DscPricebookID = null;
+					}
+				}
+			} else{
+				Logger.error("[GetApplicablePriceBooks] Error in GetApplicablePriceBooks.ds :: dsc_customObject was empty or did not contain a binary search string.");		
+			}
+		}
+		
+		// Flyer Comdiv Price Book Determination
+		if (!empty(flyerComdiv)){
+			var flyerPricebookID : String = StringUtils.format("flyer-{0}-pricebook",flyerComdiv);
+			if ( !empty(PriceBookMgr.getPriceBook(flyerPricebookID)) ){
+				priceBookAllocation.push(flyerPricebookID);
+			}
+		}
+	
+		if (!empty(priceBookAllocation)){
+			pdict.ApplicablePriceBooks = priceBookAllocation;
+			return PIPELET_NEXT;
+		}else {
+			Logger.error("[GetApplicablePriceBooks] No pricebooks found to apply in GetApplicablePriceBooks.ds :: " + e);	
+			return PIPELET_ERROR;
+		}
+		
+	} catch(e) {
+		Logger.error("[GetApplicablePriceBooks] Error in GetApplicablePriceBooks.ds :: " + e);	
+		return PIPELET_ERROR;
+	}
+}

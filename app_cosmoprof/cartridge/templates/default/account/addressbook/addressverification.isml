@@ -1,0 +1,72 @@
+<!--- TEMPLATENAME: addressverification.isml --->
+<isset name="DecoratorTemplate" value="account/pt_account" scope="page"/>
+	<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || pdict.CurrentHttpParameterMap.pwr.stringValue == 'true' || pdict.CurrentHttpParameterMap.source.stringValue == 'search' || pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart'}">
+		<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+	</isif>
+<isdecorate template="${DecoratorTemplate}">	
+<div class="address-verify <isif condition="${pdict.CurrentHttpParameterMap.SA.value == 'true'}">SA</isif>">
+	<h1>${Resource.msg('verify.address','account',null)}</h1>
+	${Resource.msg('verify.shippingAddress','account',null)}
+	
+	<div class="address-verify-main">
+		<form action="${URLUtils.httpContinue()}" name="verify-address-form" method="POST">
+			<div class="address-verify-left">
+				<input name="verifyAddress" type="radio" value="correctedAddress" checked="checked" /> 
+				<label for="verifyAddress" style="display:inline;">${Resource.msg('verify.correctedAddress','account',null)}</label><br/>
+				<isif condition="${!empty(pdict.StandardizedAddress)}">
+					<div class="address-verify-address">
+					
+					<iscomment>
+					This populates the Standardized Address suggestion
+					</iscomment>
+					<isif condition="${'companyName' in pdict.StandardizedAddress && !empty(pdict.StandardizedAddress.companyName)}">
+						<isprint value="${pdict.StandardizedAddress.companyName}" /> <br/>
+					</isif>
+					<isprint value="${pdict.StandardizedAddress.firstName}" /> <isprint value="${pdict.StandardizedAddress.lastName}" /><br/>
+					<isprint value="${pdict.StandardizedAddress.address1}" /> <br/>
+					<isif condition="${!empty(pdict.StandardizedAddress.address2)}">
+						<isprint value="${pdict.StandardizedAddress.address2}" /><br/>
+					</isif>
+					<isprint value="${pdict.StandardizedAddress.city}" />, <isprint value="${pdict.StandardizedAddress.state}" /> <isprint value="${pdict.StandardizedAddress.country}" /><br/>
+					<isprint value="${pdict.StandardizedAddress.postalCode}" /><br/><br/>
+					
+					</div>
+				</isif>
+			</div>
+		
+			<div class="address-verify-right">
+				<input name="verifyAddress" type="radio" value="originalAddress" /> 
+				<label for="verifyAddress" style="display:inline;">${Resource.msg('verify.originalAddress','account',null)}</label><br/>
+				
+				<div class="address-verify-address">
+				<isif condition="${'companyName' in pdict.StandardizedAddress && !empty(pdict.StandardizedAddress.companyName)}">
+						<isprint value="${pdict.StandardizedAddress.companyName}" /> <br/>
+				</isif>
+				<isprint value="${pdict.shipto.firstName}" /> <isprint value="${pdict.shipto.lastName}" /><br/>
+				<isprint value="${pdict.shipto.street1}" /><br/>
+				<isif condition="${!empty(pdict.shipto.street2)}">
+					<isprint value="${pdict.shipto.street2}" /><br/>
+				</isif>
+				<isprint value="${pdict.shipto.city}" />, <isprint value="${pdict.shipto.state}" /> <isprint value="${pdict.shipto.country}" /><br/>
+				<isprint value="${pdict.shipto.postalCode}" /> <br/><br/>
+				</div>
+			</div>
+			
+			<div class="address-verify-confirm">
+				<button type="submit" value="submit" class="addressvalidcontinuebtn" name="${pdict.CurrentForms.customeraddress.edit.htmlName}">
+					${Resource.msg('global.continue','locale',null)}
+				</button>
+			</div>
+			
+			<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('orderID')}">
+				<input type="hidden" value="${pdict.CurrentHttpParameterMap.orderID.stringValue}" name="orderID" id="orderID" />
+			</isif>
+		</form>
+	</div>
+</div>
+</isdecorate>
+<iscomment>Ajax call not needed now 
+<script type="text/javascript">
+	app.addressverification.init();
+</script>
+ </iscomment>

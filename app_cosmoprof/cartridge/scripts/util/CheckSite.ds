@@ -1,0 +1,118 @@
+/**
+* 	The following script checks if the current http host is a portal site or not
+*  
+*	@input httpHost : String
+*	@input tempCC : String
+*   @input incSearchConsolidation : String
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		//The following 3 lines instantiate three separate variables, isPortal to store if a user is a portal user or not, 
+		//http host to store the http host from the current request, and sites for storing the sites to ignore (i.e. sites that are not portals)
+		var isPortal : Boolean = true;
+		var isNonLoginPortal : Boolean = false;
+		var httpHost = pdict.httpHost;
+		var isConsolidated = false;
+		var sites = dw.system.Site.current.preferences.custom.loginBarrierSitesToIgnore;
+		var nonLoginsites = dw.system.Site.current.preferences.custom.nonLoginPortalHost;
+		
+		//iterate through all the sites to ignore that are stored in the custom site preference "loginBarrierSitesToIgnore"
+		for each(var s in sites)
+		{
+			//if the site is equivalent to the current http host, then the current user is not coming from a portal page
+			if(s == httpHost)
+			{
+				isPortal = false;	
+			}
+		}
+		
+		for each(var s in nonLoginsites)
+		{
+			//if the site is equivalent to the current http host, then the current user is not coming from a portal page
+			if(s == httpHost)
+			{
+				isPortal = true;
+				isNonLoginPortal = true;		
+			}
+		}
+		
+		//set a session variable with the chain code specific phone number
+		var phoneNumJSON = dw.system.Site.current.preferences.custom.ccPhoneNumbers;
+		var phoneNumJSONStr = JSON.parse(phoneNumJSON);
+		var phoneNum;
+		
+		if(empty(pdict.tempCC))
+		{
+			phoneNum = phoneNumJSONStr[dw.system.Site.current.preferences.custom.defaultChainCode];
+		}
+		else
+		{
+			phoneNum = phoneNumJSONStr[pdict.tempCC];
+		}
+			
+		session.custom.phonenumber = phoneNum;
+		
+		if(!empty(pdict.incSearchConsolidation) && (pdict.incSearchConsolidation).toLowerCase() == 'true')
+		{
+			session.custom.incSearchConsolidation=(pdict.incSearchConsolidation).toLowerCase();
+		}
+		else
+		{
+			var siteIncludedSearchConsolidation = 'sitesIncludeSearchConsolidation' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.sitesIncludeSearchConsolidation : "" ;
+			for each(var s in siteIncludedSearchConsolidation)
+			{
+				//if the site is eligible for Search Consolidation.
+				if(s == httpHost)
+				{
+					isConsolidated = true;	
+				}
+			}
+			if(isConsolidated) {
+				session.custom.incSearchConsolidation="true";
+			}
+			else {
+				session.custom.incSearchConsolidation="false";
+			}
+			
+			
+		}
+	
+		//if the customer is a portal user, set their hostname mapping
+		if(isPortal)
+		{
+			var tcc;
+			
+			if(empty(pdict.tempCC))
+			{
+				var hostJSON = dw.system.Site.current.preferences.custom.hostnameMapping;
+				var hostJSONStr = JSON.parse(hostJSON);
+				tcc = hostJSONStr[httpHost];
+			}
+			else
+			{
+				tcc = pdict.tempCC;	
+			}
+			
+			session.custom.tempChainCode = tcc;
+			session.custom.isPortalUser = isPortal; 
+			session.custom.isNonLoginPortalUser = isNonLoginPortal;
+		} else {
+			delete session.custom.isPortalUser; 
+			delete session.custom.isNonLoginPortalUser;
+		}
+	}
+	catch(e)
+	{
+		//if the code fails, make the customer default to a portal user
+		session.custom.isPortalUser = true;
+		Logger.error("CheckSite	has produced the following error: " + e);
+	}
+
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,90 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+
+	<isscript>var pageContext={title:(pdict.Product.name || 'Product Detail'), type:'product', ns:'product'};</isscript>
+	<isinclude template="components/header/htmlhead"/>
+
+	<isinclude template="product/pt_productdetails_UI"/>
+
+	<link rel="canonical" href="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}"/>	
+	
+</head>
+<body>
+	<isinclude template="gtm/bodytrackingcode" />
+	<div id="wrapper" class="pt_product-details">
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		
+		<div id="main" role="main" class="full-width clearfix">
+							
+			<isinclude template="components/browsertoolscheck"/>
+			<iscomment> For mobile, no breadcrumb, just have link back to main category </iscomment>
+			<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+				<isscript>
+					var cat = pdict.Product.primaryCategory;
+		
+					if(!empty(pdict.CurrentHttpParameterMap.cgid) && !empty(pdict.CurrentHttpParameterMap.cgid.stringValue)) {
+						cat = dw.catalog.CatalogMgr.getCategory(pdict.CurrentHttpParameterMap.cgid.stringValue);
+					}
+					if((empty(cat) || (!empty(cat.parent) && ('root' in cat.parent && cat.parent.root))) && pdict.Product.categories.length > 0) {
+						for each (var category in pdict.Product.categories) {
+							if (!empty(category.parent) && !category.parent.root) {
+								cat = category;
+								break;
+							}
+						}
+					}
+				</isscript>
+				<div class="messagebar mobileheader">
+					<isif condition="${!pdict.CurrentCustomer.authenticated}">
+						<a class="link-button" title="${Resource.msg('global.login','locale',null)}${pdict.CurrentCustomer.profile.firstName} ${pdict.CurrentCustomer.profile.lastName}" href="${URLUtils.https('Account-Show')}" class="user-account-login">
+							${Resource.msg('global.login','locale',null)}
+						</a>
+					<iselse/>
+						<isif condition="${!pdict.SignIn}">
+							<div class="header-search">
+								<isinclude template="search/simplesearch"/>
+							</div>
+							<br><br>
+							<isslot id="global-promotional-message" description="Global Promotional Message" context="global" />
+						</isif>
+					</isif>
+				</div>
+		
+				<div class="pagination clearfix">
+					<isif condition="${!empty(cat)}">
+						<a id="backtogrid" href="${URLUtils.url('Search-Show','cgid', cat.ID)}" class="back"><< Back to <isprint value="${cat.displayName}"/></a>
+					</isif>
+				</div>
+			
+			</isif>
+			
+			<div id="primary" class="primary-content">
+				
+				<iscomment>
+					SAL-1463 - removing until PAV logic can be added
+					<div id="product-nav-container">
+						<isinclude template="search/productnav"/>
+					</div>
+				</iscomment>
+				<isreplace/>
+			</div><!-- /primary-content -->
+			
+		</div> <!-- /main -->
+		
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="product/pt_productdetails_VARS"/>
+	</div> <!-- /pt_product-details -->
+	<div class="main-backtotop-view-less">
+		<img id="back-to-top" src="${URLUtils.staticURL('/images/back-to-top-new.png')}" />
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+/**
+* DisableCustomer
+* Disables a customer account given a customer number
+*
+*
+*   @input CurrentCustomer : dw.customer.Customer  This is the account owner
+*   @input customerNO : String This is the customer number to disable
+*
+*/
+
+var ArrayList = require('dw/util').ArrayList;
+var CustomerMgr = require('dw/customer').CustomerMgr;
+var Profile = require('dw/customer').Profile;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		if (!empty(args.customerNO)){
+	   		var customerToDisable : Profile = CustomerMgr.getProfile(args.customerNO);
+			customerToDisable.credentials.setEnabledFlag(false);
+			customerToDisable.custom.deleteFlag = true;
+			removeChildAccountByID(args.customerNO,args.CurrentCustomer);
+		}
+	}
+	catch (ex){
+		Logger.error("[DisableCustomer] There was an error disabling the customer: {0}",ex);
+		
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}
+
+function removeChildAccountByID(childAccountNO : String, CurrentCustomer : Customer ) : Boolean
+{
+	var childAccountsArray : Array = CurrentCustomer.profile.custom.listChildrenAccounts;
+	var childAccountsList : ArrayList = new ArrayList(childAccountsArray);
+	childAccountsList.remove(childAccountNO);
+	
+	CurrentCustomer.profile.custom.listChildrenAccounts = childAccountsList;	
+	return true;
+}

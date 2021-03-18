@@ -1,0 +1,49 @@
+<!--- TEMPLATENAME: outofstockproductoverlay.isml --->
+<!doctype html>
+<isinclude template="util/modules" />
+<form action="${URLUtils.httpContinue()}" method="post" id="outofstcokoverlayForm" >
+<isif condition="${!empty(pdict.UnshippableProducts)}"> 
+		<div class="outofstockproductoverlay">
+		<span class="title"><isprint value="${Resource.msg('global.outofstockproductoverlay','locale',null)}" /></span>
+		<isset name="outofstockproducts" value="${pdict.UnshippableProducts}" scope="Page" />
+			<isloop items="${outofstockproducts}" var="outProduct" >
+			<div class="product">
+				<isset name="product" value="${dw.catalog.ProductMgr.getProduct(outProduct)}" scope="Page" />
+				<isset name="imageSize" value="${'large'}" scope="page" />
+				<isset name="image" value="${product.getImage(imageSize,0)}" scope="page" />
+				
+				<isimagesizes />
+				
+				<isif condition="${!empty(image)}">
+					<isset name="imageUrl" value="${product.getImage(imageSize,0).getAbsImageURL(imageConfig.pdpImage != null ? imageConfig.pdpImage : imageConfig)}" scope="page"/>
+					<isset name="imageAlt" value="${product.name}" scope="page"/>
+					<isset name="imageTitle" value="${product.name}" scope="page"/>
+				<iselse>
+					<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+					<isset name="imageAlt" value="${product.name}" scope="page"/>
+					<isset name="imageTitle" value="${product.name}" scope="page"/>
+				
+				</isif>
+				<div class='ProductImg'>
+					<img src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}"/>	
+				</div>
+				<div class="productname title">
+					<isprint value="${product.name}" />
+				</div>
+				<div class="sku">
+					<span class="label">${Resource.msg('global.checkoutsku','locale',null)}</span>
+					<span class="value"><isprint value="${product.ID.substring(product.ID.lastIndexOf('-')+1)}"/></span>
+				</div>
+			 </div>
+			 </isloop>
+		</div>
+<iselse>
+		<div class="redirectnext hide">Go To Next</div>
+</isif>
+<isif condition="${pdict.checkoutflow}">
+	<input type="hidden" value="${pdict.checkoutflow}" name="checkflow" id="checkflow" />
+	<button type="submit" value="${Resource.msg('global.continue','locale',null)}" class="hide">
+		${Resource.msg('global.continue','locale',null)}
+	</button>
+ </isif>
+</form>

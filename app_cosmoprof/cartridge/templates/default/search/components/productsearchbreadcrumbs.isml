@@ -1,0 +1,87 @@
+<iscomment>This template renders the breadcrumb navigation for product search results</iscomment>
+
+<iscomment>get the current paging model for convenient reuse</iscomment>
+<isset name="gtmBreadCrumbVal" value="${Resource.msg('global.home','locale',null)}" scope="page"/>
+<isset name="pagingModel" value="${pdict.ProductPagingModel}" scope="page"/>
+
+<div class="breadcrumb">
+	
+	<isif condition="${pdict.CustomSearchPage}">
+		<isif condition="${ojson.category.available || ojson.brand.available || ojson.bestSelerproduct.available || ojson.content.available || ojson.products.available}">
+			<a href="${URLUtils.httpHome()}" class="breadcrumb-home" title="${Resource.msg('global.home','locale',null)}">${Resource.msg('global.home','locale',null)}</a>
+			<span class="breadcrumb-result-text">
+				<isprint value="${Resource.msg('searchbreadcrumbs.resultstext','search',null)}" /> <em>"${pdict.SearchedPhrase}"</em>
+			</span>
+		</isif>
+	<iselse>
+		<a href="${URLUtils.httpHome()}" class="breadcrumb-home" title="${Resource.msg('global.home','locale',null)}">${Resource.msg('global.home','locale',null)}
+		<isif condition="${!empty(pdict.ProductSearchResult) && !empty(pdict.ProductSearchResult.searchPhrase) && !pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid')}">
+		<isif condition="${empty(pagingModel)}">
+			<isset name="breadcrumbHref" value="${URLUtils.url('Search-Show','q',pdict.ProductSearchResult.searchPhrase)}" scope="page" />
+		<iselse>
+			<isset name="breadcrumbHref" value="${pagingModel.appendPaging(URLUtils.url('Search-Show','q',pdict.ProductSearchResult.searchPhrase), 0)}" scope="page" />
+		</isif>
+		<span class="breadcrumb-result-text">
+			${Resource.msg('searchbreadcrumbs.resultstext','search',null)}
+			<isset name="searchPhrase" value="${!empty(pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-"|'))-1)) ? pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-"|'))-1) : pdict.ProductSearchResult.searchPhrase}" scope="PAGE" />
+			<a  class="breadcrumb-last" href="${breadcrumbHref}" title="${pdict.ProductSearchResult.searchPhrase}">
+				  <iscomment>
+					  <isif condition="${pdict.breadcrumb != null}">
+					  	<isprint value="${Resource.msgf('search.quotesforsearch','search',null,pdict.breadcrumb.trim())}" />
+					  <iselse/>
+					  	<isprint value="${Resource.msgf('search.quotesforsearch','search',null,pdict.ProductSearchResult.searchPhrase)}" />
+					  </isif>
+				   </iscomment>
+				   
+				   <isprint value="${Resource.msgf('search.quotesforsearch','search',null,searchPhrase)}" />
+			 </a>
+		</span>
+	</isif>
+
+	<isif condition="${!empty(pdict.ProductSearchResult) && pdict.ProductSearchResult.category != null}">
+	
+		<isactivedatacontext category="${pdict.ProductSearchResult.category}"/>
+	
+		<isscript>
+			importScript
+			var path = new dw.util.ArrayList();
+			var cat = pdict.ProductSearchResult.category;
+			while( cat.parent != null )
+			{
+				if( cat.online ) path.addAt( 0, cat );
+				cat = cat.parent;
+			}
+		</isscript>
+
+		<isloop items="${path}" var="cat" status="loopstate">
+			<isif condition="${loopstate.first && !pdict.ProductSearchResult.categorySearch && !pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid')}">
+				<span class="breadcrumb-result-text">${Resource.msg('searchbreadcrumbs.in','search',null)}</span>
+			</isif>
+			
+			<isif condition="${pdict.ProductSearchResult.categorySearch}">
+				<isset name="catLinkUrl" value="${dw.catalog.ProductSearchModel.urlForCategory('Search-Show', cat.ID)}" scope="page"/>
+			<iselse>                        
+				<isset name="catLinkUrl" value="${dw.catalog.ProductSearchModel.urlForCategory(URLUtils.url('Search-Show','q', pdict.ProductSearchResult.searchPhrase), cat.ID)}" scope="page"/>
+			</isif>
+			
+			<isset name="catDisplayName" value="${(!empty(cat) && cat.hasOwnProperty('displayName')) ? cat.displayName : pdict.ProductSearchResult.category.displayName}" scope="page">
+				<isif condition="${loopstate.last &&  !pdict.ProductSearchResult.refinedByPrice}">
+					<a class="breadcrumb-last" href="${catLinkUrl}" title="${catDisplayName}">${catDisplayName}</a>
+					<input type="hidden" id="breadcrumpdpID" value="${catDisplayName}"   />		
+					<isset name="gtmBreadCrumbVal" value="${gtmBreadCrumbVal.concat("/",cat.displayName)}" scope="page"/>		
+				<iselse>
+					<a  href="${catLinkUrl}" title="${cat.displayName}">${cat.displayName}</a>
+					<input type="hidden" id="breadcrumpdpID" value="${catDisplayName}"   />
+					<isset name="gtmBreadCrumbVal" value="${gtmBreadCrumbVal.concat("/",cat.displayName)}"	scope="page"/>
+				</isif>
+
+		</isloop>
+		
+	</isif>
+	<input type="hidden" id="category-page-breadcrumb" value="${gtmBreadCrumbVal}"   />
+	<ispagingcurrentpage pageurl="${pdict.ProductSearchResult.url('Search-Show')}" pagingmodel="${pdict.ProductPagingModel}"/>
+	
+</isif>
+	
+	
+</div><!-- END: breadcrumb -->

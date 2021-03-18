@@ -1,0 +1,50 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+
+	<isscript>var pageContext={title:'MyAccount', type:'MyAccount', ns:'account', subtype: !empty(pdict.AccountPageType) ? pdict.AccountPageType : 'Profile'};</isscript>
+	<isinclude template="util/modules"/>
+	
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="account/pt_account_UI"/>
+	
+	<iscomment>Add template-specific header information here.</iscomment>	
+	
+	<script src="${URLUtils.absStatic('/js/FlexMicroform.js')}"></script>
+	
+</head>
+
+<body>
+	<div id="wrapper" class="pt_account">
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+			<div id="main" role="main" class="page-content clearfix">
+				<isinclude template="components/browsertoolscheck"/>
+				<div id="primary" class="primary-content">
+					<isreplace/>
+				</div>
+				
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile' && (empty(pdict.Action) || pdict.Action != 'prereg')}">
+					<div id="secondary" class="nav">
+						<nav>
+							<h1 class="visually-hidden"><isprint value="${Resource.msg('global.secondarynavheading','locale',null)}" /></h1>
+							<div class="secondary-navigation">
+								<isinclude url="${URLUtils.url('Account-IncludeNavigation')}"/>
+							</div>
+						</nav>
+					</div>	
+				</isif>
+						
+			</div><!-- /main -->
+			<isinclude template="components/footer/footer"/>	
+			<isinclude template="account/pt_account_VARS"/>		
+	</div>
+	
+</body>
+</html>

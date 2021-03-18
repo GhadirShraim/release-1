@@ -1,0 +1,25 @@
+<isdecorate template="rendering/category/pt_categorylanding">
+
+	<iscache type="relative" minute="30" varyby="price_promotion"/>
+	
+	<isinclude template="util/modules"/>
+	
+	<iscomment>
+		Configured as rendering template for the general category landing page.
+		Displays two category specific slots containing static html with promotional
+		banner in the first slot and either up to four featured products or promotional
+		content in the second slot.
+	</iscomment>
+
+	<div id="secondary" class="secondary-content">	
+		<isslot id="cat-landing-slotnav" context="category" description="Category Side Navigation" context-object="${pdict.ProductSearchResult.category}"/>
+	</div>	
+	<div id="primary" class="primary-content">		
+		<isslot id="cat-landing-slot1" context="category" description="Category Slot 1" context-object="${pdict.ProductSearchResult.category}"/>
+	
+		<isslot id="cat-landing-slot2" context="category" description="Category Slot 2" context-object="${pdict.ProductSearchResult.category}"/>
+		
+		<isslot id="cat-landing-slot3" context="category" description="Category Slot 3" context-object="${pdict.ProductSearchResult.category}"/>
+	</div>
+	
+</isdecorate>

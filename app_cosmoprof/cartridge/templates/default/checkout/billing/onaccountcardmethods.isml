@@ -1,0 +1,97 @@
+<isinclude template="util/modules"/>
+<div class="error-message payment-on-account-error hide">${Resource.msg('onAccountCard.requiredError','forms',null)}</div>
+<label class="account-terms-label">
+	<input type="radio" name="onAccountMCard" class="on-account-terms"/>
+	<iscontentasset aid="on-account-terms" encoding="off"/>
+</label>
+<isset name="onAccountCards" value="${JSON.parse(pdict.Result)}" scope="page" />
+
+<isif condition="${empty(onAccountCards) || empty(onAccountCards.card)}">
+	<span class="error-message on-accoun-empty-tokenized-error">${Resource.msg('checkout.onaccount.tokenizedCardNumbersError','checkout',null)}</span>
+<iselse>
+<isloop items="${onAccountCards.card}" var="onAccountCardObj" status="loopstate">
+	<isset name="isPLCCCard" value="false" scope="Page" />
+	<isset name="creditCardType" value="" scope="Page" />
+	<label class="onAccount-option-label">
+	<input type="radio" name="onAccountMCard" class="on-account-card"/>
+	<div class="card-info">
+		<isif condition="${onAccountCardObj.creditCardType == '01'}">
+			<isset name="onAccountCardType" value="Visa" scope="Page" />
+			<isset name="creditCardType" value="001" scope="Page" />
+		</isif>
+		<isif condition="${onAccountCardObj.creditCardType == '02'}">
+			<isset name="onAccountCardType" value="MasterCard" scope="Page" />
+			<isset name="creditCardType" value="002" scope="Page" />
+		</isif>
+		<isif condition="${onAccountCardObj.creditCardType == '03'}">
+			<isset name="onAccountCardType" value="Amex" scope="Page" />
+			<isset name="creditCardType" value="003" scope="Page" />
+		</isif>
+		<isif condition="${onAccountCardObj.creditCardType == '04'}">
+			<isset name="onAccountCardType" value="Discover" scope="Page" />
+			<isset name="creditCardType" value="004" scope="Page" />
+		</isif>	
+		<isif condition="${onAccountCardObj.creditCardType == '99'}">
+			<isset name="onAccountCardType" value="PLCC" scope="Page" />
+			<isset name="onAccountCardLabel" value="Cosmo Prof Rewards Credit Card" scope="Page" />
+			<isset name="isPLCCCard" value="true" scope="Page" />
+			<isset name="creditCardType" value="002" scope="Page" />
+		</isif>
+		
+		<iscomment>
+			Parsing the date..
+		</iscomment>
+		
+		<isset name="cardExpireyDate" value="${onAccountCardObj.creditCardExpiration.split('/')}" scope="Page" />
+		<isset name="cardExpireyMonth" value="${cardExpireyDate[0]}" scope="Page" />
+		<isset name="cardExpireyYear" value="${cardExpireyDate[1]}" scope="Page" />
+
+		<span class="${onAccountCardType}"></span>
+		<div class="card-details">
+			<div class="card-details-wrapper">
+				<div>${Resource.msg('billing.creidetcardFrom','checkout',null)} 
+					<isif condition="${onAccountCardObj.creditCardType == '99'}">
+						<span class="card-type-label"><isprint value="${onAccountCardLabel}"/></span>
+					<iselse>
+						<span class="card-type-label"><isprint value="${onAccountCardType}"/></span>
+                    </isif>
+				</div>
+				<div>${Resource.msg('billing.creidetcardEnding','checkout',null)} <span class="card-number-last-four-digits"><isprint value="${onAccountCardObj.cybersourceCardToken.substring(onAccountCardObj.cybersourceCardToken.length-4)}"/></span> <span class="on-account-card-type-month"><isprint value="${cardExpireyMonth}" formatter="00" /></span>/ <span class="on-account-card-type-year"><isprint value="${cardExpireyYear}" formatter="0000" /></span></div>
+			</div>
+			<span class="hidden-cybersource-token hide">${onAccountCardObj.cybersourceCardToken}</span>
+			<iscomment>
+				<span class="hidden-worldpay-token hide"><isif condition="${!empty(onAccountCardObj.worldpayCardToken)}">${onAccountCardObj.worldpayCardToken}</isif></span>
+			</iscomment>
+			<span class="hidden-worldpay-token hide"> </span>
+			<span class="hidden-plcc-falg hide">${isPLCCCard}</span>
+			<span class="hidden-card-type-label hide">${creditCardType}</span>
+			<span class="hidden-card-token hide" value="${onAccountCardObj.cybersourceCardToken}"/>
+			<isinputfield formfield="${pdict.CurrentForms.billing.paymentMethods.creditCard.cvn}" attribute2="validation" value2="required" attribute3="disabled" value3="true" type="input" maxlength="4" label="${false}" xhtmlclass="inputcls number-only cvn-card hide" attribute1="placeholder" value1="CVV" rowclass="cvn" isvalidate="true" emptyerror="${Resource.msg('creditcard.cvnmissingerror','forms',null)}"  errcontainer="${Resource.msg('creditcard.cvnmissingerror','forms',null)}" expression="string"/>
+			<isif condition="${pdict.CurrentForms.billing.paymentMethods.creditCard.cvn.error == null}">
+				<div class="form-field-tooltip cvn-tip">
+			<iselse>
+				<div class="form-field-tooltip cvn-tip-error">
+			</isif>
+			<a href="${URLUtils.url('Page-Show', 'cid', 'checkout-security-code')}" class="tooltip">
+				<div class="tooltip-content" data-layout="small tooltip-cvn">
+					<iscontentasset aid="checkout-security-code" />
+				</div>
+			</a>
+		</div>
+		</div>
+	</div>
+	</label>
+</isloop>
+</isif>
+<input type="hidden" name="req_payment_method" id="req_payment_method" value="card">
+<input type="hidden" name="req_cybersource_token" class="on-account-cyber-token" value="">
+<input type="hidden" name="req_worldpay_token" class="on-account-worldpay-token" value="">
+<input type="hidden" name="dwfrm_billing_paymentMethods_creditCard_month" class="on-account-month-input" value="">
+<input type="hidden" name="dwfrm_billing_paymentMethods_creditCard_year" class="on-account-year-input">
+<input type="hidden" name="dwfrm_billing_paymentMethods_creditCard_type" class="on-account-card-type-text">
+<input type="hidden" name="on_account_card_type" class="on-account-card-type">
+<input type="hidden" name="on_account_is_plcc" class="on-account-plcc-flag">
+<input type="hidden" name="dwfrm_billing_paymentMethods_creditCard_number" class="on-account-card-number" value="">
+
+
+

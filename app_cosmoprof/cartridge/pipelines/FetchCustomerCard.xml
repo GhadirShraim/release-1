@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?demandware-pipeline version="2.0"?>
+
+<pipeline type="view">
+  <branch basename="Do">
+    <segment>
+      <node>
+        <start-node call-mode="public" name="Do" secure="false"/>
+        <node-display x="2" y="2"/>
+      </node>
+      <simple-transition>
+        <transition-display>
+          <bend-point relative-to="source" x="0" y="1"/>
+        </transition-display>
+      </simple-transition>
+      <node>
+        <pipelet-node pipelet-name="Script" pipelet-set-identifier="bc_api">
+          <config-property key="Transactional" value="false"/>
+          <config-property key="OnError" value="PIPELET_ERROR"/>
+          <config-property key="ScriptFile" value="int_cosmoprof_biztalk:Azure/getcustomercard/pipelets/BuildCustomerCardRequest.ds"/>
+          <key-binding alias="null" key="ScriptLog"/>
+          <key-binding alias="RequestObject" key="RequestObject"/>
+          <key-binding alias="CurrentForms.profile" key="Profile"/>
+          <key-binding alias="CardNumber" key="CardNumber"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+        <branch basename="b2" source-connector="error">
+          <transition target-connector="in1" target-path="./b3.1">
+            <transition-display>
+              <bend-point relative-to="source" x="2" y="0"/>
+            </transition-display>
+          </transition>
+        </branch>
+      </node>
+      <simple-transition/>
+      <node>
+        <pipelet-node pipelet-name="Script" pipelet-set-identifier="bc_api">
+          <config-property key="Transactional" value="false"/>
+          <config-property key="OnError" value="PIPELET_ERROR"/>
+          <config-property key="ScriptFile" value="int_cosmoprof_biztalk:Azure/getcustomercard/pipelets/DoCustomerCardService.ds"/>
+          <key-binding alias="ScriptLog" key="ScriptLog"/>
+          <key-binding alias="RequestObject" key="RequestObject"/>
+          <key-binding alias="CardNumber" key="CardNumber"/>
+          <key-binding alias="CallCC" key="callCC"/>
+          <key-binding alias="CardNotFound" key="CardNotFound"/>
+          <key-binding alias="CRMErrorResponse" key="CRMErrorResponse"/>
+          <key-binding alias="CRMCardNotFound" key="CRMCardNotFound"/>
+          <key-binding alias="StudentCardFound" key="StudentCardFound"/>
+          <key-binding alias="CardLastDigit" key="CardLastDigit"/>
+          <key-binding alias="cardType" key="cardType"/>
+          <key-binding alias="cardStatus" key="cardStatus"/>
+          <key-binding alias="accountDetail" key="accountDetail"/>
+          <key-binding alias="accountId" key="accountId"/>
+          <key-binding alias="accountNumber" key="accountNumber"/>
+          <key-binding alias="accountStatus" key="accountStatus"/>
+          <key-binding alias="contactId" key="contactId"/>
+          <key-binding alias="CardType" key="CardType"/>
+          <key-binding alias="salesforceContactID" key="salesforceContactID"/>
+          <key-binding alias="salesforceCardID" key="salesforceCardID"/>
+        </pipelet-node>
+        <node-display x="0" y="1"/>
+        <branch basename="b3" source-connector="error">
+          <transition target-connector="in1"/>
+          <segment>
+            <node>
+              <join-node/>
+              <node-display x="1" y="0"/>
+            </node>
+            <simple-transition/>
+            <node>
+              <pipelet-node pipelet-name="Assign" pipelet-set-identifier="bc_api">
+                <config-property key="Transactional" value="false"/>
+                <key-binding alias="true" key="From_0"/>
+                <key-binding alias="Error" key="To_0"/>
+                <key-binding alias="null" key="From_1"/>
+                <key-binding alias="null" key="To_1"/>
+                <key-binding alias="null" key="From_2"/>
+                <key-binding alias="null" key="To_2"/>
+                <key-binding alias="null" key="From_3"/>
+                <key-binding alias="null" key="To_3"/>
+                <key-binding alias="null" key="From_4"/>
+                <key-binding alias="null" key="To_4"/>
+                <key-binding alias="null" key="From_5"/>
+                <key-binding alias="null" key="To_5"/>
+                <key-binding alias="null" key="From_6"/>
+                <key-binding alias="null" key="To_6"/>
+                <key-binding alias="null" key="From_7"/>
+                <key-binding alias="null" key="To_7"/>
+                <key-binding alias="null" key="From_8"/>
+                <key-binding alias="null" key="To_8"/>
+                <key-binding alias="null" key="From_9"/>
+                <key-binding alias="null" key="To_9"/>
+              </pipelet-node>
+              <node-display x="0" y="1"/>
+            </node>
+            <simple-transition/>
+            <node>
+              <end-node name="error"/>
+              <node-display x="0" y="1"/>
+            </node>
+          </segment>
+        </branch>
+      </node>
+      <simple-transition/>
+      <node>
+        <end-node/>
+        <node-display x="0" y="1"/>
+      </node>
+    </segment>
+  </branch>
+</pipeline>

@@ -1,0 +1,27 @@
+<!--- TEMPLATENAME: requestconsultantmail.isml --->
+
+<isset name="formData" value="${pdict.CurrentForms.profile}" scope="page" />
+
+<span>${Resource.msg('salon.firstname', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.firstname.value}" /> </br>
+<span>${Resource.msg('salon.lastname', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.lastname.value}" /> </br>
+<span>${Resource.msg('profile.businessname', 'forms', null)}&nbsp;</span><isprint value="${formData.business.businessname.value}" /> </br>
+<span>${Resource.msg('salon.salonaddress1', 'forms', null)}&nbsp;</span><isprint value="${formData.salonaddress1.value}" /> </br>
+<span>${Resource.msg('salon.salonaddress2', 'forms', null)}&nbsp;</span><isprint value="${formData.salonaddress2.value}" /> </br>
+<span>${Resource.msg('salon.city', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.city.value}" /></br>
+<span>${Resource.msg('salon.country', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.country.value}" /></br>
+<span>${Resource.msg('salon.states', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.states.shortstate.value}" /></br>
+<span>${Resource.msg('salon.salonphone', 'forms', null)}</span>&nbsp;<isprint value="${formData.salonphone.value}" /></br>
+<span>${Resource.msg('salon.salonemail', 'forms', null)}</span>&nbsp;<isprint value="${formData.salonemail.value}" /></br>
+<span>${Resource.msg('salon.currentcustomercard', 'forms', null)}</span>&nbsp;<isprint value="${formData.customer.currentcustomercard.value}" /></br>
+<span>${Resource.msg('salon.zip', 'forms', null)}</span>&nbsp;<isprint value="${formData.address.zip.value}" /></br>
+<span>${Resource.msg('salon.colors', 'forms', null)}</span>&nbsp;<isprint value="${formData.color.value}" /></br>
+<span>${Resource.msg('salon.cuttings', 'forms', null)}</span>&nbsp;<isprint value="${formData.cutting.value}" /></br>
+<span>${Resource.msg('salon.mani', 'forms', null)}</span>&nbsp;<isprint value="${formData.mani.value}" /></br>
+<span>${Resource.msg('salon.waxings', 'forms', null)}</span>&nbsp;<isprint value="${formData.waxing.value}" /></br>
+<span>${Resource.msg('salon.massages', 'forms', null)}</span>&nbsp;<isprint value="${formData.massage.value}" /></br>
+<span>${Resource.msg('salon.spas', 'forms', null)}</span>&nbsp;<isprint value="${formData.spa.value}" /></br>
+<span>${Resource.msg('salon.salonowners', 'forms', null)}</span>&nbsp;<isprint value="${formData.salonowner.value}" /></br>
+<span>${Resource.msg('salon.Independents', 'forms', null)}</span>&nbsp;<isprint value="${formData.Independent.value}" /></br>
+<span>${Resource.msg('salon.barbers', 'forms', null)}</span>&nbsp;<isprint value="${formData.barber.value}" /></br>
+<span>${Resource.msg('salon.others', 'forms', null)}</span>&nbsp;<isprint value="${formData.other.value}" /></br>
+<span>${Resource.msg('salon.saloncomments', 'forms', null)}</span>&nbsp;<isprint value="${formData.saloncomment.value}" /></br>

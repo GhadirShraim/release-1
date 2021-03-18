@@ -1,0 +1,78 @@
+<iscache status="off" />
+<isscript>
+	importScript( "util/ViewHelpers.ds" );
+	
+	var isPortalUser = pdict.CurrentSession.customerAuthenticated;
+	var custVerified = pdict.CurrentCustomer.authenticated;
+	
+	var conCode = pdict.conCode;
+    var cCode = pdict.cCode;
+    
+    if(empty(cCode) || cCode == null)
+    {
+    	cCode = '00' + dw.system.Site.current.preferences.custom.defaultChainCode;
+    }
+	
+	topLevel = getTopLevelCategory();
+</isscript>
+
+<isinclude template="util/modules"/>
+<div class="categorymenu">
+	<ul class="menu">
+		<isif condition="${!pdict.CurrentCustomer.authenticated}">
+			<li class="first M-Menu">
+				<a title="${Resource.msg('global.login','locale',null)}" href="${URLUtils.https('Account-Show')}"  class="level-1">
+					${Resource.msg('global.loginforcatalog','locale',null)}
+				</a>
+			</li>
+		<iselse>
+			<isloop items="${getSubcategoriesInMenuForCategory(dw.catalog.CatalogMgr.getSiteCatalog().getRoot())}" var="Cat">
+				<isif condition="${!checkIfExcluded(conCode,cCode,Cat) && 'showInMobileMenu' in Cat.custom && Cat.custom.showInMobileMenu}">
+					<li class="M-Menu<isif condition="${Cat.custom.public}">-public</isif>">
+						<a ${!empty(Cat.getOnlineSubCategories()) ? 'data-submenu=#submenu-'+Cat.getID() : ''} href="${URLUtils.http('Search-Show', 'cgid', Cat.ID)}">
+							<isprint value="${Cat.getDisplayName()}"/>
+						</a>
+					</li>
+				</isif>
+			</isloop>
+		</isif>
+		<iscontentasset aid="mobile-header" encoding="off"/>
+	</ul>
+
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isloop items="${getSubcategoriesInMenuForCategory(dw.catalog.CatalogMgr.getSiteCatalog().getRoot())}" var="topCat">
+			<isif condition="${!checkIfExcluded(conCode,cCode,topCat)}">
+				<div class="submenu" id="submenu-${topCat.getID()}">
+					<div class="title">
+						<isprint value="${topCat.getDisplayName()}"/>
+					</div>
+					<ul>
+						<isloop items="${topCat.getOnlineSubCategories()}" var="subCat">
+							<isif condition="${!checkIfExcluded(conCode,cCode,subCat)}">
+								<isset name="subSubCats" value="${getSubcategoriesInMenuForCategory(subCat)}" scope="page" />
+								<li>
+									<a  <isif condition="${subSubCats.length > 0}">data-subsubmenu="${'#subSubCat-'}${subCat.getID()}" class="toggle"</isif> href="${URLUtils.http('Search-Show', 'cgid', subCat.getID())}">
+										<isprint value="${subCat.getDisplayName()}"/>
+									</a>
+								</li>
+								<isif condition="${subSubCats.length > 0}">
+									<div class="col" id="subSubCat-${subCat.getID()}">
+										<ul>
+											<isloop items="${subSubCats}" var="subSubCat" status="firstloop">
+												<li>
+													<a href="${URLUtils.http('Search-Show', 'cgid', subSubCat.ID)}">
+														<isprint value="${subSubCat.displayName}"/>
+													</a>
+												</li>
+											</isloop>
+										</ul>
+									</div>
+								</isif>
+							</isif>
+						</isloop>
+					</ul>
+				</div>
+			</isif>
+		</isloop>
+	</isif>
+</div>

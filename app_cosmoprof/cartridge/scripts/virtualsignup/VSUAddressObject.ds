@@ -1,0 +1,38 @@
+ /**
+* # SAL-649
+* AddressObject.ds - Creates an address object to feed to the DAV process,
+* So as not to create an address unless otherwise authorized.
+*
+*	@input Form : dw.web.FormGroup - The Profile Address Form Group to create the address object from
+*	@output AddressObject : Object - The object to hold the necessary address info
+*/
+var Logger : Logger = require("dw/system").Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		var obj : Object = new Object();
+		
+		var profileForm = args.Form;
+		
+		obj.firstName = profileForm.address.firstname.value;
+		obj.lastName = profileForm.address.lastname.value;
+		obj.address1 = profileForm.address.vsu.address1.value;
+		obj.address2 = profileForm.address.vsu.address2.value;
+		obj.city = profileForm.address.city.value;
+		obj.stateCode = profileForm.address.states.shortstate.value;
+		obj.postalCode = profileForm.address.zip.value;
+		obj.countryCode = dw.system.Site.current.ID == 'CosmoProf-CA' ? 'CA' : 'US';
+		obj.phone = profileForm.address.workphone.value;
+		obj.email = profileForm.customer.email.value;
+		
+		args.AddressObject = obj;
+		
+		
+		return PIPELET_NEXT;
+	} catch ( e ) {
+		var a = e;
+		Logger.error("AddressObject.ds error: " + e);
+		return PIPELET_ERROR;
+	}
+}

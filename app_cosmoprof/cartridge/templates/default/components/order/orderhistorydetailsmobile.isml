@@ -1,0 +1,91 @@
+
+<div class="mobile-order-details">
+	<isset name="Order" value="${pdict.order}" scope="page"/>
+	<a href="${URLUtils.url('Order-History')}" class="link-back">
+	<div class="order-history-header">
+		<div class="order-number">
+			<span class="label">${Resource.msg('orders.numberlabel','account',null)}</span>
+			<isif condition="${'page' in pdict && pdict.page == 'history' && 'cosmoProfInvoiceNumber' in Order }">
+				<span class="value"><isprint value="${Order.cosmoProfInvoiceNumber}"/></span>
+			<iselse>
+				<span class="value"><isprint value="${Order.orderNo}"/></span>
+			</isif>
+		</div>
+		<div class="order-total">
+			<span class="label">${Resource.msg('orders.ordertotal','account',null)}</span>
+			<span class="value"><isprint value="${Order.totalGrossPrice}"/></span>
+		</div>
+		
+		<isinclude template="account/orderhistory/orderstatusinclude" />
+		
+		<div class="order-date">
+			<span class="label">${Resource.msg('orders.date','account',null)}</span>
+			<span class="value"><isprint value="${Order.creationDate}" /></span>
+		</div>
+		<isloop items="${Order.shipments}" var="Shipment" status="shipmentloopstate">
+			<isif condition="${shipmentloopstate.first}">
+				<span class="label">${Resource.msg('orders.shippedto','account',null)}</span>
+				<span class="value"><isprint value="${Shipment.shippingAddress.fullName}" /></span>
+			</isif>
+		</isloop>
+		<div class="shipping-status">
+			<span class="label">${Resource.msg('orderdetails.shippingstatus','components',null)}</span>
+			<isif condition="${!empty(shipment) && shipment.shippingStatus==dw.order.Shipment.SHIPPING_STATUS_NOTSHIPPED}">
+				<span class="value">${Resource.msg('orderdetails.notshipped','components',null)}</span>
+			<iselseif condition="${!empty(shipment) && shipment.shippingStatus==dw.order.Shipment.SHIPPING_STATUS_SHIPPED}">
+				<span class="value">${Resource.msg('orderdetails.shipped','components',null)}</span>
+			<iselse>
+				<span class="value">${Resource.msg('orderdetails.notknown','components',null)}</span>
+			</isif>
+		</div>
+		
+		<div class="tracking-number">
+			<span class="label">${Resource.msg('orderdetails.tracking','components',null)}</span>
+			<isif condition="${!empty(shipment.trackingNumber)}">
+				<span class="value"><!-- Tracking Number --><isprint value="${shipment.trackingNumber}"/></span>
+			<iselse>
+				<span class="value">${Resource.msg('global.na','locale',null)}</span>
+			</isif>
+		</div>
+	</div>
+	</a> 
+	
+	<isloop items="${Order.shipments}" var="shipment" status="shipmentloopstate">
+		<isif condition="${shipment.productLineItems.size() > 0}">
+			<iscomment>Shipment items table</iscomment>
+			<table class="order-shipment-table">
+				<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+					<tr>
+						<td><isdisplayliproduct p_productli="${productLineItem}" p_formli="${FormLi}" p_editable="${false}" p_hideprice="${true}" p_hidepromo="${true}" /></td>
+						<td>${Resource.msg('order.qty','order',null)} <isprint value="${productLineItem.quantity}"/></td>
+					</tr>
+				</isloop>
+			</table>
+		</isif>
+	</isloop>
+	
+	
+<isif condition=${Order.isJSON}>
+	<iscomment>Shipment items table</iscomment>
+	<table class="receipt-order-shipment-table">
+		<isloop items="${Order.lineItems}" var="productLineItem" status="pliloopstate">
+			<tr>
+				<td>
+					<iscomment>Display product line and product using module</iscomment>
+					<div class="name"><isprint value="${productLineItem.productName}"/></div><br>
+					
+					<div class="sku">
+					<span>${Resource.msg('orders.sku','account',null)}:</span>
+					<isprint value="${productLineItem.itemNo}"/></div>
+				</td>
+
+			    <td><div class="qty"><span>${Resource.msg('global.qty','locale',null)}:</span>
+		    		<isprint value="${productLineItem.quantity}"/></div><br>
+		    		
+					<div class="size">To Do:  Add Size</div>
+		    	</td>
+			</tr>
+		</isloop>
+	</table>
+</isif>
+</div>

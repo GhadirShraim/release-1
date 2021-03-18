@@ -1,0 +1,219 @@
+<isdecorate template="content/pt_customerservice">
+ 
+<isinclude template="util/modules"/>
+<isset name="isNonLoginPortal" value="${'isNonLoginPortalUser' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.isNonLoginPortalUser) ? true : false }" scope="page" />
+
+<isset name="isCaptchaError" value="${false}" scope="Page" />
+<isif condition="${pdict.CaptchaErrorCode && empty(pdict.CurrentCustomer.profile)}">
+	<isset name="isCaptchaError" value="${true}" scope="Page" />
+</isif>
+		
+	<isif condition="${!empty(pdict.ConfirmationMessage) && pdict.ConfirmationMessage}">
+		
+		<div class="confirmation-message contactusdialog hide" id="dialog-contact">
+			<p><isprint value="${Resource.msg('forms.contactus.messagesent','forms',null)}"/></p> 
+			<p><isprint value="${Resource.msg('forms.contactus.messagerequires','forms',null)}"/></p>
+			<button id="close" class="dialogclose" value="${Resource.msg('global.close','locale',null)}" >
+				<isprint value="${Resource.msg('global.close','locale',null)}"/>
+			</button>	
+		</div>
+		
+	</isif>
+	<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}">
+		<isset name="cCode" value="${'tempChainCode' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.tempChainCode) ? pdict.CurrentSession.custom.tempChainCode.replace('C00', '') : ''}" scope="page"/>
+	<iselseif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+		<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="page"/>
+	<iselse/>
+		<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+	</isif>
+	
+	<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+		<h1><isprint value="${Resource.msg('global.contactus','locale',null)}"/></h1>
+		
+		<div class="Padding-Right">
+			<iscontentasset aid="${cCode+'-contactus'}"/>
+		</div>
+		
+	<iselse/>
+	
+		<div class="center">
+			<h1><isprint value="${Resource.msg('global.contactus','locale',null)}"/>
+		</div>
+		<div class="Padding-left">
+			<iscontentasset aid="contactus-top"/>
+		</div>
+		
+	</isif>
+	<div class="dialog-required Padding-Right"> 
+			<span class="required-indicator">&#42; <isprint value="${Resource.msg('global.requiredfield','locale',null)}"/></span>
+	</div>
+	<div class="contact-us">
+		<form action="${URLUtils.httpsContinue()}" method="post" id="RegistrationForm">
+			<fieldset>
+				<isif condition="${pdict.CurrentForms.contactus.firstname.value != null && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isprint value="${Resource.msg('forms.contactus.firstname.label','forms',null)}"/> 
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.firstname.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselse>
+					<isinputfield formfield="${pdict.CurrentForms.contactus.firstname}" type="input"/>
+				</isif>
+					
+				<isif condition="${pdict.CurrentForms.contactus.lastname.value != null && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isprint value="${Resource.msg('forms.contactus.lastname.label','forms',null)}"/>
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.lastname.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselse>
+					<isinputfield formfield="${pdict.CurrentForms.contactus.lastname}" type="input"/>
+				</isif>
+					
+				<isif condition="${pdict.CurrentForms.contactus.email.value != null && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isprint value="${Resource.msg('forms.contactus.email.label','forms',null)}"/>
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.email.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselse>
+					<isinputfield formfield="${pdict.CurrentForms.contactus.email}" type="input"/>
+				</isif>
+				
+				<isif condition="${pdict.CurrentCustomer.profile != null && pdict.CurrentCustomer.profile.custom.accountNumber != null && !pdict.CurrentSession.custom.isPortalUser && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isprint value="${Resource.msg('forms.contactus.accountnumber.label','forms',null)}"/>
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.accountnumber.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselseif condition="${pdict.CurrentCustomer.profile != null && pdict.CurrentCustomer.profile.custom.cardNumber != null && !pdict.CurrentSession.custom.isPortalUser && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isprint value="${Resource.msg('forms.contactus.cardnumber.label','forms',null)}"/>
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.cardnumber.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselseif condition="${ !pdict.CurrentSession.custom.isPortalUser }">
+					<isinputfield formfield="${pdict.CurrentForms.contactus.accountorcardnumber}" type="input"/>
+				</isif>
+				
+				<isif condition="${pdict.CurrentForms.contactus.states.state.value != null && !isCaptchaError}">
+					<table>
+						<tr>
+							<td  class="tdtopic">
+								<label class="topic">
+									<isif condition="${pdict.CurrentCustomer.addressBook != null && pdict.CurrentCustomer.addressBook.preferredAddress.countryCode.value == 'CA'}">
+										<isprint value="${Resource.msg('forms.province','forms',null)}"/>
+									<iselse/>
+										<isprint value="${Resource.msg('forms.contactus.state.label','forms',null)}"/>
+									</isif> 
+								</label>
+							</td>
+							<td class="tdtopicValue">
+								<isprint value="${pdict.CurrentForms.contactus.states.state.value}"/>
+							</td>
+						</tr>
+					</table>
+				<iselse>
+					<isinputfield formfield="${pdict.CurrentForms.contactus.states.state}" type="select"/>
+				</isif>
+				
+				<isif condition="${!pdict.CurrentSession.custom.isPortalUser}">	
+					<table>
+						<tr> 
+							<iscomment>
+							<td  class="tdtopic topicInterest">
+								<label class="topic">
+									<span class="required-indicator">&#42;</span> <isprint value="${Resource.msg('forms.contactus.topicofinterest.label','forms',null)}"/> 
+								</label>
+							</td>
+							 </iscomment>
+							<td class="tdtopicSelect">
+								<isinputfield formfield="${pdict.CurrentForms.contactus.topicofinterest}" type="select" xhtmlclass ="contactus-select" selectedval= ${pdict.Topic} defaultforselect="Select Topic"/>
+							</td>
+						</tr>
+					</table>
+				<iselseif condition="${pdict.CurrentSession.custom.isPortalUser}">
+					 <table>
+							<tr> 
+								<iscomment>
+								<td  class="tdtopic topicInterest">
+									<label class="topic">
+										<span class="required-indicator">&#42;</span> <isprint value="${Resource.msg('forms.contactus.topicofinterest.label','forms',null)}"/> 
+									</label>
+								</td>
+								</iscomment>
+								<td class="tdtopicSelect">
+									<isinputfield formfield="${pdict.CurrentForms.contactus.topicofinterest}" type="select" xhtmlclass ="contactus-select" defaultforselect="Select Topic"/>
+								</td>
+							</tr>
+					 </table>
+				  
+				</isif>	
+				<isinputfield attribute1="rows" value1="8" attribute2="cols" value2="40" formfield="${pdict.CurrentForms.contactus.comment}" type="textarea"/>
+			
+				<isif condition="${!pdict.CurrentCustomer.authenticated}">
+					<isif condition="${pdict.CaptchaErrorCode}"> 
+						<div class="contsct-us-captchaerror error">${Resource.msg('virtualsignup.googlerecaptcha','account',null)}</div>
+					</isif>
+					<script>
+						function recaptchaCallback() {
+							if($(".contsct-us-captchaerror").length > 0) {
+								$(".contsct-us-captchaerror").remove();
+							}
+						};
+					</script>
+					<isif condition="${'recatchaSiteKey' in dw.system.Site.getCurrent().preferences.custom}"> 
+						<div class="g-recaptcha contsct-us-captcha" data-callback="recaptchaCallback" data-sitekey="${dw.system.Site.getCurrent().preferences.custom.recatchaSiteKey}"></div> 
+					</isif>
+				 </isif>
+					
+				<div class="form-row form-row-button">
+					<button id="sendBtn" class="primaryButtn" type="submit" value="${Resource.msg('global.send','locale',null)}" name="${pdict.CurrentForms.contactus.send.htmlName}">
+						<isprint value="${Resource.msg('global.submit','locale',null)}"/></button>
+					<iscomment>Redesign- Cancel button not required.
+					<button id="cancel" class="secondarybtn" type="submit" value="${Resource.msg('global.send','locale',null)}" name="${pdict.CurrentForms.contactus.send.htmlName}">
+						<isprint value="${Resource.msg('global.cancel','locale',null)}"/></button>	
+					 </iscomment>
+				</div>
+			
+			</fieldset>
+		</form>
+	</div>	
+	
+</isdecorate>
+

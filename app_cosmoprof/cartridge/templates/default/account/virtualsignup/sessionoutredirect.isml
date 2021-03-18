@@ -1,0 +1,3 @@
+<!-- redirect to  VSU-Start if Session went out -->
+<isset scope="page" name="Location" value="${URLUtils.https('VirtualSignup-Start', 'sessionViolation', 'true')}"/>
+<isredirect location="${Location}" permanent="true" />

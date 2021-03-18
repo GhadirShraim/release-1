@@ -1,0 +1,91 @@
+<div class="cart-row <isif condition="${!pdict.CurrentSession.custom.isPortalUser && productLineItem.custom.deliveryMethod == 'SDD' && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">SSD_prod-items <iselse/>Non_SDD_prod-item</isif>">
+	<div class="item-image image-col">
+		<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+	</div>
+	<div class="details-col">
+		<div class="item-details">
+			<iscomment>Display product line and product using module</iscomment>
+			<isdisplayliproduct p_productli="${productLineItem}" p_editable="${false}"/>
+		</div>
+		<!-- Line Item Pricing Calculation Same as Cart-->
+		<isif condition="${productLineItem.product != null}">
+		
+			<iscomment> this is to get the discount price on the item </iscomment>
+			<isset name="promos" value="${dw.campaign.PromotionMgr.activeCustomerPromotions.getProductPromotions(productLineItem.product)}" scope="page"/>
+			<isset name="DiscountPrice" value="${null}" scope="page"/>
+			<isif condition="${! empty(promos)}">
+				<isloop items="${promos}" var="promo">
+					<isif condition="${promo.custom.discountModel}">
+						<isset name="DiscountPrice" value="${promo.getPromotionalPrice(productLineItem.product)}" scope="page"/>
+						<isbreak/>
+					</isif>
+					
+				</isloop>
+			</isif>
+			
+			<iscomment>Get the price model for this	product.</iscomment>
+			<isset name="PriceModel" value="${productLineItem.product.getPriceModel()}" scope="page" />
+			
+			<iscomment>Get StandardPrice from list price book.</iscomment>
+			<isinclude template="product/components/standardprice" />
+			
+			<iscomment>Get SalesPrice from line item itself.</iscomment>
+			<isset name="StandardPrice" value="${productLineItem.basePrice}" scope="page" />
+			<isset name="SalesPrice" value="${productLineItem.adjustedPrice / productLineItem.quantity.value}" scope="page" />
+			<iscomment>Get the tax Basis Price </iscomment>
+			<isset name="taxBasis" value="${productLineItem.taxBasis.divide(productLineItem.quantity.value)}" scope="Page" />
+			<!-- Rounding Off Sales Price -->
+			<isset name="SalesPrice" value="${Math.round(SalesPrice * 100.0)/100}" scope="page" />
+		</isif>
+		
+		<!-- End of Pricing Logic -->
+		
+		<div class="col3-wrap">
+			<div class="item-price column">
+				<isif condition="${productLineItem.bonusProductLineItem}">
+					<div class="summary-bonus-price">
+						<span class="bonus-item">
+							${Resource.msg('global.bonus','locale',null)}
+						</span>
+					</div>
+				<iselse>
+					 ${Resource.msg('global.price','locale',null)}
+					 <isif condition="${!empty(DiscountPrice) && (DiscountPrice != dw.value.Money.NOT_AVAILABLE)}">
+						 <isprint value="${SalesPrice}"/>
+						<isif condition="${DiscountPrice > SalesPrice && taxBasis > SalesPrice }">
+						</isif>
+					<iselseif condition="${StandardPrice.available && StandardPrice > SalesPrice}">
+						 <isprint value="${StandardPrice}"/>
+					<iselse>
+						 <isprint value="${StandardPrice}"/>
+					</isif>
+				</isif>
+			</div>
+			<div class="item-quantity column">
+				<div class="bg-sdd-image"></div>
+				<div>${Resource.msg('global.qty2','locale',null)} <isprint value="${productLineItem.quantity}"/></div>
+			</div>
+			<div class="item-total column">
+				<iscomment>Render quantity. If it is a bonus product render word 'Bonus'</iscomment>
+		    	<isif condition="${productLineItem.bonusProductLineItem}">
+		    		<iscomment>
+		    			<span class="bonus-item"><isprint value="${Resource.msg('global.bonus','locale',null)}" /></span>
+		    		 </iscomment>
+		    	<iselse>
+		    	<!-- New Pric logic as per cart page -->
+			    	<isif condition="${lineItem.priceAdjustments.length > 0}">
+			    		${Resource.msg('global.totalprice','locale','null')} <isprint value="${productLineItem.getAdjustedPrice()}"/>
+			    	<iselse>
+			    		${Resource.msg('global.totalprice','locale','null')} <isprint value="${productLineItem.getAdjustedPrice()}" />
+			    	</isif>
+	            					    						            
+		            <isif condition="${!empty(productLineItem.optionProductLineItems) && productLineItem.optionProductLineItems.size() > 0}">
+						<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+							<p>+ <isprint value="${optionLI.adjustedPrice}"/></p>
+						</isloop>
+					</isif>
+				</isif>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,448 @@
+/**
+* CosmoProductPriceObjectUtils
+* Utilities for use of the Dynamic Pricing Model for CosmoProf
+* @module app_cosmoprof/cartridge/scripts/product/CosmoProductPriceObjectUtils
+*
+*
+*/
+var Money = require('dw/value').Money;
+var ArrayList = require('dw/util').ArrayList;
+var Collection = require('dw/util').Collection;
+var Product = require('dw/catalog').Product;
+var PromotionMgr = require('dw/campaign').PromotionMgr;
+var Promotion = require('dw/campaign').Promotion;
+var ProductPriceModel = require('dw/catalog').ProductPriceModel;
+var StringUtils = require('dw/util').StringUtils;
+var PriceBook = require('dw/catalog').PriceBook;
+var PriceBookMgr = require('dw/catalog').PriceBookMgr; 
+var Logger = require('dw/system').Logger;
+
+function CosmoProductPriceObjectUtils () {}
+
+/*
+*	getCosmoProductPriceObject
+*
+*   @input Product 					: dw.catalog.Product
+*   @input CurrentCustomer			: dw.customer.Customer		 	Customer
+*	@input DscPricebookID			: String						Optional, passed from custom session attribute if one was set for the user's session.
+* 	@input CurrentOptionModel		: dw.catalog.ProductOptionModel Optional, passed if already available else it will be populated
+*   @output CosmoProductPriceObject : Object
+*/
+CosmoProductPriceObjectUtils.getCosmoProductPriceObject = function(productViewed, CurrentCustomer, DscPricebookID,CurrentOptionModel){
+	/*
+		Validate inputs for Product and CurrentCustomer
+	 	DscPricebookID and CurrentOptionModel are optional
+	*/
+	if( empty(productViewed) || empty(CurrentCustomer) ){
+		Logger.error("[CosmoProductPriceObjectUtils] Error in CosmoProductPriceObjectUtils.ds.  Required parameter was null.");
+		 return null;
+	}
+		
+	var prodPriceModel : ProductPriceModel = productViewed.getPriceModel();
+	var zeroMoneyObject : Money = new Money(0,prodPriceModel.price.currencyCode);
+	
+	var basePriceBookPrice : Money = dw.value.Money.NOT_AVAILABLE;
+	var dscPriceBookPrice : Money = dw.value.Money.NOT_AVAILABLE;
+	var flyerPriceBookPrice : Money = dw.value.Money.NOT_AVAILABLE;
+	var discountModelPrice : Money = dw.value.Money.NOT_AVAILABLE;
+	var promotionPrice : Money = dw.value.Money.NOT_AVAILABLE;
+	//currentBasePrice is created for tracking actual base price
+	var currentBasePrice : Money = dw.value.Money.NOT_AVAILABLE;
+	
+	// Our container object
+	var CosmoProductPriceObject : Object = {
+		ProductID : productViewed.ID,
+		YourPrice : null,
+		lblYourPrice : null,
+		SalonPrice : null,
+		lblSalonPrice : null,
+		SalePrice : null,
+		lblSalePrice : null,
+		SavePrice : null,
+		lblSavePrice : null,
+		lblPromo : null,
+		lowDMPrice : null,
+		highDMPrice : null
+	};
+	
+	//Set premium pricing boolean to false as default
+	CosmoProductPriceObject.premiumPricing = false;
+	
+	/******************************
+	
+	PRICES BY TYPE
+	
+	*******************************/
+	
+	// Get base price book price
+	var basePriceBookID : String = !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('baseSitePriceBookID')) ? dw.system.Site.getCurrent().getCustomPreferenceValue('baseSitePriceBookID') : "";
+	if (!empty(basePriceBookID)){
+		basePriceBookPrice = prodPriceModel.getPriceBookPrice(basePriceBookID);
+		currentBasePrice = basePriceBookPrice;
+		
+	} else {
+		Logger.error("[CosmoProductPriceObjectUtils] Error in CosmoProductPriceObjectUtils.ds.  Could not get baseSitePriceBookID preference.");		
+	}
+
+	// Get DSC price book price if available
+	if (!empty(DscPricebookID))
+	{
+		dscPriceBookPrice = prodPriceModel.getPriceBookPrice(DscPricebookID);
+		
+		if(dscPriceBookPrice > basePriceBookPrice)
+		{
+			basePriceBookPrice = prodPriceModel.getPriceBookPrice(DscPricebookID);
+			dscPriceBookPrice = dw.value.Money.NOT_AVAILABLE;
+		}
+		
+		if(prodPriceModel.getPriceTable().getQuantities().size() > 1) {
+			CosmoProductPriceObject.premiumPricing = true;
+		}
+	}
+		
+	// Flyer Comdiv Price Book Determination
+	if(!empty(CurrentCustomer.getAddressBook())){
+		var selectedAddr = CurrentCustomer.getAddressBook().getAddress(CurrentCustomer.profile.custom.activeShipAddressID);
+	}
+	var flyerComdiv : String = "";
+	//get flyer from profile first
+	if(!empty(CurrentCustomer.profile.custom.flyerComdiv)){
+		flyerComdiv = CurrentCustomer.profile.custom.flyerComdiv;
+	//if the profile doesn't have a flyer comdiv (usually card holders), get it from the selected address
+	}else if(selectedAddr != null && 'comdiv' in selectedAddr.custom && !empty(selectedAddr.custom.comdiv)){
+		flyerComdiv = selectedAddr.custom.comdiv
+	}
+	if (!empty(flyerComdiv)){
+		var flyerPricebookID : String = StringUtils.format("flyer-{0}-pricebook",flyerComdiv);
+		flyerPriceBookPrice = prodPriceModel.getPriceBookPrice(flyerPricebookID);
+	}
+	
+	try {
+		// DM price determination
+		var lowDMPrice : Money = dw.value.Money.NOT_AVAILABLE;
+		var highDMPrice : Money = dw.value.Money.NOT_AVAILABLE;
+		var lowPromoPrice : Money = dw.value.Money.NOT_AVAILABLE;
+		var discountModel = false;
+
+		var variants : Collection = productViewed.isMaster() ? productViewed.getVariants() : new ArrayList(productViewed);
+		var promos = PromotionMgr.activeCustomerPromotions.getProductPromotions(productViewed);
+		// for each variant in the product
+		for each (var variant : Product in variants) {
+			// if there are promos for this product
+			if (!empty(promos)) {    
+				var dmPrice : Money = dw.value.Money.NOT_AVAILABLE;
+				var promoPrice : Money = dw.value.Money.NOT_AVAILABLE;
+				var previousPromoRank : Number = null;
+				var currentPromoRank : Number = null;
+				
+				// for each promo
+				for each (var promo : Promotion in promos) {
+					var currentPromoRank = promo.getRank();
+					// if a promotion class product and it's the discount model
+					if (promo.getPromotionClass() != null && promo.getPromotionClass().equals(Promotion.PROMOTION_CLASS_PRODUCT) ) {
+						// Is this an option product
+						if (variant.optionProduct){
+							// if so and option model available
+							if (CurrentOptionModel != null){
+								promoPrice = promo.getPromotionalPrice(variant, CurrentOptionModel);
+							} else{
+								promoPrice = promo.getPromotionalPrice(variant, variant.getOptionModel());
+							}
+						}
+						else {
+							if (promo.custom.discountModel){
+								//get the actual percentage discount from discount model
+								var promoDiscount : String = promo.custom.discountModelPercentage;
+								var promoNum : Number = new Number(promoDiscount);
+								//Discount Model Price based on actual Base price
+								dmPrice = basePriceBookPrice.subtractPercent(promoNum);
+								// calculate discount model price if flyer Price book is less than actual base price
+								if(flyerPriceBookPrice != dw.value.Money.NOT_AVAILABLE && flyerPriceBookPrice < currentBasePrice){
+									dmPrice = flyerPriceBookPrice.subtractPercent(promoNum);
+								}
+								// calculate discount model price if DSC Price book is less than actual base price
+								if(dscPriceBookPrice != dw.value.Money.NOT_AVAILABLE && currentBasePrice > dscPriceBookPrice){
+									dmPrice = dscPriceBookPrice.subtractPercent(promoNum);
+								}
+								//dmPrice = promo.getPromotionalPrice(variant);
+								discountModel = true;
+							} else {
+								promoPrice = promo.getPromotionalPrice(variant);
+							}
+						}
+					}
+					
+					// Did we find a promotional price?  Track the lowest promotional price
+					if (promoPrice != dw.value.Money.NOT_AVAILABLE) {
+						// If lowest found is not yet set or the new promo price is lower
+						if ( (lowPromoPrice == dw.value.Money.NOT_AVAILABLE) || (promoPrice < lowPromoPrice) ){
+							// Check rankings to ensure correct lowest promotional price is shown on PDP
+							// and matches the calculated price on mini-cart/cart pages.
+							// JIRA Ticket reference CPS-1091.
+							if (!empty(previousPromoRank)) {
+								if(!empty(currentPromoRank) && (currentPromoRank < previousPromoRank)){
+									lowPromoPrice = promoPrice;
+								}
+							}
+						} else {
+							// Update low promo price
+							lowPromoPrice = promoPrice;
+						}
+					}
+					
+					// Was there a DM price for this variant?
+					if (dmPrice != dw.value.Money.NOT_AVAILABLE) {
+						if (dmPrice < lowDMPrice || lowDMPrice == dw.value.Money.NOT_AVAILABLE) {
+							// Check rankings to ensure correct lowest promotional price is shown on PDP
+							// and matches the calculated price on mini-cart/cart pages.
+							// JIRA Ticket reference CPS-1091.
+							if (!empty(previousPromoRank)) {
+								if (!empty(currentPromoRank) && (currentPromoRank < previousPromoRank)) {
+									// The current promotion has a lower rank, thus override previous
+									// promo price.
+									lowDMPrice = dmPrice;
+								}
+							} else {
+								lowDMPrice = dmPrice;
+							}
+						}
+						
+						if (dmPrice > highDMPrice || highDMPrice == dw.value.Money.NOT_AVAILABLE) {	
+							highDMPrice = dmPrice;
+						}
+					}
+					previousPromoRank = currentPromoRank;
+				}
+			}
+		}		
+		
+		// Did we find a discount model?	
+		if (discountModel){
+			discountModelPrice = lowDMPrice;
+			CosmoProductPriceObject.lowDMPrice = lowDMPrice;
+			CosmoProductPriceObject.highDMPrice = highDMPrice;
+		}
+		
+		// Update promotion price with the low promotion price found, which may be not available
+		promotionPrice = lowPromoPrice;
+	} catch (ex){
+		Logger.error("[CosmoProductPriceObjectUtils] Error in CosmoProductPriceObjectUtils.ds determining discount model :: " + ex);	
+		return null;	
+	}
+		
+
+		
+	/******************************
+	
+	PRICING COMPARISONS
+	
+	*******************************/
+	try {		
+		
+		// Determine YourPrice based on those pulled from pricebooks / calculated
+		if ((discountModelPrice != dw.value.Money.NOT_AVAILABLE) && (dscPriceBookPrice != dw.value.Money.NOT_AVAILABLE)){
+			if (discountModelPrice < dscPriceBookPrice){
+				CosmoProductPriceObject.YourPrice = discountModelPrice;
+			} else {
+				CosmoProductPriceObject.YourPrice = dscPriceBookPrice;
+			}
+		} else if (discountModelPrice != dw.value.Money.NOT_AVAILABLE){
+			CosmoProductPriceObject.YourPrice = discountModelPrice;
+		} else if (dscPriceBookPrice != dw.value.Money.NOT_AVAILABLE){
+			CosmoProductPriceObject.YourPrice = dscPriceBookPrice;
+		} else {
+			CosmoProductPriceObject.YourPrice = dw.value.Money.NOT_AVAILABLE;
+		}
+		
+		// Determine SalonPrice based on those pulled from pricebooks
+		CosmoProductPriceObject.SalonPrice = basePriceBookPrice;
+		
+		// Determine SalePrice based on those pulled from pricebooks & promotional
+		if ((flyerPriceBookPrice != dw.value.Money.NOT_AVAILABLE) && (dscPriceBookPrice != dw.value.Money.NOT_AVAILABLE)){
+			if (flyerPriceBookPrice < dscPriceBookPrice){
+				CosmoProductPriceObject.SalePrice = flyerPriceBookPrice;
+			} else {
+				CosmoProductPriceObject.SalePrice = dscPriceBookPrice;
+			}
+		} else if (flyerPriceBookPrice != dw.value.Money.NOT_AVAILABLE){
+			CosmoProductPriceObject.SalePrice = flyerPriceBookPrice;
+		} else if (dscPriceBookPrice != dw.value.Money.NOT_AVAILABLE){
+			CosmoProductPriceObject.SalePrice = dscPriceBookPrice;
+		} else {
+			CosmoProductPriceObject.SalePrice = dw.value.Money.NOT_AVAILABLE;
+		}
+		
+		// If we found a promotion price
+		if (promotionPrice != dw.value.Money.NOT_AVAILABLE){
+			// and either Sale Price didn't get set or it's more than our promotional price
+			if ( (CosmoProductPriceObject.SalePrice == dw.value.Money.NOT_AVAILABLE) || (CosmoProductPriceObject.SalePrice > promotionPrice) ){
+				// Set the sale price to this promotional price
+				CosmoProductPriceObject.SalePrice = promotionPrice;
+			}
+		}	
+		
+		/******************************
+		
+		LABELS
+		
+		*******************************/
+		
+		// If there isn't a sale	
+		if (productViewed.hasOwnProperty('sale') && (empty(productViewed.custom.sale) || (productViewed.custom.sale != 'Y'))){
+			//CosmoProductPriceObject.lblYourPrice = StringUtils.format("Your Price: {0}",CosmoProductPriceObject.YourPrice);
+			
+			// Salone greater than Your Price
+			if (!empty(CosmoProductPriceObject.SalonPrice) && !empty(CosmoProductPriceObject.YourPrice) && ( CosmoProductPriceObject.SalonPrice > CosmoProductPriceObject.YourPrice)){
+				//CosmoProductPriceObject.lblSalonPrice = StringUtils.format("Salon Price: {0}",CosmoProductPriceObject.SalonPrice);
+				CosmoProductPriceObject.SavePrice = CosmoProductPriceObject.SalonPrice.subtract(CosmoProductPriceObject.YourPrice);
+			}
+			
+		} else {
+		// Else there is a sale
+			CosmoProductPriceObject.lblPromo = "On Sale";
+			
+			// Is the SalePrice set and greater than 0?
+			if ( (CosmoProductPriceObject.SalePrice != dw.value.Money.NOT_AVAILABLE) || (CosmoProductPriceObject.SalePrice <= zeroMoneyObject) ){
+				
+				// Sale is greater than Your Price
+				if (CosmoProductPriceObject.SalePrice > CosmoProductPriceObject.YourPrice){
+					//CosmoProductPriceObject.lblYourPrice = StringUtils.format("Your Price: {0}",CosmoProductPriceObject.YourPrice);
+					//CosmoProductPriceObject.lblSalePrice = StringUtils.format("Sale Price: {0}",CosmoProductPriceObject.SalePrice);
+					
+					// Salon is greater than Sale Price
+					if (!empty(CosmoProductPriceObject.SalonPrice) && ( CosmoProductPriceObject.SalonPrice > CosmoProductPriceObject.SalePrice)){
+						CosmoProductPriceObject.SavePrice = CosmoProductPriceObject.SalonPrice.subtract(CosmoProductPriceObject.YourPrice);
+						//CosmoProductPriceObject.lblSalonPrice = StringUtils.format("Salon Price: {0}",CosmoProductPriceObject.SalonPrice);
+					// Salon price equal to or less than Sale
+					} else {
+						CosmoProductPriceObject.SavePrice = CosmoProductPriceObject.SalePrice.subtract(CosmoProductPriceObject.YourPrice);
+					}			
+				
+				// Sale is less than Your Price
+				} else if ( (CosmoProductPriceObject.SalePrice <= CosmoProductPriceObject.YourPrice) && (CosmoProductPriceObject.SalePrice > zeroMoneyObject) ){
+					//CosmoProductPriceObject.lblSalePrice = StringUtils.format("Sale Price: {0}",CosmoProductPriceObject.SalePrice);
+					
+					// Salone is greater than Sale Price
+					if (!empty(CosmoProductPriceObject.SalonPrice) && ( CosmoProductPriceObject.SalonPrice > CosmoProductPriceObject.SalePrice)){
+						//CosmoProductPriceObject.lblSalonPrice = StringUtils.format("Salon Price: {0}",CosmoProductPriceObject.SalonPrice);
+						CosmoProductPriceObject.SavePrice = CosmoProductPriceObject.SalonPrice.subtract(CosmoProductPriceObject.SalePrice);
+					}
+				}
+			
+			} else {
+			// No sale price available	
+				//CosmoProductPriceObject.lblYourPrice = StringUtils.format("Your Price: {0}",CosmoProductPriceObject.YourPrice);
+				if (!empty(CosmoProductPriceObject.SalonPrice) && !empty(CosmoProductPriceObject.YourPrice) && ( CosmoProductPriceObject.SalonPrice > CosmoProductPriceObject.YourPrice)){
+					//CosmoProductPriceObject.lblSalonPrice = StringUtils.format("Salon Price: {0}",CosmoProductPriceObject.SalonPrice);
+					CosmoProductPriceObject.SavePrice = CosmoProductPriceObject.SalonPrice.subtract(CosmoProductPriceObject.YourPrice);
+				}
+			}
+		} 
+		
+		// Was any amount of savings calculated?  If so, prepare label.
+		if (CosmoProductPriceObject.SavePrice > zeroMoneyObject){
+			CosmoProductPriceObject.lblSavePrice = StringUtils.format("Save: {0}",CosmoProductPriceObject.SavePrice);
+		}
+	
+	   return CosmoProductPriceObject;
+   
+	} catch (ex){
+		Logger.error("[CosmoProductPriceObjectUtils] Error in CosmoProductPriceObjectUtils.ds determining labels :: " + ex);
+		return CosmoProductPriceObject;	
+	}
+}
+
+
+
+//Create another Object to get DM price
+
+
+
+CosmoProductPriceObjectUtils.getCosmoProductDMPriceObject = function(productViewed, CurrentCustomer, DscPricebookID,CurrentOptionModel) {
+	var priceList : dw.util.ArrayList = new dw.util.ArrayList();
+	var CosmoProductDMPriceObject : Object = {
+			lowDMPrice : null,
+			highDMPrice : null
+	};
+	var maxprice = null;
+	var minprice = null;
+	var variants : Collection = productViewed.isMaster() ? productViewed.getVariants() : new ArrayList(productViewed);
+	for each (var variant : Product in variants) {
+		if(variant.online){
+		 var prodDetail = CosmoProductPriceObjectUtils.getCosmoProductPriceObject(variant,CurrentCustomer,DscPricebookID,CurrentOptionModel);
+		 //Check the lowest price
+		 if(prodDetail.SalonPrice.value != 0 && prodDetail.SalePrice.value != 0 && prodDetail.YourPrice.value != 0) {
+			 var tempArray = [prodDetail.SalonPrice.value, prodDetail.SalePrice.value, prodDetail.YourPrice.value];
+			 var lowest = tempArray[0];
+			 for(var price in tempArray ) {
+				 if(tempArray[price] < lowest) {
+					 lowest = tempArray[price];
+				 } 
+			 }
+			 priceList.add(lowest);
+		 }
+		 
+		 else if(prodDetail.SalonPrice.value != 0 && prodDetail.SalePrice.value != 0 && prodDetail.YourPrice.value == 0) {
+			 if(prodDetail.SalonPrice.value > prodDetail.SalePrice.value ) {
+				 priceList.add(prodDetail.SalePrice.value);
+			 } 
+			 else {
+				 priceList.add(prodDetail.SalonPrice.value);
+			 }
+			 
+		 }
+		 else if(prodDetail.SalonPrice.value != 0 && prodDetail.SalePrice.value == 0 && prodDetail.YourPrice.value != 0)  {
+			 if(prodDetail.SalonPrice.value > prodDetail.YourPrice.value ) {
+				 priceList.add(prodDetail.YourPrice.value);
+			 } 
+			 else {
+				 priceList.add(prodDetail.SalonPrice.value);
+			 }
+			 
+		 }
+		 else {
+			 //If we have only one price add that price to ArrayList.
+			 if(prodDetail.SalonPrice.value != 0) {
+				 priceList.add(prodDetail.SalonPrice.value);
+			 }
+			 else if(prodDetail.SalePrice.value != 0) {
+				 priceList.add(prodDetail.SalePrice.value);
+			 }
+			 else {
+				 priceList.add(prodDetail.YourPrice.value);
+			 }
+			 
+		 }
+	}
+	}
+	//Find Min And Max Price
+	if(!empty(priceList) ) {
+		minprice = priceList.get(0);
+		maxprice = priceList.get(0);
+		var itr : dw.util.Iterator = priceList.iterator();
+		while(itr.hasNext()) {
+			var price = itr.next();
+			if(price < minprice) {
+		    	minprice = price;
+		    }
+		    if(price > maxprice) {
+		    	maxprice = price;
+		    }
+		}
+		//Assign Min and Max price to Object
+		CosmoProductDMPriceObject.lowDMPrice = minprice;
+		CosmoProductDMPriceObject.highDMPrice = maxprice;
+		return CosmoProductDMPriceObject;
+	}
+	
+}
+
+
+
+
+
+/** 
+ * CosmoProductPriceObjectUtils namespace
+ * @type {CosmoProductPriceObjectUtils}
+ */
+exports.CosmoProductPriceObjectUtils = CosmoProductPriceObjectUtils;

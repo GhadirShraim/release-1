@@ -1,0 +1,105 @@
+<iscontent type="text/html " charset="UTF-8"/>
+<isinclude template="util/modules"/>
+<isset name="portalData" value="${dw.object.CustomObjectMgr.getCustomObject('PortalData', '500' )}" scope="page"/>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+	
+	<iscomment>
+		The "to" tag contains the email address of the recipient, the "from" tag the email address of the sender. 
+		Each tag is to be specified max. once. Multiple email address can be separated by "," (see RFC2822).
+	</iscomment>
+	
+	<head>
+	</head>
+	
+	<body>	
+		<table width="100%" cellpadding="0" cellspacing="0">
+			<tr>
+				<td align="left" style="${Resource.msg('email.backgroundcell','email',null)}">
+					<center>
+						<table  style="${Resource.msg('email.containertable','email',null)}">
+							<tr>
+								<td style="${Resource.msg('email.tablecell','email',null)}">
+									<isif condition="${pdict.Order.customer.profile.custom.chainCode}">
+										<iscomment> using the regular iscontentasset will NOT pull in the content asset in an email </iscomment>
+										<isprint value="${dw.content.ContentMgr.getContent('portal_' + pdict.Order.customer.profile.custom.chainCode.substring(2) + '_logo').custom.body}" />
+									<iselse/>
+										<isprint value="${dw.content.ContentMgr.getContent('portal_cosmo').custom.body}"/>
+									</isif>
+								</td>
+								
+							</tr>
+							<tr>
+								<td style="${Resource.msg('email.tablecell','email',null)}">
+									<br><br><isprint value="${Resource.msg('order.orderconfirmation-email.dear','order',null)}" encoding="off"/> <isprint value="${pdict.Order.customer.profile.firstName}"/>,
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<isprint value="${dw.content.ContentMgr.getContent('order-cancel-email-msg').custom.body}"/>
+								</td>
+							</tr>
+		
+							<tr>
+								<td style="${Resource.msg('email.tablecell','email',null)}">
+									<table>
+										<tr>
+											<td style="${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('shipconfirm.webordernumber','order',null)}</td>
+											<td style="${Resource.msg('email.shippingdetails.text','email',null)}"><isprint value="${pdict.Order.currentOrderNo}"/></td>
+										</tr>
+										<tr>
+											<td style="${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('shipconfirm.bsgordernumber','order',null)}</td>
+											<td style="${Resource.msg('email.shippingdetails.text','email',null)}"><isprint value="${pdict.Order.custom.bsgOrderId}"/></td>
+										</tr>
+										<tr>
+											<td style="${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('shipconfirm.orderdate','order',null)}</td>
+											<td style="${Resource.msg('email.shippingdetails.text','email',null)}"><isprint value="${pdict.Order.creationDate}" style="DATE_LONG"/></td>
+										</tr>
+										<tr>
+											<td style="${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('shipconfirm.ordertotal','order',null)}</td>
+											<td style="${Resource.msg('email.shippingdetails.text','email',null)}"><isprint value="${pdict.Order.getTotalGrossPrice()}"/></td>
+										</tr>
+										<isif condition="${pdict.Order.custom.po != null}">
+											<tr>
+												<td style="${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('shipconfirm.purchaseordernotes','order',null)}</td>
+												<td style="${Resource.msg('email.shippingdetails.text','email',null)}"><isprint value="${pdict.Order.custom.po}"/></td>
+											</tr>
+										</isif>
+									</table>
+								</td>
+							</tr>
+		
+							<tr>
+								<td style="${Resource.msg('email.tablecell','email',null)}" colspan="2">
+									<isshippingdetalsemail order="${pdict.Order}"/>
+								</td>
+							</tr>
+
+							<tr>
+								<td style="${Resource.msg('email.tablecell','email',null)}">
+								
+									<table  style="${Resource.msg('email.containertable','email',null)}">
+										<tr>
+											<th style="${Resource.msg('email.tableheader','email',null)}"></th>
+										</tr>
+										<tr>
+											<td align="center" style="${Resource.msg('email.tablecell','email',null)}">
+												<isif condition="${pdict.Order.customer.profile.custom.chainCode && !empty(dw.content.ContentMgr.getContent('portal_'+ pdict.Order.customer.profile.custom.chainCode.replace('00','') +'_footer'))}">
+													<isprint value="${dw.content.ContentMgr.getContent('portal_'+ pdict.Order.customer.profile.custom.chainCode.replace('00','') +'_footer').custom.body}"/>
+												<iselse/>
+													<isprint value="${dw.content.ContentMgr.getContent('portal_cosmo_footer').custom.body}"/>
+												</isif>
+											</td>
+										</tr>
+									</table>
+		
+								</td>
+							</tr>
+							
+						</table>
+					</center>
+				</td>
+			</tr>
+		</table>
+	
+	</body>
+</html>

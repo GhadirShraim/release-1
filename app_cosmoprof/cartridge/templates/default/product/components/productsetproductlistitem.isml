@@ -1,0 +1,62 @@
+<isinclude template="util/modules"/>
+<isimagesizes />
+<isscript>
+	var avm = pdict.Product.availabilityModel;
+	pdict.available = avm.availabilityStatus==dw.catalog.ProductAvailabilityModel.AVAILABILITY_STATUS_IN_STOCK 
+					&& avm.inventoryRecord != null 
+					&& avm.inventoryRecord.stockLevel.available;
+</isscript>	
+
+<iscomment>Get Image detail </iscomment>
+<isset name="imageProduct" value="${pdict.Product}" scope="page"/>
+<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+	<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getAbsImageURL(imageConfig.pdpBundleThumbnail != null ? imageConfig.pdpBundleThumbnail : imageConfig)}" scope="page"/>
+	<isset name="imageAlt" value="${imageProduct.getImage('large', 0).alt}" scope="page"/>
+	<isset name="imageTitle" value="${imageProduct.getImage('large', 0).title}" scope="page"/>
+<iselse>
+	<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+	<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+	<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+</isif>
+<div class="product-set-details-list">
+	<div class="bundleswatchimage">
+		<a href="${URLUtils.https('Product-Show', 'pid',pdict.Product.ID )}"  title="${pdict.Product.name}${imageTitle}" target="_blank">
+			<img itemprop="image"  src="${imageUrl}" alt="${imageAlt}" title="${pdict.Product.name}${imageTitle}"/>
+		</a>
+	</div>		
+	<div class="bundle-product-details">
+		<div class="vendor-code">
+			<span class="brand"><isprint value="${pdict.Product.brand}"/>
+		</div>
+		<div class="bundle-product-name-attr-qty">
+			<div class="product-name">
+				<isprint value="${pdict.Product.name}"/>
+			</div>
+			<div class="bundle-product-number-upc">
+				<div class="product-number">
+					<span class="bundlesku">${Resource.msg('order.sku','order',null)} </span><isprint value="${ pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) }"/>
+				</div>
+				<isif condition="${!empty(pdict.Product.UPC)}">
+					<div class="product-number upc">
+						${Resource.msg('product.upc','product',null)} <span itemprop="productID"><isprint value="${pdict.Product.UPC}"/></span>
+					</div>
+				</isif>
+			</div>	
+				<div class="clear"></div>
+			<div class="product-attr-qty-section">
+				<div class="attribute">
+					<isinclude template="product/components/variationsbundle"/>
+				</div>
+				
+				<div class="product-quantity">
+					<span class="qty-label">${Resource.msg('global.bundlequantity','locale',null)} </span>
+					<isprint value="${pdict.ProductSet.getBundledProductQuantity(pdict.Product)}"/>
+				</div>
+			</div>	
+		
+			
+		</div>
+				
+		<div class="bundle-product-desc-section"><isprint value="${pdict.Product.longDescription}" encoding="off" /> </div>	
+	</div>			
+</div>

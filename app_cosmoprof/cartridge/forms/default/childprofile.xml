@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19" secure="true">
+	<group formid="customer">
+		<field formid="firstname" label="profile.firstname" type="string" mandatory="true" binding="firstName" max-length="50"/>
+		<field formid="lastname" label="profile.lastname" type="string" mandatory="true" binding="lastName" max-length="50"/>
+		<field formid="email" label="profile.email" type="string" mandatory="true" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50" value-error="profile.usernametaken"/>
+		<field formid="emailconfirm" label="Confirm Email" type="string" mandatory="true" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50" value-error="profile.emailnomatch"/>
+		<field formid="manageusercheckBox" label="adduser.manageusercheckBox" type="boolean" mandatory="false" binding="custom.manageusercheckBox"/>
+		
+	</group>	
+
+	<include formid="address" name="customeraddress" />
+	
+	<group formid="addressbook">
+		<list formid="addresses" selectmany-fieldid="isInclude" >
+			<field formid="isInclude" type="boolean" />
+			<action formid="edit" valid-form="false"/>
+			<action formid="remove" valid-form="false"/>
+		</list>	
+		<action formid="add" valid-form="false"/>
+	</group>
+	
+	<group formid="inherited">
+		<field formid="accountNumber" type="string" mandatory="false" binding="custom.accountNumber" />
+		<field formid="cardNumber" type="string" mandatory="false" binding="custom.cardNumber" />
+		<field formid="discountModel" type="string" mandatory="false" binding="custom.discountModel" />
+		<field formid="flyerComdiv" type="string" mandatory="false" binding="custom.flyerComdiv" />
+		<field formid="chainCode" type="string" mandatory="true" binding="custom.chainCode" />
+		<field formid="creditTerms" type="string" mandatory="true" binding="custom.creditTerms" />
+		<field formid="customerType" type="string" mandatory="false" binding="custom.customerType" />
+		<field formid="customerExceptionPricebookID" type="string" mandatory="true" binding="custom.customerExceptionPricebookID" />
+		<field formid="consolidationCode" type="string" mandatory="true" binding="custom.consolidationCode" />
+		<field formid="dscNumber" type="string" mandatory="true" binding="custom.dscNumber" />
+	</group>
+
+	<action formid="confirm" valid-form="true"/>
+	<action formid="register" valid-form="true"/>
+	<action formid="remove" valid-form="false"/>
+	<action formid="cancel" valid-form="false"/>
+	<action formid="edit" valid-form="false"/>
+	<action formid="send" valid-form="false"/>
+</form>

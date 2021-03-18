@@ -1,0 +1,85 @@
+<isinclude template="util/modules"/>
+
+<isif condition=" ${pdict.AllowedRegion}">
+	<li class="shopping-list dd3">
+		<isprint value="${Resource.msg('header.store.shoppinglist','account',null)}" />
+		<div class="dd3">
+			<div class="mylist shopping-list"> 
+			    <a href="${URLUtils.https('ShoppingList-Start')}" title="${Resource.msg('headercustomerinfo.storeshoppinglist','components',null)} " class="user-account">
+		     		${Resource.msg('headercustomerinfo.storeshoppinglist','components',null)}
+			    </a>
+			</div>
+
+			<div class="shopping-list-wrapper">
+				<iscontentasset aid="shopping-list-header-instruction" />
+			</div>
+
+			<!-- Check if Customer already save any Store -->
+			<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.savedStore)}">
+				<isset name="savedStore" value="${JSON.parse(pdict.CurrentCustomer.profile.custom.savedStore)}" scope="Page" />
+			</isif>
+
+			<div class="sl-dropdwn-content address-detail">
+				<isif condition="${!empty(savedStore)}">
+					<div class="sl-closest-store">
+						<isprint value="${Resource.msg('shoppinglist.header.savedStore','storepickup',null)}" />
+					</div>
+
+					<!-- Get first Store -->
+
+					<isif condition="${!empty(savedStore.address1)}">
+						<div class="address1">
+							<isprint value="${savedStore.address1}" />
+						</div>
+					</isif>
+
+					<isif condition="${!empty(savedStore.address2)}">
+						<div class="address2">
+							<isprint value="${savedStore.address2}" />
+						</div>
+					 </isif>
+					 <isif condition="${!empty(savedStore.city)}"><span class="city"><isprint value="${savedStore.city}" />,</span></isif> <isif condition="${!empty(savedStore.region)}"><span class="state"><isprint value="${savedStore.region}" />,</span></isif> <isif condition="${!empty(savedStore.postalcode)}"><span class="zip"><isprint value="${savedStore.postalcode}" /></span></isif>
+					 <isif condition="${!empty(neareststore.local_phone)}">
+					 	<div class="local-phone"><isprint value="${neareststore.local_phone}" /></div>
+					 </isif>
+
+				<iselseif condition="${!empty(pdict.Stores)}">
+					<div class="sl-closest-store">
+						<isprint value="${Resource.msg('shoppinglist.header.closeststore','storepickup',null)}" />
+					</div>
+
+					<!-- Get first Store -->
+					<isset name="neareststore" value="${pdict.Stores[0]}" scope="Page" />
+					<isif condition="${!empty(neareststore.address_1)}">
+						<div class="address1">
+							<isprint value="${neareststore.address_1}" />
+						</div>
+					</isif>
+
+					<isif condition="${!empty(neareststore.address_2)}">
+						<div class="address2">
+							<isprint value="${neareststore.address_2}" />
+						</div>
+					 </isif>
+					 <isif condition="${!empty(neareststore.city)}"><span class="city"><isprint value="${neareststore.city}" />,</span></isif> <isif condition="${!empty(neareststore.region)}"><span class="state"><isprint value="${neareststore.region}" />,</span></isif> <isif condition="${!empty(neareststore.post_code)}"><span class="zip"><isprint value="${neareststore.post_code}" /></span></isif>
+					 <isif condition="${!empty(neareststore.local_phone)}">
+					 	<div class="local-phone"><isprint value="${neareststore.local_phone}" /></div>
+					 </isif>
+				 </isif>
+			</div>
+
+			<div class="mylist myfav"> 
+			    <a href="${URLUtils.https('Wishlist-Show')}" title="${Resource.msg('headercustomerinfo.myheaderfavourites','components',null)} " class="user-account">
+
+		     		<isprint value="${Resource.msg('headercustomerinfo.myheaderfavourites','components',null)}" />
+			    </a>
+			</div>
+
+			<div class="mylist my-lists"> 
+			    <a href="${URLUtils.https('GiftRegistry-Start')}" title="${Resource.msg('headercustomerinfo.lists','components',null)} " class="user-account">
+		     		${Resource.msg('headercustomerinfo.lists','components',null)}
+			    </a>
+			</div>
+		</div>
+	</li>
+ </isif>

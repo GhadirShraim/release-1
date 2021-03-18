@@ -1,0 +1,9 @@
+<iscontent type="application/json" charset="UTF-8" compact="true"/>
+
+<isscript>
+	var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+	
+	var av = ProductUtils.getAvailability(pdict.Product, false);
+</isscript>
+
+<isprint value="${JSON.stringify(av)}" encoding="off"/>

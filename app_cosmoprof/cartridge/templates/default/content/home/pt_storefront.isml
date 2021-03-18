@@ -1,0 +1,43 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+<head>
+
+	<isscript>var pageContext={title:'home',type:!empty(pdict.HomePage) ? 'home' : 'blog',ns:'storefront'};</isscript>
+	<isinclude template="util/modules"/>
+
+	<iscomment>This page must be cachable. It inherits the caching attributes by the decorated template.</iscomment>
+
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="content/home/pt_storefront_UI"/> 
+
+	<iscomment>Add page specific header information here.</iscomment>
+	
+</head>
+<body>
+	<isinclude template="gtm/bodytrackingcode" />
+	<div id="wrapper" class="pt_storefront ${!empty(pdict.HomePage) ? pdict.HomePage : ''} ${(pdict.CurrentSession.custom.isNonLoginPortalUser == true) ? 'main-portal' : ''}">
+
+		<isif condition="${!empty(pdict.IsHomePage) && pdict.IsHomePage}">
+			<isinclude url="${URLUtils.url('Home-IncludeHeader', 'isHome', 'true')}"/>
+		<iselse>
+			<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		 </isif>
+
+		<div id="main" role="main" class="clearfix">
+			<isreplace/>
+			<isinclude template="components/browsertoolscheck"/>
+		</div>
+
+	    <isinclude template="components/footer/footer"/>
+		<isinclude template="content/home/pt_storefront_VARS"/>
+
+	</div><!--  /wrapper -->
+	
+</body>
+</html>

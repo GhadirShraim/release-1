@@ -1,0 +1,46 @@
+/**
+* Update Parent Account
+* Updates the parent account's reference to the child.
+*
+*
+*   @input ChildCustomer : dw.customer.Customer  This is the customer child account
+*   @input CurrentCustomer : dw.customer.Customer  This is the current customer, the account owner
+*
+*/
+
+var ArrayList = require('dw/util').ArrayList;
+var Customer = require('dw/customer').Customer;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		if (!empty(args.ChildCustomer) && !empty(args.CurrentCustomer)){
+			var childCustomer : Customer = args.ChildCustomer;
+			var currCustomer : Customer = args.CurrentCustomer;
+			
+			addChildAccountByID(childCustomer.profile.customerNo, currCustomer);
+		}
+	}
+	catch (ex) {
+		Logger.error("[UpdateParentAccount] There was an error updating the parent account {0} for child account {1}: {2}", args.CurrentCustomer.ID, args.ChildCustomer.ID, ex);
+		
+		return PIPELET_ERROR;
+	}
+
+	return PIPELET_NEXT;
+}
+
+function addChildAccountByID(childAccountNO : String, CurrentCustomer : Customer ) : Boolean
+{
+	if (!empty(CurrentCustomer.profile.custom.listChildrenAccounts)){
+		var childAccountsArray : Array = CurrentCustomer.profile.custom.listChildrenAccounts;
+		var childAccountsList : ArrayList = new ArrayList(childAccountsArray);
+		childAccountsList.push(childAccountNO);
+		CurrentCustomer.profile.custom.listChildrenAccounts = childAccountsList;
+	} else {
+		CurrentCustomer.profile.custom.listChildrenAccounts = new Array(childAccountNO);
+	}
+	
+	return;
+}

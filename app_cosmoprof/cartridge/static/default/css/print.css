@@ -1,0 +1,15 @@
+/* gather primary UI */
+@import url('normalize.css');
+@import url('style.css');
+
+/* adjust for better print view */
+
+/*shopping list */
+.pt_shopping_list .edit-print-list .print-page{display: none;}
+.pt_shopping_list .edit-print-list{display: none;}
+.pt_shopping_list .shopping-list-action.bottom { display: none;}
+
+#wrapper.pt_order .primary-content .order-details  .backlink{display: none;}
+#wrapper.pt_order .primary-content .order-details .item-list{padding-top: 30px;}
+#wrapper.pt_order .primary-content .form-row.order-detail-options .reorderBtn{display: none;}
+

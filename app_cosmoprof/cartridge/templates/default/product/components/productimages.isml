@@ -1,0 +1,119 @@
+<isinclude template="util/modules"/>
+
+<isif condition="${pdict.Product.master && pdict.CurrentVariationModel}">
+    <isset name="imageProduct" value="${pdict.CurrentVariationModel.getDefaultVariant()}" scope="page"/>
+<iselseif condition="${pdict.Product.variant && !empty(pdict.Product.getVariationModel())}">
+    <isset name="imageProduct" value="${pdict.Product.getVariationModel()}" scope="page"/>
+<iselse>
+    <isset name="imageProduct" value="${pdict.Product}" scope="page"/>
+</isif>
+
+<isimagesizes />
+
+<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+	<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getAbsImageURL(imageConfig.pdpImage != null ? imageConfig.pdpImage : imageConfig)}" scope="page"/>
+	<isset name="imageAlt" value="${imageProduct.getImage('large', 0).alt}" scope="page"/>
+	<isset name="imageTitle" value="${imageProduct.getImage('large', 0).title}" scope="page"/>
+<iselse>
+	<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+	<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+	<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+</isif>
+
+<isset name="imageUrlHiRes" value="${imageProduct.getImage('large', 0).getURL()}" scope="page"/>
+
+<isif condition="${imageProduct.hasOwnProperty('selectedVariant') && imageProduct.selectedVariant != null && imageProduct.selectedVariant.custom.disableZoom}">
+	<div class="product-primary-image disable-zoom">
+<iselse/>
+	<div class="product-primary-image">
+</isif>
+<iscomment>Product Image Overlay</iscomment>
+<isif condition="${('ProductImageOverlay' in imageProduct.custom && imageProduct.custom.ProductImageOverlay) && ('overlayFrom' in imageProduct.custom && imageProduct.custom.overlayFrom) && ('overlayTo' in imageProduct.custom && imageProduct.custom.overlayTo)}">
+	<isinclude url="${URLUtils.url('Product-ProductBadges','productid', imageProduct.ID)}"/>		
+</isif>
+	<h2 class="visually-hidden">Images</h2>
+	<isset name="showfavicon" value="${(pdict.Product.master ? 'hideFavIcon' : 'showFavIcon')}" scope="page" />
+	<div class="favorite-wrapper ${showfavicon}">
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<isgetwishlisticon product_id="${pdict.Product.ID}" />
+		 </isif>
+		<iscomment>
+			<isinclude url="${URLUtils.url('Wishlist-FavoriteListPDP','pid', pdict.Product.ID)}"/>	
+		 </iscomment>		
+	</div>
+	<isif condition="${pdict.Product.custom.newLaunch.toString() == 'Yes'}">
+		<div class="new-badges"></div>
+	</isif>
+	
+
+	<isif condition="${!isQuickView}">
+		<img class="zoom-icon zoomin" src="${URLUtils.staticURL('/images/pdp-images/zoom-icon.png')}" title="Zoom Product" />
+		<img class="zoom-icon" src="${URLUtils.staticURL('/images/pdp-images/zoom-out.png')}" title="Zoom Product" />
+	</isif>
+	
+	<!--hi-res image -->	
+	<isif condition="${!empty(imageProduct.getImages('large')) && imageProduct.getImages('large').length>0}">
+		<isset name="hi_res" scope="page" value="${imageProduct.getImages('large')[0].getURL().toString()}" />
+		<isset name="href" scope="page" value="${'href='+hi_res+' target=_blank'}" />
+	<iselse>
+		<isset name="hi_res" scope="page" value="${''}" />
+		<isset name="href" scope="page" value="${'name=product_detail_image'}" />
+	</isif>
+	<a ${href} class="product-image main-image" title="${imageTitle}">
+		<img itemprop="image" class="primary-image" src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}"/>
+	</a>
+	
+	<div class="larger-image-container hide">
+		<img itemprop="image" class="larger-image" src="${hi_res}" alt="${imageAlt}" title="${imageTitle}"/>
+	</div>
+	
+</div>
+
+
+<isset name="largeImagesSize" value="${imageProduct.getImages('large').size()}" scope="page"/>
+<isset name="smallImagesSize" value="${imageProduct.getImages('small').size()}" scope="page"/>
+<isset name="noOfImages" value="${largeImagesSize > smallImagesSize ? smallImagesSize : largeImagesSize}" scope="page"/>
+
+<isscript>
+	var videoArray = [];
+	
+	if('videoLink' in pdict.Product.custom)
+	{
+		var videoLinks = pdict.Product.custom.videoLink;
+		
+		for each( var v in videoLinks)
+		{
+			videoArray.push(v);
+		}
+	}
+</isscript>
+
+<isif condition="${smallImagesSize > 1 }">
+	<div id="thumbnails" class="product-thumbnails">		
+		<h2>${Resource.msg('productthumbnails.title','product',null)}</h2>
+		<ul>
+			<isloop items="${imageProduct.getImages('large')}" var="img" status="imgSmStatus">
+				<iscomment>we only show the smallest of large or small images, there is 1-1 correspondence</iscomment>
+				<isif condition="${imgSmStatus.count > noOfImages}">
+					<isbreak/>
+				</isif>					
+				<isset name="lgImage" value="${imageProduct.getImages('large')[imgSmStatus.index.toFixed(0)]}" scope="page"/>
+				<!-- hi-res image -->
+				<isif condition="${!empty(imageProduct.getImages('large')) && pdict.Product.getImages('large').length>imgSmStatus.index}">
+					<isset name="hi_res" scope="page" value="${pdict.Product.getImages('large')[imgSmStatus.index.toFixed(0)].getURL()}" />
+					<isset name="href" scope="page" value="${'href='+hi_res+' target=_blank'}" />
+				<iselse>
+					<isset name="hi_res" scope="page" value="${''}" />
+					<isset name="href" scope="page" value="${'name=product_detail_image'}" />
+				</isif>
+				<li class="thumb${imgSmStatus.first ? ' selected' : ''}">
+					<a ${href} class="thumbnail-link">
+						<img class="productthumbnail" src="${img.getAbsImageURL(imageConfig.pdpBundleThumbnail != null ? imageConfig.pdpBundleThumbnail : imageConfig)}" alt="${img.alt}" title="${pdict.Product.name}${img.title}" data-lgimg='{"url":"${lgImage.getURL()}", "title":"<isprint value="${lgImage.title}" encoding="on"/>", "alt":"<isprint value="${lgImage.alt}" encoding="on"/>", "hires":"${hi_res}"}'/>								 
+					</a>
+					
+				</li>										
+			</isloop>	
+				
+		</ul>			
+	</div>
+</isif>

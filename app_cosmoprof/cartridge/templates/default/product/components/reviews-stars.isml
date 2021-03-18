@@ -1,0 +1,19 @@
+<!--- TEMPLATENAME: reviews-stars.isml --->
+
+
+	<isset name="rate1" value="${0.0}" scope="pdict"/>
+	<isif condition="${!empty(pdict.Product) && 'averageProductRating' in pdict.Product.custom && !empty(pdict.Product.custom.averageProductRating)}">
+		<isset name="rate1" value="${pdict.Product.custom.averageProductRating}" scope="pdict"/>
+	<iselseif condition="${!empty(Product) && 'averageProductRating' in Product.custom && !empty(Product.custom.averageProductRating)}">
+		<isset name="rate1" value="${Product.custom.averageProductRating}" scope="pdict"/>
+	</isif>
+	
+	<isscript>
+		var rating = pdict.rate1 * 2
+		rating = Math.round(rating)
+		rating = rating/2
+	</isscript>
+	<isset name="rate" value="${rating.toString().replace(".","-")}" scope="pdict"/>
+	<isset name="ClassName" value="${'review-overallRating-' + pdict.rate}" scope="page"/>
+	<input type="hidden" id="prodRatingGtm" value="${pdict.rate}" />
+	<div class="${ClassName}">&nbsp;</div>

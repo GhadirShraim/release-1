@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19" secure="true">
+
+	<list formid="commentoptions" label="forms.summary.commentoptions" type="select" selectone-fieldid="isSelected">
+		<field formid="isSelected" type="boolean" label="forms.summary.commentoptions"/>
+	</list>
+	
+	<field formid="comment" type="string" mandatory="false"  max-length="200"/>
+
+	<action formid="submit" valid-form="false"/>
+
+</form>

@@ -1,0 +1,40 @@
+/**
+* ExclusionsSearch.ds
+*
+*-Description - Get exclusion rules from site prefs
+*
+*	@input CustomerNumber : String
+*	@input consolidationCode : String
+*	@input Address : dw.customer.CustomerAddress
+*	@input locale : String
+*	@output CustomerExclusionVal : String
+*	@output PortalExclusionVal : String
+*	@output ZipExclusionVal : String
+*	@output VOCExclusionVal : String
+*
+*/
+
+var cosmoProfUtils = require('app_cosmoprof/cartridge/scripts/util/CosmoProfUtils').CosmoProfUtils;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try
+	{
+		var binarySearchResult = cosmoProfUtils.execBinarySearch(args.CustomerNumber, args.consolidationCode, args.Address, args.locale);
+	
+		if(!empty(binarySearchResult))
+		{
+			args.CustomerExclusionVal = binarySearchResult.customerExclusionVal;
+			args.PortalExclusionVal = binarySearchResult.consolidationExclusionVal;
+			args.ZipExclusionVal = binarySearchResult.zipExclusionVal;
+			args.VOCExclusionVal = binarySearchResult.vocExclusionVal;
+		}
+	}
+	catch(e)
+	{
+		dw.system.Logger.error('ExclusionsSearch.ds has failed with the following error' + e);
+		return PIPELET_ERROR;
+	}
+	
+	return PIPELET_NEXT;
+}

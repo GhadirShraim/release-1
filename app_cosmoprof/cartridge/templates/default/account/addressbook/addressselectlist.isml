@@ -1,0 +1,103 @@
+<isif condition="${!empty(pdict.p_customerno)}">
+	<isset name="profile" value="${dw.customer.CustomerMgr.getProfile(pdict.p_customerno)}" scope="Page" />
+	<isset name="preferredaddress" value="${profile.addressBook.getPreferredAddress()}" scope="PAGE" />
+<iselse>
+ 	<isset name="preferredaddress" value="${customer.profile.addressBook.getPreferredAddress()}" scope="PAGE" />
+</isif>
+
+<isscript>
+importScript("checkout/Utils.ds");
+	var emptyaddrObj = {
+			UUID : " ",	
+			ID: " ",
+			key: " ",
+			companyName: " ",
+            firstName: " ",
+            lastName: " ",
+            address1: " ",
+            address2: " ",
+            postalCode: " ",
+            city: " ",
+            stateCode: " ",
+            countryCode: preferredaddress.countryCode.value,
+            phone: " ",            
+            type: " ",
+            displayValue: " "
+	}
+	
+ </isscript>
+  
+<iscomment>
+	<select id="${pdict.p_listid}" name="${pdict.p_listid}" class="input-select">
+		<option value="" ${pdict.CurrentCustomer.profile.custom.activeShipAddressID != null ? "":"selected='selected'"}>${Resource.msg('forms.address.list.select','forms',null)}</option>
+		<option value="${preferredaddress.ID}" data-address='<isprint value="${JSON.stringify(addrObj).replace("'","^")}" encoding="off"/>'>
+			${Resource.msg('manageusers.adddefault','account',null)} <isprint value="${preferredaddress.custom.addressLabel}"/> <isprint value="${preferredaddress.address1}"/>, <isprint value="${preferredaddress.city}"/>, <isprint value="${preferredaddress.stateCode}"/>, <isprint value="${preferredaddress.postalCode}"/>
+		</option>
+		<isloop items="${pdict.p_listaddresses}" var="address">
+			<isset name="jsonAddr" value="${AddressInJSONObj(address)}" scope="PAGE" />
+			<isset name="aid" value="${!empty(address.ID) ? address.ID : address.key}" scope="page"/>
+			<isset name="addrLabel" value="${'addressLabel' in  address.custom && !empty(address.custom.addressLabel) ? address.custom.addressLabel + ':' : ''}" scope="page"/>	
+			<isif condition="${preferredaddress.ID != aid}">
+				<isif condition="${pdict.p_onlyshippingaddr == 'true' && aid == '-1'}">
+					<iscontinue/>
+				<iselse>
+							
+					<option value="${aid}" data-address='<isprint value="${JSON.stringify(jsonAddr).replace("'","^")}" encoding="off"/>'>
+					(${aid.substring(0,10)}) <isprint value="${addrLabel}"/> <isprint value="${address.address1}"/>, <isprint value="${address.city}"/>, <isprint value="${address.stateCode}"/>, <isprint value="${address.postalCode}"/>
+					</option>
+				</isif>
+							
+			 </isif>
+		</isloop>				
+	</select>
+ </iscomment>
+
+<select id="${pdict.p_listid}" name="${pdict.p_listid}" class="input-select">
+
+	<isif condition="${pdict.p_onlyshippingaddr == 'true'}">
+		<option value="" selected>${Resource.msg('forms.address.list.select','forms',null)}</option>
+		<isset name="jsonPrefAddr" value="${AddressInJSONObj(preferredaddress)}" scope="PAGE" />
+		<option value="${preferredaddress.ID}" data-defaultaddress = "true" data-address='<isprint value="${JSON.stringify(jsonPrefAddr).replace("'","^")}" encoding="off"/>' >
+			${Resource.msg('manageusers.adddefault','account',null)} <isprint value="${preferredaddress.custom.addressLabel}"/> <isprint value="${preferredaddress.companyName}" />, <isprint value="${preferredaddress.address1}"/>, <isprint value="${preferredaddress.city}"/>, <isprint value="${preferredaddress.stateCode}"/>, <isprint value="${preferredaddress.postalCode}"/>
+		</option>
+	<iselse>
+		<option value="" ${pdict.CurrentCustomer.profile.custom.activeShipAddressID != null ? "":"selected='selected'"}>${Resource.msg('forms.address.list.select','forms',null)}</option>
+		<isset name="jsonPrefAddr" value="${AddressInJSONObj(preferredaddress)}" scope="PAGE" />
+		<option value="${preferredaddress.ID}" data-defaultaddress = "true" data-address='<isprint value="${JSON.stringify(jsonPrefAddr).replace("'","^")}" encoding="off"/>' selected>
+		${Resource.msg('manageusers.adddefault','account',null)} <isprint value="${preferredaddress.custom.addressLabel}"/> <isprint value="${preferredaddress.companyName}" />, <isprint value="${preferredaddress.address1}"/>, <isprint value="${preferredaddress.city}"/>, <isprint value="${preferredaddress.stateCode}"/>, <isprint value="${preferredaddress.postalCode}"/>
+	</option>
+	</isif>
+	
+	
+	<isif condition="${!empty(pdict.p_isbillingaddr) && pdict.p_isbillingaddr}"> 
+		<isset name="billingAddr" value="${customer.profile.addressBook.getAddress('-1')}" scope="Page" />
+		<isset name="jsonBillAddr" value="${AddressInJSONObj(billingAddr)}" scope="PAGE" />
+		<option value="${jsonBillAddr.ID}" data-defaultaddress = "false" data-address='<isprint value="${JSON.stringify(jsonBillAddr).replace("'","^")}" encoding="off"/>' selected>
+			(${jsonBillAddr.ID.substring(0,10)}) <isprint value="${jsonBillAddr.custom.addressLabel}"/> <isprint value="${jsonBillAddr.companyName}" />, <isprint value="${jsonBillAddr.address1}"/>, <isprint value="${jsonBillAddr.city}"/>, <isprint value="${jsonBillAddr.stateCode}"/>, <isprint value="${jsonBillAddr.postalCode}"/>
+		</option>
+	</isif>
+	<isloop items="${pdict.p_listaddresses.entrySet().iterator()}" var="address">
+		<isset name="jsonAddr" value="${AddressInJSONObj(address.value)}" scope="PAGE" />
+		<isset name="aid" value="${!empty(address.value.ID) ? address.value.ID : address.value.key}" scope="page"/>
+		<isset name="addrLabel" value="${'addressLabel' in  address.value.custom && !empty(address.value.custom.addressLabel) ? address.value.custom.addressLabel + ':' : ''}" scope="page"/>	
+		<isif condition="${preferredaddress.ID != aid}">
+			<isif condition="${pdict.p_onlyshippingaddr == 'true' && aid == '-1'}">
+				<iscontinue/>
+			<iselse>			
+				<option value="${aid}" data-defaultaddress = "false" data-address='<isprint value="${JSON.stringify(jsonAddr).replace("'","^")}" encoding="off"/>'>
+					(${aid.substring(0,10)}) <isprint value="${addrLabel}"/> <isprint value="${address.value.companyName}"/>, <isprint value="${address.value.address1}"/>, <isprint value="${address.value.city}"/>, <isprint value="${address.value.stateCode}"/>, <isprint value="${address.value.postalCode}"/>
+				</option>
+			</isif>
+						
+		 </isif>
+	</isloop>
+	<isif condition="${pdict.p_isbillingaddr}">
+		<iscomment>Create a Empty JSON Obj Except Country Code </iscomment>
+		<option value="0" data-address='<isprint value="${JSON.stringify(emptyaddrObj).replace("'","^")}" encoding="off"/>'>
+			Other
+		</option>
+	</isif>				
+</select>
+
+
+

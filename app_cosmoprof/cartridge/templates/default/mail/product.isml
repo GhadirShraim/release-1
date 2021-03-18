@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- TemplateComment :  EMail form for inviting someone to shop  -->
+<iscontent type="text/html" charset="UTF-8"/>
+<isinclude template="util/modules"/>
+<html>
+<head>
+
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0">
+	<tr>
+		<td align="center" style="${Resource.msg('email.backgroundcell','email',null)}">
+			<center>
+				<table  style="${Resource.msg('email.containertable','email',null)}">
+					<tr>
+						<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+							<isif condition="${pdict.CurrentCustomer.profile.custom.chainCode}">
+								<iscomment> using the regular iscontentasset will NOT pull in the content asset in an email </iscomment>
+								<isprint value="${dw.content.ContentMgr.getContent('portal_' + pdict.CurrentCustomer.profile.custom.chainCode.substring(2) + '_logo').custom.body}" encoding="off"/>
+							<iselse/>
+								<isprint value="${dw.content.ContentMgr.getContent('portal_cosmo').custom.body}" encoding="off"/>
+							</isif>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+							<p><isprint value="${pdict.CurrentForms.sendtofriend.message.htmlValue}"/></p>
+							<p><a href='<isprint value="${pdict.CurrentForms.sendtofriend.messagelink.htmlValue}"/>'><isprint value="${pdict.CurrentForms.sendtofriend.messagelinktext.htmlValue}"/></a></p>
+						</td>
+					</tr>
+					<tr>
+						<td width="120" style="${Resource.msg('email.tablecell','email',null)}">
+							<isset name="imageProduct" value="${pdict.Product}" scope="page"/>
+							
+							<isimagesizes /> 
+	
+							<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+								<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getAbsImageURL(imageConfig.checkoutCartTile != null ? imageConfig.checkoutCartTile : imageConfig)}" scope="page"/>
+								<isset name="imageAlt" value="${imageProduct.getImage('large', 0).alt}" scope="page"/>
+								<isset name="imageTitle" value="${imageProduct.getImage('large', 0).title}" scope="page"/>
+							<iselse>
+								<isset name="imageUrl" value="${URLUtils.absStatic('/images/noimagelarge.png')}" scope="page"/>
+								<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+								<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+							</isif>
+							<img width="100" height="100" src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}"/>
+						</td>
+						<td style="${Resource.msg('email.tablecell','email',null)}">
+							<div>
+							
+								<h2><isprint value="${pdict.Product.name}" encoding="off"/></h2>
+								<h3><isprint value="${pdict.Product.brand}" encoding="off"/></h3>
+						
+								<div>
+									<span>${Resource.msg('product.item','product',null)}</span>
+									<span itemprop="productID"><isprint value="${ pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) }"/></span>
+								</div>
+								<br>
+								
+								<isif condition="${pdict.Product != null && pdict.Product.isVariant()}">
+									<isloop items="${pdict.Product.variationModel.getProductVariationAttributes()}" var="VA">
+										<isset name="SelectedVariationValue" value="${pdict.Product.variationModel.getSelectedValue(VA)}" scope="page"/>
+										<div>
+											<span>
+												${VA.displayName}:
+											</span>
+											<span>
+												<isif condition="${SelectedVariationValue != null}">
+													<isprint value="${SelectedVariationValue.displayValue}"/>
+												<iselse>
+													-
+												</isif>
+											</span>
+										</div>
+									</isloop>
+								</isif>
+								<isif condition="${pdict.Product.shortDescription!=null}">
+									<p>
+									<strong>${Resource.msg('global.description','locale',null)}</strong><br/>
+									<isprint value="${pdict.Product.shortDescription}" encoding="off"/></p>
+								</isif>
+													
+							</div>
+						</td>
+					</tr>
+					<isif condition="${!empty(pdict.Product.longDescription) && pdict.Product.longDescription.markup.length > 0}">
+						<tr>
+							<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+								<h2>Description</h2>
+								<p><isprint value="${pdict.Product.longDescription}" encoding="off"/></p>
+							</td>
+						</tr>
+					</isif>
+					<isif condition="${!empty(pdict.Product.custom.directions) && pdict.Product.custom.directions.markup.length > 0}">
+						<tr>
+							<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+								<h2>Directions</h2>
+								<p><isprint value="${pdict.Product.custom.directions}" encoding="off"/></p>
+							</td>
+						</tr>
+					</isif>
+					<isif condition="${!empty(pdict.Product.custom.features_benefits) && pdict.Product.custom.features_benefits.markup.length > 0}">
+						<tr>
+							<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+								<h2>Features and Benefits</h2>
+								<p><isprint value="${pdict.Product.custom.features_benefits}" encoding="off"/></p>
+							</td>
+						</tr>
+					</isif>
+					<isif condition="${!empty(pdict.Product.custom.ingredients) && pdict.Product.custom.ingredients.markup.length > 0}">
+						<tr>
+							<td colspan="2" style="${Resource.msg('email.tablecell','email',null)}">
+								<h2>Ingredients</h2>
+								<p><isprint value="${pdict.Product.custom.ingredients}" encoding="off"/></p>
+							</td>
+						</tr>
+					</isif>
+				</table>						
+			</center>
+		</td>
+	</tr>
+</table>
+	
+</body>
+</html>

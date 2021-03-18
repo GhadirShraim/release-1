@@ -1,0 +1,30 @@
+/**
+*
+*   @input items : dw.util.Collection 
+*   @input UUID : String
+*   @output ProductList : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+function execute( args : PipelineDictionary ) : Number{
+ try{
+	var listItems : Collection = args.items;
+	var selectedProductList = args.UUID;
+	var selectProductList :  dw.customer.ProductListItem;
+	var listItemsIter : Iterator = listItems.iterator();
+	while(listItemsIter.hasNext()){
+		var item = listItemsIter.next();
+		if (item.UUID == selectedProductList){
+			selectProductList = item;
+			break;
+		}
+	}
+	args.ProductList = selectProductList;
+	return PIPELET_NEXT;
+  }catch ( e ) {
+		//Pass the first product List in the Queue
+		args.ProductList = listItems.iterator().next();
+		return PIPELET_NEXT;
+  }
+}

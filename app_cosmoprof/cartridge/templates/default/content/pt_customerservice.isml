@@ -1,0 +1,72 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+
+	<isscript>var pageContext={title:'Customer Service', type:'customerservice',ns:'account'};</isscript>
+	<isinclude template="util/modules"/>
+	
+	<iscomment>This page must be cachable. It inherits the caching attributes by the decorated template.</iscomment>
+
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="content/pt_customerservice_UI"/>
+	
+	<iscomment>Add template-specific header information here.</iscomment>
+	<script src='https://www.google.com/recaptcha/api.js'></script>
+	
+</head>
+
+<body>
+
+	<div id="wrapper" class="pt_customer-service ${!empty(pdict.WebToCase) && pdict.WebToCase == true ? 'webToCase_service' : ''}">
+	
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+	
+		<div id="main" role="main" class="page-content clearfix">
+			
+			<isbreadcrumbs bcurl1="${URLUtils.url('CustomerService-Show')}" bctext1="${'Customer Service'}" bctext2="${empty(pdict.Content) ? null : pdict.Content.name}" />
+
+			<div id="primary" class="primary-content">
+				<section>
+					<isinclude template="components/browsertoolscheck"/>
+					<isreplace/>
+				</section>
+			</div>
+			
+			<isif condition="${'tempChainCode' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.tempChainCode != null}">
+				<isset name="cCode" value="${pdict.CurrentSession.custom.tempChainCode}" scope="page"/>
+			<iselseif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+				<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="page"/>
+			<iselse/>
+				<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+			</isif>
+			<iscomment>As per Redesign Part
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+					<div id="secondary" class="nav">
+						<nav>
+							<h1 class="visually-hidden">${Resource.msg('global.secondarynavheading','locale',null)}</h1>
+							<div class="secondary-navigation">
+								<isinclude url="${URLUtils.url('CustomerService-LeftNav','cc',cCode)}"/>
+							</div>
+						</nav>
+						<div class="account-nav-asset">
+							<isslot id="account-nav-text" description="Account Nav text" context="global"/>
+						</div>
+					</div>		
+				</isif>
+			 </iscomment>
+		</div><!-- /main -->
+		
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="content/pt_customerservice_VARS"/>
+		
+	</div><!--  /wrapper -->
+	
+</body>
+</html>

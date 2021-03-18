@@ -1,0 +1,24 @@
+<isdecorate template="util/pt_empty">
+<isinclude template="util/modules"/>
+
+	<isif condition="${empty(pdict.LoginError)}">
+		<h3><isprint value="${Resource.msg('addressdropdown.productavailabilitycheck', 'account', null)}" /></h3>
+		<isset name="customerNo" value="${pdict.CurrentHttpParameterMap.customerNum.value}" scope="Page" />
+		<isaddressselectlist p_listId="address_list" p_listaddresses="${pdict.ShippingAddresses}" p_customerno="${customerNo}"/>
+		<label class="enter_prodId"><isprint value="${Resource.msg('addressdropdown.enterproductid', 'account', null)}" /> <input type="text" class="pidVal"></input></label>
+		
+		<p class="errorText">
+			<span></span>
+		</p>
+		
+		<button class="apply-button" type="submit" value="${Resource.msg('global.check','locale',null)}">
+			<isprint value="${Resource.msg('global.check','locale',null)}" />
+		</button>
+		
+		<div class="passOrFail">
+		</div>
+	<iselse>
+		<isprint value="${Resource.msg('addressdropdown.invalidaccessrequest', 'account', null)}" />
+	</isif>
+
+</isdecorate>

@@ -1,0 +1,24 @@
+/**
+* Demandware Script File
+*	
+*	
+*/
+importPackage( dw.order );
+var Logger = require('dw/system').Logger;
+var Site : dw.system.Site = require('dw/system').Site;
+function execute( args : PipelineDictionary ) : Number
+{
+	
+	try{
+		var currentBasket : Basket = BasketMgr.getCurrentBasket();
+		if(!empty(currentBasket) && currentBasket !=null){
+			var totalNmberOfLineItems = currentBasket.getAllProductLineItems().length;
+			Logger.error('********Basket Line Items after calling Cart-TestBasketIssue pipeline = ' + totalNmberOfLineItems ); 
+		}
+	}catch(e){ 
+		//exception? 
+		Logger.error('empty Basket'); 
+		return PIPELET_NEXT
+	}
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,956 @@
+<iscomment>
+	Grab Site Preference value for Order Status. The value is used to distinguish between store purchases and all other orders (Web, etc).
+</iscomment>
+<isinclude template="util/modules.isml"/> 
+<isif condition="${'orderStatusSP' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.orderStatusSP)}">
+	<isset name="orderStatusSP" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('orderStatusSP').toUpperCase()}" scope="page"/>
+<iselse>
+	<isset name="orderStatusSP" value="STORE PURCHASE" scope="page"/>
+</isif>
+
+<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+	
+	<isset name="page" value="${pdict.page != null ? pdict.page : 'history'}" scope="page"/>
+	<isif condition="${page == 'history'}"> 
+    	<isinclude template="components/order/orderhistorydetailsmobile"/> 
+    <iselse/> 
+    	<isinclude template="components/order/orderdetailsmobile"/> 
+    </isif> 
+
+<iselse/>	
+	<iscomment>
+		Displays order details, such as order number, creation date, payment information,
+		order totals and information for each contained shipment.
+		This template module can be used in order confirmation pages as well as in the
+		order history to render the details of a given order. Depending on the context
+		being used in, one might omit rendering certain information.
+
+		Parameters:
+	
+		order		: the order whose details to render
+		orderstatus	: if set to true, the order status will be rendered
+		              if set to false or not existing, the order status will not be rendered
+	</iscomment>
+	<isset name="Order" value="${pdict.order}" scope="page"/>
+	<isset name="Order.isJSON" value="${(!empty(Order) && Order.hasOwnProperty('isJSON'))? Order.isJSON : false}" scope="page"/>
+	<isset name="itemCount" value="${0}" scope="PAGE" />
+	<isscript>var Order.isJSON = (!empty(Order) && Order.hasOwnProperty('isJSON'))? Order.isJSON : false;</isscript>
+	<div class="order-details ${!empty(pdict.viewtype) && pdict.viewtype == 'CSS' ? 'CSSUiteView' : ''}">
+		<h1 class="content-header">
+			<isprint value="${Resource.msg('summary.orderdetails','checkout',null)}" />
+		</h1>
+		<div class="item-list">		
+		    <iscomment>	
+				<tr>
+					<th class="section-header"><isprint value="${Resource.msg('orderdetails.orderinformation','components',null)}" /></th>
+					<th class="section-header"><isprint value="${Resource.msg('orderdetails.billingaddress','components',null)}" /></th>
+					<th class="section-header">
+						<isif condition="${!empty(Order.paymentInstruments) && Order.paymentInstruments.length == 1}">
+							<isprint value="${Resource.msg('orderdetails.paymentmethod','components',null)}" />
+						<iselse>
+							<isprint value="${Resource.msg('orderdetails.paymentmethods','components',null)}" />
+						</isif>
+					</th>
+					<th class="section-header"><isprint value="${Resource.msg('orderdetails.paymenttotal','components',null)}" /></th>
+				</tr>
+			</iscomment>
+			
+			<div class="first-row-orderinfo">
+				<isif condition="${!empty(Order)}">
+					<isset name="OrderStatus" value="${Order.orderStatus.toUpperCase()}" scope="page"/>
+				</isif>
+				<div class="order-information">
+				
+					<div class="head-label">${Resource.msg('orderdetails.orderinformation','components',null)}</div>
+					<div class="order-date ">
+						<isscript>
+							if(!empty(Order.creationDate)) {
+								var orderDate = Order.creationDate;
+								var splitedDate = orderDate.split("-");
+								var formattedDate =  splitedDate[1]+ "/" + splitedDate[2] + "/" + splitedDate[0];
+							}		
+						 </isscript>
+						<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+							<isif condition="${!empty(Order.creationDate)}">
+								<iscomment>Display order date for a on-site/in-store purchase.</iscomment>
+								<span class="label"><isprint value="${Resource.msg('orderdetails.orderplaced','components',null)}" /></span>
+								<span class="value"><isprint value="${orDate}" style="DATE_LONG"/></span>
+							</isif>
+						<iselse>
+							<iscomment>Display order date for online purchase.</iscomment>
+							<span class="label"><isprint value="${Resource.msg('orderdetails.orderplaced','components',null)}" /></span>
+							<span class="value"><isprint value="${formattedDate}" style="DATE_LONG"/></span>
+							
+						</isif><!-- ISIF Condition for Order Date -->
+					</div><!-- End of order-Date -->
+					<isif condition="${!empty(OrderStatus) && !empty(pdict.orderstatus) && pdict.orderstatus == 'true'}">
+						<isinclude template="account/orderhistory/orderstatusinclude"/>
+					<iselse>
+						<div class="order-status">
+							<span class="label">${Resource.msg('orderstatusinclude.statuslabel','account',null)}</span>
+							<span class="value"><isprint value="${Order.orderStatus.toUpperCase()}"/></span>
+						</div>
+					</isif>
+					
+					<div class="order-number ">
+						<isif condition="${!empty(Order.cosmoOrderID) && !empty(Order.cosmoInvoiceID)}">
+							<isif condition="${!empty(Order.cosmoOrderID)}">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+								</span>
+								<span class="value">
+									<isprint value="${Order.cosmoOrderID}"/>
+								</span>
+							</isif>
+							<isif condition="${!empty(Order.cosmoInvoiceID)}">
+								
+								<span class="label">
+								   <isprint value="${Resource.msg('orderdetails.invoicenumber','components',null)}"/>
+								</span>
+								<span class="value">
+									<isif condition="${!empty(Order.cosmoInvoiceID)}"> 
+										<isprint value="${Order.cosmoInvoiceID}"/>
+									<iselse>
+										<isprint value="${Resource.msg('orders.invoicenopending','account',null)}" />
+									</isif>
+								</span>
+							</isif>
+						<iselseif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}"><!-- If Order Status is Store Purchase -->
+							<isif condition="${!empty(Order.cosmoProfInvoiceNumber)}">
+								<span class="label">
+									<isprint value="${Resource.msg('orders.storenumber','account',null)}" />
+								</span>
+								<span class="value">
+									<isprint value="${Order.orderChannel.split(' ')[1]}"/>
+								</span>
+							</isif>
+							<isif condition="${!empty(Order.cosmoProfInvoiceNumber)}">
+								
+								<span class="label">
+								   <isprint value="${Resource.msg('orders.numberlabel','account',null)}" />	
+								</span>
+								<span class="value">
+									<isprint value="${Order.cosmoProfInvoiceNumber.split(' ')[1]}"/>
+								</span>
+							</isif>
+						<iselse><!-- If Order Is not Store Purchase -->
+							<isif condition="${'page' in pdict && pdict.page == 'history' && 'cosmoProfInvoiceNumber' in Order }">
+								<isif condition="${!empty(Order.webOrderNumber)}">
+									<span class="label">
+										<isprint value="${Resource.msg('orderdetails.ordernumber','components',null)}"/>
+									</span>
+									<isif condition="${!empty(Order.webOrderNumber) && Order.webOrderNumber.toString().search('0000000') == -1}"> 
+										<span class="value">
+											<isprint value="${Order.webOrderNumber}"/>
+										</span>
+									</isif>
+								<iselseif condition="${!empty(Order.orderNo)}" >
+									<span class="label">
+										<isprint value="${Resource.msg('orders.numberlabel','account',null)}" />
+									</span>
+									<isif condition="${!empty(Order.orderNo) && Order.orderNo.toString().search('0000000') == -1}"> 
+										<span class="value">
+											<isprint value="${Order.orderNo}"/>
+										</span>
+									</isif>
+								</isif>
+								
+								<span class="label">
+									<isprint value="${Resource.msg('orderdetails.invoicenumber','components',null)}"/>
+								</span>
+								<span class="value">
+									<isif condition="${!empty(Order.cosmoProfInvoiceNumber)}"> 
+										<isprint value="${Order.cosmoProfInvoiceNumber}"/>
+									<iselse>
+										<isprint value="${Resource.msg('orders.invoicenopending','account',null)}" />
+									</isif>
+								</span>
+								
+							<iselse>
+								<span class="label">
+										<isprint value="${Resource.msg('orderdetails.ordernumber','components',null)}"/>
+								</span>
+								<span class="value">
+									<isprint value="${Order.orderNo}"/>
+								</span>
+								</br>
+								<span class="label">
+									<isprint value="${Resource.msg('orderdetails.invoicenumber','components',null)}"/>
+								</span>
+								<span class="value">
+									<isif condition="${!empty(Order.custom.bsgOrderId)}"> 
+										<isprint value="${Order.custom.bsgOrderId}"/>
+									<iselse>
+										<isprint value="${Resource.msg('orders.invoicenopending','account',null)}" />
+									</isif>
+								</span>
+							</isif>
+						</isif>
+						
+						<iscomment>
+							 <isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID')}"> 
+								<isreorder order_id="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID') ? pdict.CurrentHttpParameterMap.dwreOrderID : ''}"/>
+							<iselseif condition="${!empty(dwOrderID) && dwOrderID !=null}">
+								<isreorder order_id="${dwOrderID}"/>
+							</isif> 
+						</iscomment>
+						
+					</div><!-- End of order-number -->
+					<!-- Condition to display PO Number -->
+					<isif condition="${!empty(Order.custom) && Order.custom.po && Order.custom.po != ''}">
+						<div class="order-po">
+							<span class="label"><isprint value="${Resource.msg('orderdetails.ponumber','components',null)}"/></span>
+							<span class="value"><isprint value="${Order.custom.po}"/></span>
+						</div>
+					</isif>
+					<!-- End of condition for PO Number -->
+					
+					<isif condition="${!empty(Order.custom) && Order.custom.commentText && Order.custom.commentText != ''}">
+						<div class="order-commentwithtext">
+							<span class="label"><isprint value="${Resource.msg('orderdetails.ordernotes','components',null)}"/></span>
+							<span class="value"><isprint value="${Order.custom.commentText}"/></span>
+						</div>
+					<iselseif condition="${!empty(Order.custom) && Order.custom.comment && Order.custom.comment != ''}">
+						<div class="order-commenttext">
+							<span class="label"><isprint value="${Resource.msg('orderdetails.ordernotes','components',null)}"/></span>
+							<span class="value"><isprint value="${Order.custom.comment}"/></span>
+						</div>
+					</isif>
+				<div class="second-row-orderinfo">
+						<div class="order-payment-summary">
+						<iscomment> 	
+							<div class="head-label">${Resource.msg('orderdetails.paymenttotal','components',null)}</div>
+						</iscomment>	
+							<div class="order-detail-summary">
+								<isif condition="${!empty(Order.splitShipmentTotalAmt)}">
+									<isssordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+								<iselseif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+									<iscomment>Render in-store/on-site order payment total information.</iscomment>
+									<isstorepurchaseordertotals storeorder="${Order}" totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+								<iselse>
+									<isif condition="${!empty(Order.shipments) && Order.shipments.length > 1}">
+										<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+									<iselseif condition="${Order.isJSON}">
+										<isjsonordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+									<iselse/>
+										<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${false}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+									</isif>
+								</isif>
+							</div>
+						</div><!--End of  order-payment-summary -->
+						
+						<div class="order-payment-instruments">
+							<div class="head-label">
+								<isif condition="${!empty(Order.paymentInstruments) && Order.paymentInstruments.length == 1}">
+									${Resource.msg('orderdetails.paymentmethod','components',null)}
+								<iselse>
+									${Resource.msg('orderdetails.paymentmethod','components',null)}
+								</isif>
+							</div><!-- end of head label -->
+							
+							<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+								<iscomment>Render in-store/on-site purchase payment method information.</iscomment>
+									<isif condition="${Order.hasOwnProperty('paymentMethod') && !empty(Order.paymentMethod)}">
+										<div class="payment-type">
+											<iscomment>As per Redesign.
+												<isprint value="${Order.paymentMethod.type}"/><br />
+											 </iscomment>
+											<isif condition="${Order.paymentMethod.hasOwnProperty('cardNumber') && !empty(Order.paymentMethod.cardNumber)}">
+												<isprint value="${Resource.msgf('orderdetails.last4creditcard', 'order', null, paymentInstr.ccNumber.substring('12'))}"/><br />
+											</isif>
+										</div>
+									</isif><!-- Render Payment Method For Store Purchase-->
+							<iselse>
+							<iscomment>Fetch Order Payment Instrument for Web Order Based on Service Res </iscomment>
+							<isif condition="${!empty(Order.orderNo)}">
+								<isset name="DWROrderNo" value="${Order.orderNo.toString().replace('DWR','')}" scope="Page" />
+								<isset name="OrderFromBM" value="${dw.order.OrderMgr.getOrder(DWROrderNo)}" scope="Page" />
+								<isset name="getType" value="${OrderFromBM.getPaymentInstruments()[0].paymentMethod}" scope="Page" />
+								<isset name="accountType" value="${false}" scope="Page" />
+								<isset name="cardType" value="${false}" scope="Page" />
+								<isif condition="${getType == 'ON_ACCOUNT'}">
+									<isset name="accountType" value="${true}" scope="Page" />
+								<iselse>
+									<isset name="cardType" value="${true}" scope="Page" />
+								 </isif>
+							 </isif>
+							  
+								<iscomment>Render online purchase payment method information</iscomment>
+								<isif condition="${getType == 'BML' || getType == 'PayPal'}">
+								   <div class="order-type-value">
+									<isif condition="${getType == 'BML'}" > 
+										<isprint value="${Resource.msg('minibillinginfo.paypalCredit','checkout',null)}"/> 
+									<iselse>
+										<isprint value="${Resource.msg('minibillinginfo.paypal','checkout',null)}"/>
+									</isif>
+								   </div>
+							    </isif>
+								<isif condition="${cardType}">
+									<div class="order-type-value">
+										<isprint value="${Resource.msgf('orderdetails.last4creditcard', 'order', null, OrderFromBM.getPaymentInstruments()[0].creditCardNumber.substring('12'))}"/><br />
+									</div>
+								<iselseif condition="${accountType}" > 
+									<div class="order-type-value">
+										<isprint value="${Resource.msg('confirmation.onaccount','checkout',null)}" />
+									</div>
+								<iselseif condition="${Order.hasOwnProperty('paymentMethod') && Order.paymentMethod != null}">
+									<isif condition="${!empty(Order.paymentMethod.cardNumber)}">
+										<div class="order-type-value">
+										<isprint value="${Resource.msgf('orderdetails.last4creditcard', 'order', null, Order.paymentMethod.cardNumber.substring('12'))}"/><br />
+										</div>
+									<iselseif condition="${!empty(Order.paymentMethod.type) && Order.paymentMethod.type == 'ON_ACCOUNT'}" >
+										<isprint value="${Resource.msg('confirmation.onaccount','checkout',null)}" />
+									</isif>
+										<iscomment> <span class="value"><isprint value="${Order.paymentMethod.type}"/></span>  </iscomment> 
+								<iselse/>
+									<isloop items="${Order.getPaymentInstruments()}" var="paymentInstr" status="piloopstate">
+										<isif condition="${dw.order.PaymentInstrument.METHOD_GIFT_CERTIFICATE.equals(paymentInstr.paymentMethod)}">
+										   <div class="orderpaymentinstrumentsgc">
+												   <span class="label"><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></span>
+										           <span class="value"><isprint value="${paymentInstr.maskedGiftCertificateCode}"/></span>
+										           <span class="payment-amount">
+										              <span class="label"><isprint value="${Resource.msg('global.amount','locale',null)}" />:</span>
+										              <span class="value"><isprint value="${paymentInstr.paymentTransaction.amount}"/></span>
+										           </span>
+										    </div> 
+										<iselse> 
+											<div class="payment-type"><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></div>         
+											<isminicreditcard p_card="${paymentInstr}" p_show_expiration="${false}"/>						
+											<div class="payment-amount">
+												<span class="label"><isprint value="${Resource.msg('global.amount','locale',null)}"/>:</span>
+												<span class="value"><isprint value="${paymentInstr.paymentTransaction.amount}"/></span>
+											</div><!-- END: payment-amount -->
+										</isif>
+									</isloop>
+								</isif><!-- End of Payment Instrument Logic For online Order -->
+							</isif>
+						</div><!-- End of order-payment-instruments -->
+					</div><!-- End of second-row-orderinfo -->
+				</div><!-- end of Order-Information  -->
+				
+			<isif condition="${ Order.orderChannel.indexOf('Store') == -1 || Order.orderChannel == 'WEB'}" > 	
+				<div class='shipping_address'>
+					<isset name="shipAddr" value="${Order.shippingAddress}" scope="page"/>
+						<isset name="rowSpan" value="${Order.lineItems.size()}" scope="page"/>
+						<div rowspan="${rowSpan.toFixed()}" class="order-shipment-details">
+							<div class="head-label">${Resource.msg('orderdetails.shippingto','components',null)}</div>
+						   	<div class="order-shipment-address">
+						   		<iscomment>Removing mini shipping ddress module due to the issue of order shipping address not conforming to the same naming conventions of a DWRE order</iscomment>
+						  		<div class="name">
+						  			<isif condition="${!empty(shipAddr.company) && shipAddr.company != null}"> 
+						  				<span class="company"><isprint value="${shipAddr.company}"/></span>
+						  			</isif>
+									<span class="firstname"><isprint value="${shipAddr.firstName}"/></span>
+									<span class="lastname"><isprint value="${shipAddr.lastName}"/></span>
+									<isif condition="${'attentionTo' in shipAddr.custom && !empty(shipAddr.custom.attentionTo)}">
+										<div class="attention-to">
+											<span class="attentionto"><isprint value="${Resource.msgf('global.attnto', 'locale', null, shipAddr.custom.attentionTo)}"/></span>
+										</div>
+									</isif>
+									<div class="street">
+										<div class="line1"><isprint value="${shipAddr.address1}"/></div>
+										<isif condition="${!empty(shipAddr.address2)}">
+											<div class="line2"><isprint value="${shipAddr.address2}"/></div>
+										</isif>
+									</div><!-- END:street -->
+									<div class="location">
+										
+										<isif condition="${!empty(shipAddr.city)}">
+											<span class="city"><isprint value="${shipAddr.city}"/>
+											<isif condition="${!empty(shipAddr.city) && !empty(shipAddr.state)}">
+												<span class="statedivider">,&nbsp;</span>
+											</isif>
+										</isif>
+										<span class="state"><isprint value="${shipAddr.state}"/>&nbsp;</span>
+										<span class="zip"><isprint value="${shipAddr.zip}"/></span>
+									</div><!-- END:location -->
+									<div class="country"><isprint value="${shipAddr.country}"/></div>
+									
+									<isprint value="${Resource.msg('miniaddress.phone','account',null)}"/>
+									<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+										<isprint value="${'-'}"/>
+									<iselse>
+										<isprint value="${shipAddr.phone}"/>
+									</isif>
+								</div><!-- END:name -->
+						   	</div>
+							<div class="shipping-info">
+							<iscomment> 
+								<div class="shipping-method shippingsec">
+							   		<span class="label"><isprint value="${Resource.msg('orderdetails.shippingmethod','components',null)}" /></span>
+							  			<isif condition="${!empty(Order.shipMethod)}">
+							              <span class="value"><isprint value="${Order.shipMethod}"/></span>
+									</isif>
+							   	</div><!-- end of shipping-method shippingsec -->
+							</iscomment>	
+								<div class="shipping-status shippingsec">
+				   					<span class="label"><isprint value="${Resource.msg('orderdetails.shippingstatus','components',null)}" /></span>
+						    		<isif condition="${!empty(Order.shippingStatus)}">
+						    			<span class="value"><isprint value="${Order.shippingStatus}" /></span>
+						    		<iselse/>
+					    				<isif condition="${Order.orderStatus}">
+				 							<span class="value"><isprint value="${Order.orderStatus}"/></span>
+				 						<iselse>
+				 							<span class="value"><isprint value="${Resource.msg('orderdetails.notknown','components',null)}" /></span>
+				 						</isif>
+				    				</isif>
+				   				</div><!-- end of shipping-status shippingsec -->
+								<isif condition="${!empty(Order.splitShipmentData)}">
+									<div class="track-ingnumber shippingsec">
+								    	<span class="label"><isprint value="${Resource.msg('orderdetails.tracking','components',null)}" /></span>
+										<isloop items="${Order.splitShipmentData}" var="Carton" status="shipmentloopstate">
+											<isif condition="${!empty(Carton.trackingNo)}">
+									    		<isset name="baseTrackingUrl" value="${('UPSTrackingURL' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL'))) ? dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL') : '' }" scope="Page" />
+									    		<isif condition="${Carton.trackingNo.search('1Z') > -1}">
+									    			<isset name="trackUrl" value="${''+baseTrackingUrl+Carton.trackingNo+''}" scope="Page" />
+									    			<div class="value"><a href="${trackUrl}" target="_blank"><isprint value="${Carton.trackingNo}" /></a></div>
+									    		<iselse>
+									    			<div class="value"><isprint value="${Carton.trackingNo}" /></div>
+									    		 </isif>
+									   		 <iselse>
+										    	<div class="shiping-loop-value"><span class="value"><isprint value="${Resource.msg('ordersummary.nodata','components',null)}" /></span></div>	
+								    		</isif>
+										</isloop>
+									</div>
+								<iselse/>
+				  					<isif condition="${!empty(Order.trackingNumbers)}">
+										<div class="track-ingnumber shippingsec">
+								    		<span class="label"><isprint value="${Resource.msg('orderdetails.tracking','components',null)}" /></span>
+								    		<div class="shiping-loop-value">
+								    		<iscomment>If tracking Number is UPS
+								    			<isset name="UPSTrackingNumRegex" value="${new RegExp('\b(1Z ?[0-9A-Z]{3} ?[0-9A-Z]{3} ?[0-9A-Z]{2} ?[0-9A-Z]{4} ?[0-9A-Z]{3} ?[0-9A-Z]|[\dT]\d\d\d ?\d\d\d\d ?\d\d\d)\b')}" scope="Page" />
+								    		</iscomment>
+								    		<isset name="baseTrackingUrl" value="${('UPSTrackingURL' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL'))) ? dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL') : '' }" scope="Page" />
+								    		
+								    		<isloop items="${Order.trackingNumbers}" var="trackNum">
+									    		<isif condition="${trackNum.search('1Z') > -1}">
+									    			<isset name="trackUrl" value="${''+baseTrackingUrl+trackNum+''}" scope="Page" />
+									    			<span class="value"><a href="${trackUrl}" target="_blank"><isprint value="${trackNum}" /></a></span>
+									    		<iselse>
+									    			<span class="value"><isprint value="${trackNum}" /></span>
+									    		 </isif>
+										    </isloop>
+										    </div>
+									    </div><!-- end of track-ingnumber shippingsec -->
+							   		 <iselse>
+					  					<div class="track-ingnumber shippingsec">
+								    		<span class="label"><isprint value="${Resource.msg('orderdetails.tracking','components',null)}" /></span>
+								    		<div class="shiping-loop-value"><span class="value"><isprint value="${Resource.msg('ordersummary.nodata','components',null)}" /></span></div>	
+								    	</div>
+						    		</isif>
+						    	</isif>
+							</div>
+					  </div>
+				</div>
+			</isif>
+			
+				<div class="order-billing">
+					<isset name="billAddr" value="${Order.billingAddress}" scope="page"/>
+					<iscomment>Removing mini address module due to the issue of order billing address not conforming to the same naming conventions of a DWRE order</iscomment>
+					<div class="head-label">${Resource.msg('orderdetails.billingaddress','components',null)}</div>
+					<isif condition="${!empty(billAddr) && billAddr.hasOwnProperty('companyName')}">
+						<div class="mini-address-title">
+							<isprint value="${billAddr.companyName}"/>
+						</div>
+					</isif>
+					
+					<div class="mini-address-name">
+						<isif condition="${!empty(billAddr.company) && billAddr.company != null}"> 
+							<div class="company"><isprint value="${billAddr.company}"/></div>
+						</isif>
+						<span class="firstname"><isprint value="${billAddr.firstName}"/></span>
+						<span class="lastname"><isprint value="${billAddr.lastName}"/></span>
+					</div>
+
+					<div class="mini-address-location">
+						<iscomment>Render online purchase address order details.</iscomment>
+						<div class="address1"><isprint value="${billAddr.address1}"/></div>
+						<isif condition="${!empty(billAddr.address2)}">
+							<div class="address2"><isprint value="${billAddr.address2}"/></div>
+						</isif>
+						<isif condition="${billAddr.city != null}">
+							<div class="cityname"><isprint value="${billAddr.city}"/></div>
+						</isif>
+						<isif condition="${!empty(billAddr.city) && !empty(billAddr.state)}">
+							<div class="city-comma"><isprint value="${Resource.msg('global.comma', 'locale', null)}"/></div>
+						</isif>
+						<div class="statename"><isprint value="${billAddr.state}"/></div>
+						<div class="zipcode-value"><isprint value="${billAddr.zip}"/></div>
+						<div class="countryname"><isprint value="${billAddr.country}"/></div>
+						
+						<div class="phone-no"><isprint value="${Resource.msg('miniaddress.phone','account',null)}"/>
+						<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+							<isprint value="${'-'}"/>
+						<iselse>
+							<isprint value="${billAddr.phone}"/>
+						</isif>
+					</div>
+						<isprint value="${Order.customerEmail}"/>
+					</div>
+				</div><!-- end of order-billing -->
+			</div><!-- end of first-row-orderinfo -->
+			
+
+			
+			<div class="payment-total2">
+				<div style="${Resource.msg('email.tablecell','email',null)}">
+					<isif condition="${!empty(Order.shipments) && Order.shipments.length > 1}">
+						<isordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+					<iselseif condition="${!(Order.isJSON)}">
+						<isordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${false}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+					</isif> 
+				</div>
+			</div><!-- end of payment-total2 -->
+			
+		</div><!-- end of item-list -->
+		
+		<isset name="itemCount" value="${0}" scope="PAGE" />
+		<iscomment>Render product information for an in-store purchase.</iscomment>
+		<isif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}"><!-- Reder Product for store purchase -->
+			<div class="order-summary-product-container">
+				<div class="head-label">${Resource.msg('orderdetails.itemsinorder','components',null)}</div>
+				<div class="order-summary-product-table">					
+						<div class="headlabels desktop-only">
+							<div class="section-header product-image">${Resource.msg('global.productimg','locale',null)}</div>							
+							<div class="section-header size">${Resource.msg('global.oredrdetailsize','locale',null)}</div>
+							<div class="section-header price">${Resource.msg('global.price','locale',null)}</div>
+							<div class="section-header qty">${Resource.msg('global.quantity','locale',null)}</div>
+							<div class="section-header total">${Resource.msg('global.totalPrice','locale',null)}</div>
+						</div>					
+					<isloop items="${Order.lineItems}" var="productLineItem" status="pliloopstate">
+						<div class="seeallproduct">
+							<div class="order-summary-product-row">
+								<div class="product-image" >
+									<iscomment>Display product line and product using module</iscomment>
+									<isset name="lineItemProduct" value="${dw.catalog.ProductMgr.getProduct(productLineItem.itemNo)}" scope="PAGE" />
+									<isif condition="${!empty(lineItemProduct)}"> 
+										<isset name="lineItemProductimage" value="${lineItemProduct.getImage('large',0)}" scope="page" />
+										<iscomment> CP-533 Changes to Order Details Page
+											<isif condition="${!empty(lineItemProductimage)}"> 
+												<isset name="lineItemProductimageURL" value="${lineItemProductimage.getURL().toString()}" scope="page"/>
+												<img src="${lineItemProductimageURL}" alt="${lineItemProduct.name}" title="${lineItemProduct.name}"/>
+											<iselse>
+												<img src="${URLUtils.staticURL('/images/noimagesmall.png')}" alt="${Resource.msg('global.allnotavailable','locale',null)}" title="${Resource.msg('global.allnotavailable','locale',null)}"/>
+											</isif>
+										</iscomment>
+									</isif>
+								</div>
+
+								<div class="product-info">
+									<iscomment>Display product line and product using module</iscomment>
+									<div class="name"><isprint value="${productLineItem.productName}"/></div>
+									<isset name="itemNo" value="${productLineItem.itemNo}" scope="page" />
+									<div class="skuno"><isprint value="${itemNo.replace(RegExp(/[^0-9]/g), '')}"/></div>
+								</div>
+								
+								<div class="size" >
+									<span class="section-header display-in-mobile price">${Resource.msg('global.sizemobile','locale',null)}</span>
+						    		<div class="name"> 
+						    			<isif condition="${!empty(lineItemProduct.custom.size)}">
+						    				<isprint value="${lineItemProduct.custom.size}"/>
+						    			 </isif>
+						    		</div>
+						    	</div>
+								
+								<div class="price" >
+									<span class="section-header display-in-mobile price">${Resource.msg('global.price','locale',null)}</span>
+									<isset name="unitPrice" value="${Number(productLineItem.totalCost) / Number(productLineItem.quantity).toFixed()}" scope="Page" />
+						    		<div class="name"><isprint value="${dw.value.Money(unitPrice.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/></div>
+						    	</div>
+								
+							    <div class="qty" >
+							    	<span class="section-header display-in-mobile qty">${Resource.msg('global.quantitymobile','locale',null)}</span>
+						    		<isprint value="${(new Number(productLineItem.quantity)).toFixed()}"/>
+						    	</div>
+						    	
+						    	<div  class="total">
+						    		<span class="section-header display-in-mobile total">
+						    		${Resource.msg('global.totalprice','locale',null)}</span>
+						    		<div class="name">
+						    			<isprint value="${Resource.msgf('global.dollarsignamt', 'locale', null, productLineItem.totalCost)}"/>
+						    			<isif condition="${!empty(productLineItem.lineItemTax)}">
+						    				<span class="pli-tax"><isprint value="${Resource.msg('order.ordertax','order',null)}" /><isprint value="${dw.value.Money(productLineItem.lineItemTax.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" /> </span>
+						    			 </isif>
+						    			
+						    		</div>
+						    	</div>
+						    	
+						    	
+							</div><!-- end of order-summary-product-row -->
+						</div><!-- end of seeallproduct -->
+						<iscomment>
+						<isif condition="${pdict.SeeAll}"> 
+							<isif condition="${pliloopstate.count > 3}">
+							
+								<isbreak/>
+							 </isif>
+						</isif>
+						 </iscomment>
+					</isloop>
+					<isset name="itemCount" value="${Order.lineItems.size()}" scope="PAGE" />
+				</div><!-- end of order-summary-product-table -->
+			</div><!-- end of order-summary-product-container -->
+		</isif>
+		
+		<iscomment>render a box for each shipment</iscomment>
+		<isif condition="${OrderStatus != orderStatusSP}"><!-- render line item for online order -->
+			<isif condition="${Order.isJSON}">
+			
+				<iscomment>Shipment items table</iscomment>
+				<div class="receipt-order-shipment-table">
+					<div class="head-label">${Resource.msg('orderdetails.itemsinyourorder','components',null)}</div>
+					<div class="headlabels desktop-only">
+							<div class="section-header product-image">${Resource.msg('global.productimg','locale',null)}</div>							
+							<div class="section-header size">${Resource.msg('global.oredrdetailsize','locale',null)}</div>
+							<div class="section-header price">${Resource.msg('global.price','locale',null)}</div>
+							<div class="section-header qty">${Resource.msg('global.quantity','locale',null)}</div>
+							<div class="section-header total">${Resource.msg('global.totalPrice','locale',null)}</div>
+					</div>		
+					<isloop items="${Order.lineItems}" var="productLineItem" status="pliloopstate">
+						<div class="seeallproduct">
+							<div class="order-summary-product-container">						
+								<div class="product-image" >
+									<iscomment>Display product line image</iscomment>
+									
+									<isif condition="${!empty(pdict.recentOrder)}">
+										<isset name="lineItemProduct" value="${dw.catalog.ProductMgr.getProduct(productLineItem.itemNo)}" scope="PAGE" />
+										<isif condition="${!empty(lineItemProduct)}"> 
+											<isset name="lineItemProductimage" value="${lineItemProduct.getImage('large',0)}" scope="page" />
+											<iscomment> CP-533 Changes to Order Details Page
+											<isif condition="${!empty(lineItemProductimage)}"> 
+												<isset name="lineItemProductimageURL" value="${lineItemProductimage.getURL().toString()}" scope="page"/>
+												<img src="${lineItemProductimageURL}" alt="${lineItemProduct.name}" title="${lineItemProduct.name}"/>
+											<iselse>
+												<img src="${URLUtils.staticURL('/images/noimagesmall.png')}" alt="${Resource.msg('global.allnotavailable','locale',null)}" title="${Resource.msg('global.allnotavailable','locale',null)}"/>
+											</isif>
+											</iscomment>
+										</isif>
+									<iselse>
+										<iscomment>We have to improve this logic for image for orders coming from Service. for Time being we will display no img
+											<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+										</iscomment>
+										<isset name="lineItemProduct" value="${dw.catalog.ProductMgr.getProduct(productLineItem.itemNo)}" scope="PAGE" />
+										<iscomment> CP-533 Changes to Order Details Page
+											<isif condition="${!empty(lineItemProduct)}"> 
+												<isset name="lineItemProductimage" value="${lineItemProduct.getImage('large',0)}" scope="page" />
+												<isset name="lineItemProductimageURL" value="${lineItemProductimage.getURL().toString()}" scope="page"/>
+												<img src="${lineItemProductimageURL}" alt="${lineItemProduct.name}" title="${lineItemProduct.name}"/>
+											<iselse>
+												<img src="${URLUtils.staticURL('/images/noimagesmall.png')}" alt="${Resource.msg('global.allnotavailable','locale',null)}" title="${Resource.msg('global.allnotavailable','locale',null)}"/>
+											</isif>
+										</iscomment>
+									</isif>
+								</div>
+								<div class="product-info">
+									<iscomment>Display product line and product using module</iscomment>
+									<div class="name"><isprint value="${productLineItem.productName}"/></div>
+									<isset name="itemNo" value="${productLineItem.itemNo}" scope="page" />
+									<div class="skuno"><isprint value="${itemNo.replace(RegExp(/[^0-9]/g), '')}"/></div>
+								</div>	
+								
+								<div class="size" >
+									<span class="section-header display-in-mobile price">${Resource.msg('global.sizemobile','locale',null)}</span>
+						    		<div class="name"><isprint value="${lineItemProduct.custom.size}"/></div>
+						    	</div>
+								
+								<div class="price" >
+									<span class="section-header display-in-mobile price">${Resource.msg('global.pricemobile','locale',null)}</span>
+									<isset name="unitPrice" value="${Number(productLineItem.totalCost) / Number(productLineItem.quantity).toFixed()}" scope="Page" />
+						    		<div class="name"><isprint value="${dw.value.Money(unitPrice.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/></div>
+						    	</div>
+							     <div class="qty" >
+							     	<span class="section-header display-in-mobile qty">${Resource.msg('global.quantitymobile','locale',null)}</span>
+						    		<isprint value="${(new Number(productLineItem.quantity)).toFixed()}"/>
+						    	</div>					    	
+						    	<div  class="total">
+						    		<span class="section-header display-in-mobile total">${Resource.msg('global.totalpricemobile','locale',null)}</span>
+						    		<div class="name">
+						    		<isprint value="${dw.value.Money(productLineItem.totalCost.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}"/>
+						    		<isif condition="${!empty(productLineItem.lineItemTax)}">
+						    			<div class="pli-tax"><span><isprint value="${Resource.msg('order.ordertax','order',null)}" /></span><isprint value="${dw.value.Money(productLineItem.lineItemTax.toString().replace(/[-]/g, ''), dw.system.Site.getCurrent().getCurrencyCode())}" /></div>
+						    		 </isif>
+						    		
+						    		</div>
+						    	</div>				
+								
+								
+								
+					    		<iscomment>only show shipping address for first pli in shipment</iscomment>
+							   
+							</div><!-- end of order-summary-product-container -->
+						</div><!-- end of seeallproduct -->
+						<iscomment>
+						<isif condition="${pdict.SeeAll}"> 
+							<isif condition="${pliloopstate.count > 3}">
+							
+								<isbreak/>
+							 </isif>
+						 </isif>
+						  </iscomment>
+					</isloop>
+					<isset name="itemCount" value="${Order.lineItems.size()}" scope="PAGE" />
+				</div><!-- end of receipt-order-shipment-table -->
+				
+			<iselse/>
+				
+				<isloop items="${Order.shipments}" var="shipment" status="shipmentloopstate">
+			
+					<isif condition="${!empty(shipment.productLineItems) && shipment.productLineItems.size() > 0}">
+								
+						<iscomment>Shipment items table</iscomment>
+						<table class="receipt-order-shipment-table">
+							<thead>
+								<tr>
+								
+									<th class="section-header"><isprint value="${Resource.msg('global.item','locale',null)}" /></th>
+									<th class="section-header"><isprint value="${Resource.msg('global.quantity','locale',null)}" /></th>
+									<th class="section-header"><isprint value="${Resource.msg('global.price','locale',null)}" /></th>
+									<isif condition="${!empty(shipment.custom.shipmentType) && shipment.custom.shipmentType == 'instore'}">
+										<th class="section-header"><isprint value="${Resource.msg('cart.store.instorepickup','storepickup',null)}" /></th>							
+									<iselse>
+										<th class="section-header"><isprint value="${Resource.msg('orderdetails.shippingto','components',null)}" /></th>
+									</isif>
+								</tr>
+							</thead>
+							<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+								<tr>
+									<td>
+										<iscomment>Display product line and product using module</iscomment>
+										<isdisplayliproduct p_productli="${productLineItem}" p_editable="${false}"/>
+									</td>
+								    <td>
+							    		<isprint value="${(new Number(productLineItem.quantity)).toFixed()}"/>
+							    	</td>
+								    <td>
+								    	<iscomment>Render quantity. If it is a bonus product render word 'Bonus'</iscomment>
+								    	<isif condition="${productLineItem.bonusProductLineItem}">
+								    		<span class="bonus-item"><isprint value="${Resource.msg('global.bonus','locale',null)}" /></span>
+								    	<iselse>
+							            	<isprint value="${productLineItem.adjustedPrice}"/>				    						            
+								            <isif condition="${!empty(productLineItem.optionProductLineItems) && productLineItem.optionProductLineItems.size() > 0}">
+												<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+													<p>+ <isprint value="${optionLI.adjustedPrice}"/></p>
+												</isloop>
+											</isif>
+										</isif>
+								    </td>
+						
+						    		<iscomment>only show shipping address for first pli in shipment</iscomment>
+								    <isif condition="${pliloopstate.first}">
+								    	<isset name="rowSpan" value="${!empty(shipment.productLineItems) ? shipment.productLineItems.size() : 0}" scope="page"/>
+									    <td rowspan="${rowSpan.toFixed()}" class="order-shipment-details">
+									    	<div class="order-shipment-address">
+									    		<isminishippingaddress p_shipment="${shipment}" p_editable="${false}" p_showmethod="${false}" p_showpromos="${false}"/>
+									    	</div>
+									    	<div class="shipping-method">
+									    		<span class="label"><isprint value="${Resource.msg('orderdetails.shippingmethod','components',null)}" /></span>
+								    			<isif condition="${!empty(shipment.shippingMethod)}">
+									               <span class="value"><isprint value="${shipment.shippingMethod.displayName}"/></span>
+												<iselse>
+									               <span class="value"><isprint value="${shipment.shippingMethodID}"/></span>
+												</isif>
+									    	</div>
+									    	<div class="shipping-status">
+									    		<span class="label"><isprint value="${Resource.msg('orderdetails.shippingstatus','components',null)}" /></span>
+							    				<isif condition="${shipment.shippingStatus==dw.order.Shipment.SHIPPING_STATUS_NOTSHIPPED}">
+							    					<span class="value"><isprint value="${Resource.msg('orderdetails.notshipped','components',null)}" /></span>
+							    				<iselseif condition="${shipment.shippingStatus==dw.order.Shipment.SHIPPING_STATUS_SHIPPED}">
+							    					<span class="value"><isprint value="${Resource.msg('orderdetails.shipped','components',null)}" /></span>
+							    				<iselse>
+							    					<span class="value"><isprint value="${Resource.msg('orderdetails.notknown','components',null)}" /></span>
+							    				</isif>
+									    	</div>
+									    	<isif condition="${!empty(shipment.trackingNumber)}">
+										    	<div class="track-ingnumber">
+										    		<span class="label"><isprint value="${Resource.msg('orderdetails.tracking','components',null)}" /></span>
+										    		<span class="value"><!-- Tracking Number --><isprint value="${shipment.trackingNumber}"/></span>
+										    	</div>
+									    	</isif>
+									    </td>
+								    </isif>
+								</tr>
+							</isloop>
+							<iscomment>Shipment Gift Message</iscomment>
+							<isif condition="${shipment.gift}">
+								<tr>
+									<td colspan="4" class="order-shipment-gift-message-header">
+										<isprint value="${Resource.msg('orderdetails.giftmessage','components',null)}" />
+									</td>
+								</tr>
+								<tr>
+									<td colspan="4" class="order-shipment-gift-message">
+										<isif condition="${!empty(shipment.giftMessage)}">
+											<isprint value="${shipment.giftMessage}"/>
+										<iselse>
+											&nbsp;
+										</isif>
+									</td>
+								</tr>
+							</isif>
+						</table>
+					
+					</isif>
+			 
+					<isif condition="${!empty(shipment.giftCertificateLineItems) && shipment.giftCertificateLineItems.size() > 0}">
+			
+						<iscomment>Shipment Gift Certificate</iscomment>
+						<table >
+							<thead>
+								<tr>
+									<th class="section-header"><isprint value="${Resource.msg('global.item','locale',null)}" /></th>
+									<th class="section-header"><isprint value="${Resource.msg('global.price','locale',null)}" /></th>
+									<th class="section-header"><isprint value="${Resource.msg('orderdetails.shippingto','components',null)}" /></th>
+								</tr>
+							</thead>
+							<isloop items="${shipment.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+								<tr>
+									<td class="order-gift-cert-attributes">
+										<span class="label"><isprint value="${Resource.msg('global.giftcertificate','locale',null)}" /></span>
+										<div class="order-gift-cert-to">
+											<span class="label"><isprint value="${Resource.msg('orderdetails.giftcertto','components',null)}" /></span>
+											<span class="value">
+												<isprint value="${giftCertificateLineItem.recipientName}"/><br />
+												<isprint value="${giftCertificateLineItem.recipientEmail}"/>
+											</span>
+										</div>
+										<div class="order-gift-cert-from">
+											<span class="label"><isprint value="${Resource.msg('orderdetails.giftcertfrom','components',null)}" /></span>
+											<span class="value">
+												<isprint value="${giftCertificateLineItem.senderName}"/><br />
+												<isprint value="${Order.customerEmail}"/>
+											</span>
+										</div>
+									</td>
+									<td>
+										<isprint value="${giftCertificateLineItem.price}"/>
+									</td>
+									<td class="order-shipment-details">
+										<div class="order-shipment-address">
+								    		<span class="label"><isprint value="${Resource.msg('orderdetails.giftcertshippingaddress','components',null)}" /></span>
+								    		<div class="order-gift-cert-to">
+												<span class="value"><isprint value="${giftCertificateLineItem.recipientName}"/></span>
+												<span class="value"><isprint value="${giftCertificateLineItem.recipientEmail}"/></span>
+											</div>
+								    	</div>
+										<div class="shipping-method">
+								    		<span class="label"><isprint value="${Resource.msg('orderdetails.shippingmethod','components',null)}" /></span>
+								    		<span class="value"><isprint value="${Resource.msg('orderdetails.giftcertshipping','components',null)}" /></span>
+								    	</div>							
+									</td>
+								</tr>
+							</isloop>
+							
+							<iscomment>if shipment is marked as gift</iscomment>
+							<tr>
+								<td colspan="4" class="order-shipment-gift-message-header">
+									<isprint value="${Resource.msg('orderdetails.giftmessage','components',null)}" />
+								</td>
+							</tr>
+			
+							<isif condition="${shipment.gift}">
+								<tr>
+									<td colspan="4" class="order-shipment-gift-message">
+										<isif condition="${!empty(shipment.giftMessage)}">
+											<isprint value="${shipment.giftMessage}"/>
+										<iselse>
+											&nbsp;
+										</isif>
+									</td>
+								</tr>
+							<iselse>
+								<tr>
+									<td colspan="4" class="order-shipment-gift-message">
+										<isset name="theGiftCert" value="${shipment.giftCertificateLineItems.iterator().next()}" scope="page"/>
+										<isif condition="${!empty(theGiftCert.message)}">
+											<isprint value="${theGiftCert.message}"/>
+										<iselse>
+											&nbsp;
+										</isif>
+									</td>
+								</tr>
+							</isif>
+						</table>
+			
+					</isif>
+				</isloop>
+				<isset name="itemCount" value="${Order.lineItems.size()}" scope="PAGE" />
+			</isif>
+		</isif>
+		
+		<iscomment>
+			<div class="seefullorder">
+			<isif condition="${itemCount > 4}">
+				<form action="${URLUtils.url('Order-Detail')}" method="post" name="order-history-SeeAll">
+					<input type="hidden" value="${dw.util.StringUtils.encodeBase64(Order.cosmoProfInvoiceNumber)}" name="cin"/>
+					<input type="hidden" value="${pdict.SeeAll}" name="SeeAllFlag" id="SeeAllFlag">
+					 <isif condition="${pdict.SeeAll}"> 
+						<button type="submit"  value="submit">
+							<span id="seeLessOrderItem"><isprint value="${Resource.msgf('order.seefullorder','order',null,itemCount)}" /></span>
+							<isprint value="${Resource.msgf('order.seeordernumber','order',null,itemCount)}" />
+						</button>
+					<iselse>
+						<button type="submit"  value="submit">
+							<span id="seeLessOrderItem"><isprint value="${Resource.msgf('order.seelessorder','order',null,itemCount)}" /></span>
+							<isprint value="${Resource.msgf('order.seelessordernumber','order',null,itemCount)}" />
+						</button>
+					</isif>
+				</form>
+			 <button type="submit"  class="seeorder seefullOrder" value="submit" data-itemcount="${itemCount.toFixed()}" data-seeless="${Resource.msgf('order.seelessorder','order',null)}" data-seefull="${Resource.msgf('order.seefullorder','order',null,itemCount)}">
+				<span id="seeLessOrderItem"><isprint value="${Resource.msgf('order.seefullorder','order',null,itemCount)}" /></span>
+			</button>
+			</isif>
+			
+			
+				 <isif condition="${pdict.SeeAll}"> 
+					<a href="${URLUtils.url('Order-Detail', 'cin', Order.cosmoProfInvoiceNumber)}"> <isprint value="${Resource.msgf('order.seefullorder','order',null,itemCount)}" /></a>
+				<iselse>
+					<a href="${URLUtils.url('Order-Detail', 'cin', Order.cosmoProfInvoiceNumber)}"> <isprint value="${Resource.msgf('order.seelessorder','order',null,itemCount)}" /></a>
+				 </isif>
+		 </iscomment>
+		 
+		</div>
+		
+		<div class="order-payment-summary bottom">
+			<div class="head-label">${Resource.msg('orderdetails.paymenttotal','components',null)}</div>
+			<div class="order-detail-summary">
+				<isif condition="${!empty(Order.splitShipmentTotalAmt)}">
+					<isssordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+				<iselseif condition="${!empty(OrderStatus) && OrderStatus.equals(orderStatusSP)}">
+					<iscomment>Render in-store/on-site order payment total information.</iscomment>
+					<isstorepurchaseordertotals storeorder="${Order}" totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+				<iselse>
+					<isif condition="${!empty(Order.shipments) && Order.shipments.length > 1}">
+						<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+					<iselseif condition="${Order.isJSON}">
+						<isjsonordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+					<iselse/>
+						<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${false}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+					</isif>
+				</isif>
+			</div>
+			
+			<div class="form-row order-detail-options">
+				<isif condition="${pdict.CurrentCustomer.authenticated}">
+					<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID')}"> 
+						<isreorder order_id="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID') ? pdict.CurrentHttpParameterMap.dwreOrderID : ''}"/>
+					<iselseif condition="${!empty(dwOrderID) && dwOrderID !=null}">
+						<isreorder order_id="${dwOrderID}"/>
+					</isif>
+				</isif>
+			</div>
+		</div><!--End of  order-payment-summary -->
+			
+		<div class="view-action">
+		<iscomment> CP-533 removed back button
+			<form action="${session.custom.BackURL}" >
+				<button class="back"><isprint value="${Resource.msg('order.orderhistoryback','order',null)}" /></button>
+			</form>
+		 <div>
+			 <a href="${pdict.BackURL}" class="secondarybtn">
+				<isprint value="${Resource.msg('order.orderhistoryback','order',null)}" />
+			 </a>
+		</div>
+		</iscomment>
+		</div>
+	</div>
+</isif>

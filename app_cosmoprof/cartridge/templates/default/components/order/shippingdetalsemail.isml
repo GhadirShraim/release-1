@@ -1,0 +1,319 @@
+<iscomment>
+	Displays order details, such as order number, creation date, payment information,
+	order totals and information for each contained shipment.
+	This template module can be used in order confirmation pages as well as in the
+	order history to render the details of a given order. Depending on the context
+	being used in, one might omit rendering certain information.
+
+	Parameters:
+
+	order		: the order whose details to render
+	orderstatus	: if set to true, the order status will be rendered
+				  if set to false or not existing, the order status will not be rendered
+</iscomment>
+<isset name="Order" value="${pdict.Order}" scope="page"/>
+
+	<isloop items="${Order.shipments}" var="shipment" status="shipmentloopstate">
+		<isif condition="${shipment.productLineItems.size() > 0}">
+		
+			<isset name="shipAddr" value="${shipment.shippingAddress}" scope="page"/>
+			
+			<iscomment>Shipment items table</iscomment>
+			<table style="${Resource.msg('email.containertable','email',null)}">
+					<tr>
+						<td style="${Resource.msg('email.shippingdetails.label','email',null)}${Resource.msg('email.shippingdetails.tableheader','email',null)}${Resource.msg('email.text.left','email',null)}">${Resource.msg('order.orderconfirmation-email.deliveringto','order',null)}</td>
+						<td style="${Resource.msg('email.shippingdetails.label','email',null)}${Resource.msg('email.shippingdetails.tableheader','email',null)}${Resource.msg('email.text.left','email',null)}">${Resource.msg('order.orderconfirmation-email.tracking','order',null)}</td>
+					</tr>
+				<tr><td>
+				<table>
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">
+						<span class="firstname">
+							<isprint value="${shipAddr.firstName}"/>
+						</span>
+						<span class="lastname">
+							<isprint value="${shipAddr.lastName}"/>
+						</span>
+					</td></tr>
+					<isif condition="${!empty(shipAddr.companyName)}">
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">
+						<span class="companyName">
+							<isprint value="${shipAddr.companyName}"/>
+						</span>
+					</td></tr>
+					</isif>
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">
+						<span class="address1">
+							<isprint value="${shipAddr.address1}"/>
+						</span>
+					</td></tr>
+					<isif condition="${!empty(shipAddr.address2)}">
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">						
+							<span class="address2">
+								<isprint value="${shipAddr.address2}"/>
+							<span>						
+					</td></tr>
+					</isif>
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">
+						<isif condition="${shipAddr.city != null}">
+							<span class="city">
+								<isprint value="${shipAddr.city}"/>
+								<span class="statedivider">,&nbsp;</span>
+							</span>
+						</isif>
+						<span class="state">
+							<isprint value="${shipAddr.stateCode}"/>&nbsp;
+						</span>
+						<span class="zip">
+							<isprint value="${shipAddr.postalCode}"/>
+						</span>
+					</td></tr>
+					<tr><td style="${Resource.msg('email.shippingdetails.text','email',null)}">
+						<span class="country">
+							<isprint value="${shipAddr.countryCode}"/>
+						</span>
+					</td></tr>
+				</table>
+				</td>
+				<td style="${Resource.msg('email.shippingdetails.tablealign','email',null)}">
+				<table>
+					<isset name="splitShipmentData" value="${JSON.parse(Order.custom.splitShipmentData)}" scope="page"/>
+					<isloop items="${splitShipmentData}" var="Carton" status="shipmentloopstate">
+						<isif condition="${!empty(Carton.trackingNo)}">
+					    		<isset name="baseTrackingUrl" value="${('UPSTrackingURL' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL'))) ? dw.system.Site.getCurrent().getCustomPreferenceValue('UPSTrackingURL') : '' }" scope="Page" />
+					    		<isif condition="${Carton.trackingNo.search('1Z') > -1}">
+					    			<isset name="trackUrl" value="${''+baseTrackingUrl+Carton.trackingNo+''}" scope="Page" />
+					    			<div class="value"><a href="${trackUrl}" target="_blank"><isprint value="${Carton.trackingNo}" /></a></div>
+					    		<iselse>
+					    			<div class="value"><isprint value="${Carton.trackingNo}" /></div>
+					    		 </isif>
+				
+				   		 <iselse>
+					    		<div class="shiping-loop-value"><span class="value"><isprint value="${Resource.msg('ordersummary.nodata','components',null)}" /></span></div>	
+			    		</isif>
+					</isloop>
+				</table>
+				</td></tr>
+			</table>	
+			<div style="${Resource.msg('email.shippingdetails.label','email',null)}"><isprint value="${Resource.msg('email.itemdetails.text','email',null)}"/></div>	
+			<table style="${Resource.msg('email.containertable.bordercollapse','email',null)}">
+				<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+					<iscomment>only show shipping address for first pli in shipment</iscomment>
+					<isif condition="${'ID' in shipment.shippingAddress && !empty(shipment.shippingAddress.ID)}">
+						<tr>
+							<isif condition="${pliloopstate.first}">
+								<isset name="rowSpan" value="${shipment.productLineItems.size()}" scope="page"/>
+								<td rowspan="${rowSpan.toFixed()}" style="${Resource.msg('email.tablecell','email',null)} ${Resource.msg('email.tablecellshipping','email',null)}">
+									<isminishippingaddress p_shipment="${shipment}" p_editable="${false}" p_showmethod="${false}" p_showpromos="${false}"/>
+								</td>
+							</isif>
+						</tr>
+					</isif>
+					<isif condition="${pliloopstate.first}">
+						<thead>
+							<tr>
+								<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('order.orderconfirmation-email.sku','order',null)}</th>
+								<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('order.orderconfirmation-email.price','order',null)}</th>
+								<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('order.orderconfirmation-email.qtyordered','order',null)}</th>
+								<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('order.orderconfirmation-email.qtyshipped','order',null)}</th>
+								<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('order.orderconfirmation-email.total','order',null)}</th>
+							</tr>
+						</thead>
+					</isif>
+					<tr>
+						<td style="${Resource.msg('email.tablecellshippingitem','email',null)}">
+							<iscomment>Display product line and product using module</iscomment>
+							<isprint value="${productLineItem.productID.substring(4)}"/> <isprint value="${productLineItem.productName}"/>
+						</td>
+						<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.tablecellshippingitem','email',null)}">
+							<iscomment>Render quantity. If it is a bonus product render word 'Bonus'</iscomment>
+							<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+								<isif condition="${productLineItem.custom.lineItemTotal>0}">
+									$<isprint value="${productLineItem.custom.lineItemTotal / new Number(productLineItem.custom.qtyShipped).toFixed(0)}"/>
+								<iselse/>
+									$<isprint value="${productLineItem.custom.lineItemTotal}"/>
+								</isif>
+							<iselse/>
+								<isif condition="${productLineItem.bonusProductLineItem}">
+									${Resource.msg('global.bonus','locale',null)}
+								<iselse>
+									$<isprint value="${productLineItem.adjustedPrice / productLineItem.quantity}"/>
+									<isif condition="${productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+										<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+											<p style="${Resource.msg('email.error','email',null)}">+ <isprint value="${optionLI.adjustedPrice}"/></p>
+										</isloop>
+									</isif>
+								</isif>
+							</isif>
+						</td>
+						<td style="${Resource.msg('email.text.center','email',null)}${Resource.msg('email.tablecellshippingitem','email',null)}">
+							<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+								<isif condition="${productLineItem.custom.lineItemTotal>0}">
+									<isprint value="${productLineItem.quantity}"/>
+								<iselse/>
+									<isprint value="${new Number('0.00').toFixed(0)}"/>
+								</isif>
+							<iselse/>
+								<isprint value="${productLineItem.quantity}"/>
+							</isif>
+						</td>
+	
+						<td style="${Resource.msg('email.text.center','email',null)}${Resource.msg('email.tablecellshippingitem','email',null)}">
+							<isprint value="${new Number(productLineItem.custom.qtyShipped).toFixed(0)}"/>
+						</td>
+						<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.tablecellshippingitem','email',null)}">
+							<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+								$<isprint value="${productLineItem.custom.lineItemTotal}"/>
+							<iselse/>
+								$<isprint value="${productLineItem.adjustedNetPrice.value}"/>
+							</isif>
+						</td>
+			
+					</tr>
+					<isif condition="${pliloopstate.last}">
+						<tr>
+							<td colspan="4" style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('order.orderconfirmation-email.subtotal','order',null)}</td>
+							<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.text','email',null)}">
+								<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+									<isset name="splitShipmentTotalAmt" value="${JSON.parse(Order.custom.splitShipmentTotalAmt)}" scope="page">
+									$<isprint value="${splitShipmentTotalAmt.merchandiseTotal}"/>
+								<iselse/>
+									<isprint value="${Order.getAdjustedMerchandizeTotalPrice(false)}"/>
+								</isif>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="4" style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('order.orderconfirmation-email.tax','order',null)}</td>
+							<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.text','email',null)}">
+								<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+									$<isprint value="${splitShipmentTotalAmt.taxAmt}"/>
+								<iselse/>
+									<isprint value="${Order.getTotalTax()}"/>
+								</isif>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="4" style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('order.orderconfirmation-email.sandh','order',null)}</td>
+							<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.text','email',null)}">
+								<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+									$<isprint value="${splitShipmentTotalAmt.shippingAmt}"/>
+								<iselse/>
+									<isprint value="${Order.getShippingTotalPrice()}"/>
+								</isif>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="4" style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.label','email',null)}">${Resource.msg('order.orderconfirmation-email.total','order',null)}</td>
+							<td style="${Resource.msg('email.text.right','email',null)}${Resource.msg('email.shippingdetails.text','email',null)}">
+								<isif condition="${!empty(Order.custom.splitShipmentTotalAmt)}">
+									$<isprint value="${splitShipmentTotalAmt.orderTotal}"/>
+								<iselse/>
+									<isprint value="${Order.getTotalGrossPrice()}"/>
+								</isif>
+							</td>
+						</tr>
+					</isif>
+				</isloop>
+			<iscomment>Shipment Gift Message</iscomment>
+			<isif condition="${shipment.gift}">
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+						${Resource.msg('orderdetails.giftmessage','components',null)}
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+						<isif condition="${!empty(shipment.giftMessage)}">
+							<isprint value="${shipment.giftMessage}"/>
+						<iselse>
+							&nbsp;
+						</isif>
+					</td>
+				</tr>
+			</isif>
+			</table>
+		</isif>
+
+		<isif condition="${shipment.giftCertificateLineItems.size() > 0}">
+
+			<iscomment>Shipment Gift Certificate</iscomment>
+			<table  style="${Resource.msg('email.containertable','email',null)}">
+				<thead>
+					<tr>
+						<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('global.item','locale',null)}</th>
+						<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('global.price','locale',null)}</th>
+						<th style="${Resource.msg('email.shippingdetails.tableheader','email',null)}">${Resource.msg('orderdetails.shippingto','components',null)}</th>
+					</tr>
+				</thead>
+				<isloop items="${shipment.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+					<tr>
+						<td style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+							${Resource.msg('global.giftcertificate','locale',null)}
+							<div>
+								${Resource.msg('orderdetails.giftcertto','components',null)}
+									<isprint value="${giftCertificateLineItem.recipientName}"/><br />
+									<isprint value="${giftCertificateLineItem.recipientEmail}"/>
+							</div>
+							<div>
+								${Resource.msg('orderdetails.giftcertfrom','components',null)}
+									<isprint value="${giftCertificateLineItem.senderName}"/><br />
+									<isprint value="${Order.customerEmail}"/>
+							</div>
+						</td>
+						<td style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+							<isprint value="${giftCertificateLineItem.price}"/>
+						</td>
+						<td style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+							<div>
+								${Resource.msg('orderdetails.giftcertshippingaddress','components',null)}
+								<div>
+									<isprint value="${giftCertificateLineItem.recipientName}"/>
+									<isprint value="${giftCertificateLineItem.recipientEmail}"/>
+								</div>
+							</div>
+							<div>
+								${Resource.msg('orderdetails.shippingmethod','components',null)}
+								${Resource.msg('orderdetails.giftcertshipping','components',null)}
+							</div>
+						</td>
+					</tr>
+				</isloop>
+				
+				<iscomment>if shipment is marked as gift</iscomment>
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+						${Resource.msg('orderdetails.giftmessage','components',null)}
+					</td>
+				</tr>
+
+				<isif condition="${shipment.gift}">
+					<tr>
+						<td colspan="4" style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+							<isif condition="${!empty(shipment.giftMessage)}">
+								<isprint value="${shipment.giftMessage}"/>
+							<iselse>
+								&nbsp;
+							</isif>
+						</td>
+					</tr>
+				<iselse>
+					<tr>
+						<td colspan="4" style="${Resource.msg('email.shippingdetails.tablecell','email',null)}">
+							<isset name="theGiftCert" value="${shipment.giftCertificateLineItems.iterator().next()}" scope="page"/>
+							<isif condition="${!empty(theGiftCert.message)}">
+								<isprint value="${theGiftCert.message}"/>
+							<iselse>
+								&nbsp;
+							</isif>
+						</td>
+					</tr>
+				</isif>
+			</table>
+		</isif>
+		<table>
+			<tr>
+				<td>
+					
+				</td>
+			</tr>
+		</table>
+	</isloop>

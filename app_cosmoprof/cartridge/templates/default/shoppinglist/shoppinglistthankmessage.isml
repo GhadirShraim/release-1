@@ -1,0 +1,22 @@
+<isset name="storeDetail" value="${pdict.SelectesStore}" scope="Page" />
+<div class="thanks-popup">
+	<div class="thank-you">
+		<isprint value="${Resource.msg('shoppinglist.store.thanksyou','storepickup',null)}" />
+	</div>
+	<div class="store-details-msg">
+		<isprint value="${Resource.msg('shoppinglist.store.thanks.storedetail','storepickup',null)}" />
+	</div>
+	<div class="selectes-store-address">
+		<isif condition="${!empty(storeDetail.address1)}">
+			<div class="address1">
+				<isprint value="${storeDetail.address1}" />
+			</div>
+		 </isif>
+		 <isif condition="${!empty(storeDetail.address2)}">
+			<div class="address1">
+				<isprint value="${storeDetail.address2}" />
+			</div>
+		 </isif>
+		 <isif condition="${!empty(storeDetail.city)}"><span><isprint value="${storeDetail.city}" />,</span></isif><isif condition="${!empty(storeDetail.region)}"><span><span><isprint value="${storeDetail.region}" /></span>&nbsp;</isif><isif condition="${!empty(storeDetail.postalcode)}"><span><span><isprint value="${storeDetail.postalcode}" /></span></isif>
+	</div>
+</div>

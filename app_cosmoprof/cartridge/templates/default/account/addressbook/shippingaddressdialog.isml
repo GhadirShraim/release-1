@@ -1,0 +1,108 @@
+<isinclude template="util/modules"/>
+
+<iscomment> This section is rendered on cart and on login barier popup </iscomment>
+<isif condition="${pdict.CurrentHttpParameterMap.iscart.value == 'true'}">
+	<div class="cart-select-shipping">
+		<div class="shipping-selectmsg"><isprint value="${Resource.msg('cart.shippingaddress','checkout',null)}" /></div>
+  <iselse>
+	<div class="account-shipping">
+</isif>
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+		<div class="shipping-pavmsg">${Resource.msg('addressselect.shippingaddressavailability','account',null)}</div>
+	</isif>
+	<iscomment>
+		<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+			<div class="shipping-selectmsg">${Resource.msg('addressselect.addnew','account',null)}</div>
+		</isif>
+	
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+		<isif condition="${!empty(pdict.ErrorCode)}">
+			<div id="errorContainer">
+			${Resource.msg('addressselect.' + pdict.ErrorCode,'account',null)}
+			</div>
+		</isif> 
+	</isif>
+	</iscomment>
+	<form action="${URLUtils.httpsContinue()}" name="ship-address-select-form">	
+		<div class="address-select">
+			<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">	
+				<span class="address-select-txt">${Resource.msg('addressselect.selectshipping','account',null)}</span>
+			</isif>
+			<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">	
+				<isif condition="${!empty(pdict.ShippingAddresses)}">
+					<isaddressselectlist p_listId="shop_address_list" p_listaddresses="${pdict.SortedAddress}" />
+				</isif>
+			</isif>
+			
+			<iscomment>Load different selectList for cart and shipping pages, to minimize many pipeline changes </iscomment>
+			<isif condition="${pdict.CurrentHttpParameterMap.iscart.value == 'true'}">	
+				<input type="hidden" value="true" name="CartPage" />			
+				<isif condition="${!empty(pdict.ShippingAddresses)}">
+					<isshippingaddressselectlist p_listId="shop_address_list" p_listaddresses="${pdict.SortedAddress}" />
+				</isif>
+			</isif>
+			
+			<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('orderID')}">
+				<input type="hidden" value="${pdict.CurrentHttpParameterMap.orderID.stringValue}" name="orderID" id="orderID" />
+			</isif>
+			<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+				<button type="submit" value="submit" class="primaryButtn">
+					${Resource.msg('addressselect.shop','account',null)}
+				</button>
+			</isif>
+		</div>
+	</form>
+	
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value == 'true'}">
+		<div class="shipping-change-msg"><isprint value="${Resource.msg('cart.addressselect.note','checkout',null)}" /></div>
+	</isif>
+	
+	<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+		<div class="mobile-Address-or">${Resource.msg('address.or','account',null)}</div>
+	</isif>
+	
+	<iscomment>SAL-1116: Only show add-address for cardholders (customerType == C)</iscomment>
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+		<isif condition="${!empty(pdict.CurrentCustomer.profile) && pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+			<iscomment>
+				<button type="button" id="add-new-address" value="add"> 
+					${Resource.msg('addressselect.addnewaddress','account',null)}
+				</button>
+				 
+				<a href="${URLUtils.https("Address-Add")}" class="primaryButtn"><isprint value="${Resource.msg('addressselect.addnewaddress','account',null)}" /></a>
+			</iscomment>
+		</isif>
+	</isif>
+
+	<iscomment>SAL-1116: Only show add-address for cardholders (customerType == C)</iscomment>
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+		<isif condition="${empty(pdict.CurrentHttpParameterMap.format) && pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+			<isset name="showAddAddress" scope="page" 
+				value="${empty(pdict.ShippingAddresses) || (!empty(pdict.ErrorCode) && (pdict.ErrorCode == 'addressCreationFailed')) }" />
+			<div id="address-details-container" class="${showAddAddress ? '' : 'visually-hidden'}">
+				<isinclude template="account/addressbook/addressdetails"/>
+			</div>
+		</isif>
+	</isif>
+</div>
+<iscomment>
+	<isif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+	<script type="text/javascript">
+		app.pageRetentionURL = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+		app.shippingaddressdialog.init();
+	</script>
+</iscomment>
+<isset name="pageRetentionURL" value="${'pageRetention' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.pageRetention) ? pdict.CurrentSession.custom.pageRetention : request.httpReferer}" scope="Page" />
+
+<isif condition="${!empty(pdict.CurrentSession.custom.isMobileLogin) && pdict.CurrentSession.custom.isMobileLogin == true}">
+	 <script type="text/javascript">
+		app.shippingaddressdialog.init();
+		app.pageRetentionURL = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+	</script>
+<iselseif condition="${pdict.CurrentHttpParameterMap.iscart.value != 'true'}">
+	<script type="text/javascript">
+	//app.pageRetentionURL = "${request.httpReferer}";
+	app.pageRetentionURL = "${pageRetentionURL}";
+	app.shippingaddressdialog.init();
+	</script>
+</isif>

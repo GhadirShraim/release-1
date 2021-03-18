@@ -1,0 +1,5 @@
+<isif condition="${pdict.Basket.productLineItems.size() != 0}">	
+	<div id="selected-shipping-container">
+		<isinclude url="${URLUtils.https('LoginBarrier-SelectShippingAddress','iscart','true')}" >
+	</div>
+</isif>

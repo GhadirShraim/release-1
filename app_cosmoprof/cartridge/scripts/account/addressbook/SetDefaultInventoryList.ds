@@ -1,0 +1,83 @@
+/**
+ * SetDefaultAddress.ds
+ *
+ * This script sets the default address for the customer addressbook.
+ *
+ * @input CurrentCustomer : dw.customer.Customer
+ */
+importPackage( dw.customer );
+importPackage( dw.system );
+importPackage( dw.util);
+var addressAsurance = require('int_same_day_delivery/cartridge/scripts/deliveryAssurance/addressAsurance');
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try{
+	var customer : Customer = pdict.CurrentCustomer;
+	var addressBook : AddressBook = customer.profile.addressBook;
+	var activeShippingAddres = 'activeShipAddressID' in customer.profile.custom && !empty(customer.profile.custom.activeShipAddressID) ? customer.profile.custom.activeShipAddressID : "";
+	if (!empty(activeShippingAddres)) {
+		var getActiveAddr = customer.getAddressBook().getAddress(activeShippingAddres);
+		addressBook.setPreferredAddress(getActiveAddr);
+	} else {
+		var getActiveAddr = customer.getAddressBook().getAddress("1")
+	}
+					
+	var newInventoryLogicEnabled : Boolean = dw.system.Site.getCurrent().getCustomPreferenceValue("newInventoryLogicEnabled");
+	if(newInventoryLogicEnabled && empty(customer.profile.custom.inventoryListID) && !empty(getActiveAddr)) {
+	
+		var inventoryListData = dw.system.Site.getCurrent().getCustomPreferenceValue('inventoryListID_Mapping');
+		
+		if(inventoryListData) {
+			
+			var inventoryMap = JSON.parse(inventoryListData);
+			var inventoryListID = '';
+			
+			if (inventoryMap[getActiveAddr.stateCode]) {
+				inventoryListID = inventoryMap[getActiveAddr.stateCode];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && inventoryMap[getActiveAddr.countryCode.value]) {
+				inventoryListID = inventoryMap[getActiveAddr.countryCode];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && dw.system.Site.current.ID == 'CosmoProf') {
+				inventoryListID = inventoryMap['US_Default'];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			}
+			
+			if (empty(inventoryListID) && dw.system.Site.current.ID == 'CosmoProf-CA') {
+				inventoryListID = inventoryMap['CA_Default'];
+				if(!dw.catalog.ProductInventoryMgr.getInventoryList(inventoryListID)) {
+					inventoryListID = '';
+				}
+			} 
+			Logger.error("SetDefaultAddress : Set the inventory list on profile "+customer.ID+" inventory : "+inventoryListID);
+			if(!empty(inventoryListID)) {
+					customer.profile.custom.inventoryListID = inventoryListID;
+			} else {
+				customer.profile.custom.inventoryListID = '';
+			}
+		}
+	}
+
+	if(empty(session.custom.sddCheckComplete) || !session.custom.sddCheckComplete ) {
+	// Execute for SDD.
+	Transaction.wrap(function () {
+		addressAsurance.execute();
+	});
+	session.custom.sddCheckComplete = true;
+	}
+	} catch(e) {
+    	Logger.error("Error while updating Inventory List Address : " + e.message);
+    }
+
+    return PIPELET_NEXT;
+}

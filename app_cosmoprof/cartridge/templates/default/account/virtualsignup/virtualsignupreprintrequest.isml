@@ -1,0 +1,40 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+
+	<div class="vsu-reprint-request">
+		<p class="reprint-header">${Resource.msgf('vsu.ourrecords','account',null, pdict.CardNumber)}</p>
+		<iscomment> these next three pargraphs will change depending one what Cosmo wants here. TBA </iscomment>
+		<iscontentasset aid="reprint-request"/>
+		<p>${Resource.msg('vsu.replacement','account',null)}</p>
+				
+		<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-start-form" name="${pdict.CurrentForms.profile.htmlName}">
+		
+			<div class="form-row vsu-replacement-options">
+				<label for="replacement" class="replacementlabel"><isprint value="${Resource.msg('global.yes','locale',null)}"/></label>
+				<input type="radio"  class="input-radio replacementcard-yes" name="${pdict.CurrentForms.profile.vsu.replacementcard.htmlName}" value="true" id="replacement-yes"/>
+			</div>
+			<div class="form-row vsu-replacement-options">
+				<label for="replacement" class="replacementlabel"><isprint value="${Resource.msg('global.no','locale',null)}"/></label>
+				<input type="radio"  class="input-radio replacementcard-no" name="${pdict.CurrentForms.profile.vsu.replacementcard.htmlName}" value="false" id="replacement-no"/>
+			</div>
+			
+			<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+			<div class="form-row form-row-button ">
+				<button type="submit" value="bupkiss" name="${pdict.CurrentForms.profile.save.htmlName}">
+					${Resource.msg('global.nextarrow','locale',null)}
+				</button>
+				<isif condition="${ !empty(pdict.ErrorReprint) && pdict.ErrorReprint}">
+				<isif condition="${!empty(pdict.reprintRequested) && pdict.reprintRequested}"> 
+					<div class="error"><isprint value="${Resource.msg('vsu.reprintrequestedmsg','account',null)}" /></div>
+				<iselse>
+					<div class="error"><isprint value="${Resource.msg('vsu.reprinterrormsg','account',null)}" /></div>
+				</isif> 
+			</isif>
+			</div>
+			
+		</form>
+			
+		
+	</div>
+		
+</isdecorate>

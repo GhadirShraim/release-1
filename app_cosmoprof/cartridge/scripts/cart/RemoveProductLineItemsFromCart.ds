@@ -1,0 +1,41 @@
+/**
+* RemoveProductLineItemsFromCart
+* Removes products from the cart that were unshippable
+*
+*   @input CurrentCustomer : dw.customer.Customer  This is the current customer
+*	@input Basket : dw.order.Basket  This is the current basket
+*	@input UnshippableProducts : Array  These are the unshippable products
+*
+*/
+var Basket = require('dw/order').Basket;
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+var ProductLineItem = require('dw/order').ProductLineItem;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try 
+	{
+		var unshipProds = args.UnshippableProducts,
+			basket = args.Basket;
+			
+		if ( !empty(args.CurrentCustomer) && !empty(unshipProds) ) 
+		{
+			for each ( let pli : ProductLineItem in basket.productLineItems ) 
+			{
+				
+				if ( unshipProds.indexOf(pli.productID) > -1 ) 
+				{
+					basket.removeProductLineItem(pli);
+				}
+			}
+		}
+	} 
+	catch ( ex ) 
+	{
+		Logger.error("[RemoveProductLineItemsFromCart] There was an error getting the unshippable products: {0}",ex);
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

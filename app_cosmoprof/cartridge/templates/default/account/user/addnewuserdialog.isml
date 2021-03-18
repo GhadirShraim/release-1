@@ -1,0 +1,131 @@
+<isinclude template="util/modules"/>
+
+<isset name="DecoratorTemplate" value="account/pt_account" scope="page"/>
+<iscomment>
+<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || pdict.CurrentHttpParameterMap.ajax.stringValue == 'true' }">
+	<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+</isif>
+<isif condition="${pdict.removeDecorator}">
+	<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+</isif>
+ </iscomment>
+
+<isdecorate template="${DecoratorTemplate}">
+	<div class="confirmation-container dialog-content" id="confirmation-container" style="display:none;">
+		<div class="error-form"><isprint value="${Resource.msg('account.forbidden','account',null)}" /></div>
+		<button type="button"><isprint value="${Resource.msg('global.close','locale',null)}" /></button>			
+	</div>
+	<h1 class="title h1"><isprint value="${Resource.msg('subaccounts.addUser','account',null)}" /></h1>
+	<div class="backlink">
+		<a href="${URLUtils.url("ManageUsers-Show")}"><isprint value="${Resource.msg('account.backtomanageuser','account',null)}" /></a>
+	</div>			
+	<div class="addMangeUser">
+	<form action="${URLUtils.https('ManageUsers-Submit')}" method="post" id="RegistrationForm" class="manage-users-form removestar">
+
+		<fieldset>
+			<isinputfield formfield="${pdict.CurrentForms.childprofile.customer.firstname}" type="input"/>
+			<isinputfield formfield="${pdict.CurrentForms.childprofile.customer.lastname}" type="input"/>
+			<isinputfield formfield="${pdict.CurrentForms.childprofile.customer.email}" type="input" />
+			<isinputfield formfield="${pdict.CurrentForms.childprofile.customer.emailconfirm}" type="input" xhtmlclass="email-confirm"/>
+			
+			<div class="manage-user-checkboxdesign">
+				<isinputfield formfield="${pdict.CurrentForms.childprofile.customer.manageusercheckBox}" type="checkbox"/>
+			</div>
+			
+			<isset name="addressCount" value="${1}" scope="page" />
+			<div class="assign-shipaddress">
+				<label class="account-multiselect-label"><isprint value="${Resource.msg('manageusers.assign','account',null)}" />
+				 <span><isprint value="${Resource.msg('manageusers.checkall','account',null)}" /></span>
+				</label>
+			</div>
+			<div class="account-multiselect">
+				 <isif condition="${!empty(pdict.CurrentForms.childprofile.addressbook.addresses)}">
+					 	<isset name="addressCount" value="${new Number(1)}" scope="page" />
+				 </isif>
+				<isloop items="${pdict.CurrentForms.childprofile.addressbook.addresses}" var="FormAddress" status="loopstate" >
+					<isset name="address" value="${FormAddress.object}" scope="page" />
+					<isif condition="${!empty(address.custom.addressType) && address.custom.addressType == 'SHIP'}">
+						  <ul>
+						   	<isinputfield formfield="${FormAddress.isInclude}" rowclass="rightAlignLabel" type="checkbox"/>
+						  	<isif condition="${!empty(address.companyName) && address.companyName != null}"> 
+						  		<li><isprint value="${address.companyName}"/></li>
+						  	</isif>
+						  	<li>Shipping Address <isprint value="${addressCount}" style="INTEGER"></li>
+							<li><isprint value="${address.address1}"/>,</li>
+							<isif condition="${!empty(address.address2)}"> 
+								<li><isprint value="${address.address2}" />,</li>
+							</isif>
+							<li>
+								<div class="multiaddrdetail">
+									<isprint value="${address.city}"/>, <isprint value="${address.stateCode}"/> <isprint value="${address.postalCode}"/>
+								</div>
+							</li>
+						  </ul>
+						
+						<isset name="addressCount" value="${addressCount + 1}" scope="page" />
+					</isif>
+				</isloop>			
+			</div>
+		</fieldset>
+		<fieldset>
+			<isif condition="${('accountNumber' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.accountNumber)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.accountNumber.htmlName}" value="${pdict.CurrentCustomer.profile.custom.accountNumber}"/>
+			</isif>
+			<isif condition="${('cardNumber' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.cardNumber)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.cardNumber.htmlName}" value="${pdict.CurrentCustomer.profile.custom.cardNumber}"/>
+			</isif>
+			<isif condition="${('discountModel' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.discountModel)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.discountModel.htmlName}" value="${pdict.CurrentCustomer.profile.custom.discountModel}"/>
+			</isif>
+			<isif condition="${('chainCode' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.chainCode)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.chainCode.htmlName}" value="${pdict.CurrentCustomer.profile.custom.chainCode}"/>
+			</isif>
+			<isif condition="${('creditTerms' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.creditTerms)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.creditTerms.htmlName}" value="${pdict.CurrentCustomer.profile.custom.creditTerms}"/>
+			</isif>
+			<isif condition="${('flyerComdiv' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.flyerComdiv)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.flyerComdiv.htmlName}" value="${pdict.CurrentCustomer.profile.custom.flyerComdiv}"/>
+			</isif>
+			<isif condition="${('customerType' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.customerType)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.customerType.htmlName}" value="${pdict.CurrentCustomer.profile.custom.customerType}"/>
+			</isif>
+			<isif condition="${('customerExceptionPricebookID' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.customerExceptionPricebookID)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.customerExceptionPricebookID.htmlName}" value="${pdict.CurrentCustomer.profile.custom.customerExceptionPricebookID}"/>
+			</isif>
+			<isif condition="${('consolidationCode' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.consolidationCode)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.consolidationCode.htmlName}" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}"/>
+			</isif>
+			<isif condition="${('dscNumber' in pdict.CurrentCustomer.profile.custom) && !empty(pdict.CurrentCustomer.profile.custom.dscNumber)}" >
+				<input type="hidden" name="${pdict.CurrentForms.childprofile.inherited.dscNumber.htmlName}" value="${pdict.CurrentCustomer.profile.custom.dscNumber}"/>
+ 
+  			</isif>	
+  			
+  			
+			<div class="assign-shipaddress-error error"></div>
+  					
+			<div class="btn">				
+			<button class="manage-users-save primaryButtn" type="submit" value="${Resource.msg('manageusers.save','account',null)}" name="${pdict.CurrentForms.childprofile.register.htmlName}">${Resource.msg('manageusers.save','account',null)}</button>
+			</div>
+			<div class="btn">
+				<a href="${URLUtils.https("ManageUsers-Show")}" class="secondarybtn">  ${Resource.msg('manageusers.back','account',null)}</a>
+			</div>
+					
+			<div class=save_button_info>
+				<iscontentasset aid="add-uers-email-text"/>
+			</div>
+			
+  		
+  			<input type="hidden" name="${pdict.CurrentForms.childprofile.secureKeyHtmlName}" value="${pdict.CurrentForms.childprofile.secureKeyValue}"/>
+ 
+		</fieldset>
+ 
+		<iscomment><label class="account-multiselect-msg">${Resource.msg('manageusers.savemsg','account',null)}</label></iscomment>
+ 
+	</form>
+	</div>
+<script type="text/javascript">
+	app.manageusers.init();
+</script>
+
+
+</isdecorate>

@@ -1,0 +1,186 @@
+<isdecorate template="account/giftregistry/pt_giftregistry">
+<isinclude template="util/modules"/>
+<isset name="giftregistry_activetab" value="${0}" scope="pdict" />
+<h1 class="content-header list-name">
+	<isprint value="${pdict.ProductList.name}"/>
+	<iscomment>Not needed in Redesign
+		 - <isprint value="${pdict.ProductList.eventDate}" timezone="utc"/>
+	  </iscomment>
+</h1>
+	 
+	<form action="${URLUtils.httpsContinue()}" method="post" id="${pdict.CurrentForms.giftregistry.event.htmlName}" class="editlistform" name="${pdict.CurrentForms.giftregistry.event.htmlName}">
+		<span name="errorMessage" class="error"></span>	
+		<isinputfield formfield="${pdict.CurrentForms.giftregistry.event.name}" type="input" />
+		<input type="hidden" value="${pdict.CurrentForms.giftregistry.event.name.value}" name="listname" id="listname">		
+	</form>
+	<isset name="editListVal" value="${pdict.ProductList.name}" scope="page" />
+	<isslot id="registry-header" description="Banner for Gift Registry" context="global" />
+	<div class="mylist-registry">
+		<iscomment>These vars are used by the above specified pipeline</iscomment>
+		<input type="hidden" name="productListID" value="${pdict.ProductList.ID}" />
+		<input type="hidden" name="selectedItemID" value="" />
+		<div class="regHeader">
+			<div class="regHeaderleft">
+				<div class="removeEdit">						
+					<span class="edit">
+						<a href="javascript:void(0)">
+							<isprint value="${Resource.msg('registrylist.editlistname','account',null)}" />
+						</a>
+					</span>
+					<div class="saveEdit">
+					 	<a id="updateListName" href="">
+					 		<isprint value="${Resource.msg('registrylist.updatelistname','account',null)}" />
+					 	</a>				
+					</div>	
+					<span class="delete">
+						<isset name="UUID" value="${pdict.ProductList.UUID}" scope="page" />
+						<a onclick="removeRow('${UUID}');" alt="${Resource.msg('global.delete','locale',null)}" class="delete">
+							<isprint value="${Resource.msg('registrylist.deletelist','account',null)}" />
+						</a>
+							<iscomment>
+						<a id="${pdict.ProductList.ID}" href="${URLUtils.url('GiftRegistry-Delete', 'ProductListID', pdict.ProductList.UUID)}" alt="${Resource.msg('registrylist.deletelist','account',null)}">${Resource.msg('registrylist.deletelist','account',null)}</a>
+							</iscomment>
+					</span>
+					<span class="cancel-listname">
+						<a href="${URLUtils.url('GiftRegistry-ShowRegistryByID', 'ProductListID', pdict.ProductList.UUID)}">Cancel</a>
+					</span>
+				</div>							
+			</div>
+			<input type="hidden" value="${pdict.ProductList.ID}" id="productListId">
+			<div class="print-mylist">
+				<a class="print-page">
+					<isprint value="${Resource.msg('global.printpage','locale',null)}" />
+				</a>
+			</div>	
+		</div>		
+		<div id="dialog-delete" class="hide"><h3><isprint value="${Resource.msg('registrylist.confirmdelete','account',null)}" /></h3></div>		
+		<isif condition="${empty(pdict.ProductList.getItems())}">
+			<p><isprint value="${Resource.msg('giftregistry.giftregnoitems','account',null)}" /></p>
+			<a href="${URLUtils.httpHome()}" title="${Resource.msg('global.storename','locale',null)}" class="add-items" ><isprint value="${Resource.msg('giftregistry.emptyadd','account',null)}" /></a>
+		<iselse>
+		<isif condition="${pdict.Status != null && pdict.Status.isError()}">
+			<span class="form-error">
+				<isprint value="${Resource.msgf('giftregistry.' + pdict.Status.code,'giftregistry',null, pdict.Status.parameters)}"/>
+			</span>
+		</isif>
+			<div class="item-list gift-reg">
+				<isset name="inventorychecklist" value="${new dw.util.ArrayList()}" scope="Page" />	
+				<isloop items="${pdict.ProductList.getItems()}" var="item" status="loopstate">
+				<isset name="prod" value="${item.getProduct()}" scope="page"/>
+			<div class="Mylist <isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">						
+				<div class="item-image">
+					<iscomment>Display product image using module</iscomment>	
+						<isdisplayproductimage p_productli="${item}" p_size="large" />
+				</div>
+				<div class="item-info">
+					<div class="item-details">
+						<isdisplayliproduct p_productli="${item}" p_mylistview="true"/>
+					</div>
+						<div class="item-dashboard">
+							<isif condition="${pdict.CurrentCustomer == pdict.ProductList.owner}">
+								<iscomment>
+										<div class="item-option option-date-added">
+											<span class="label"><isprint value="${Resource.msg('registry.dateadded','account',null)}" />:</span>
+											<span class="value"><isprint value="${item.creationDate}" formatter="MMMMM dd, yyyy" /></span>
+										</div>
+								</iscomment>
+		
+									<isif condition="${prod != null && prod.hasOwnProperty('type') && prod.type == prod.TYPE_PRODUCT}">
+										
+										<div class="item-option option-quantity-desired">
+										
+											<isif condition="${pdict.CurrentCustomer == pdict.ProductList.owner}">
+												<isinputfield formfield="${prod.quantity}" type="input"/>
+											<iselse>
+												<span class="label"><isprint value="${Resource.msg('productlist.qtydesired','account',null)}" /></span>
+												<span class="value"><isprint value="${prod.quantity.value}"/></span>
+											</isif>
+										</div>
+										<div class="item-option option-quantity-purchased">
+											<span class="label"><isprint value="${Resource.msg('productlist.qtypurchased','account',null)}" /></span>
+											<span class="value"><isprint value="${prod.purchasedQuantity.value}" formatter="#"/></span>
+										</div>
+									</isif>
+								</isif>
+								<isscript>
+									var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+									
+									var av = ProductUtils.getAvailability(prod, false);
+									inventorychecklist.add(av.inStock);
+								</isscript>
+								
+								<isset name="av" value="${JSON.stringify(av)}" scope="request"/>
+									<div class="item-option option-add-to-cart">								
+									<form action="${URLUtils.url('Cart-AddProduct')}" method="post" class="add-to-cart-form" name="${pdict.CurrentForms.product.addtocart.htmlName}">
+										<fieldset>	
+											<!--- The following conditional statement is used as a safety method in case a user removes the disabled attribute of the add to cart button --->
+											<isif condition="${av.inStock}">										
+												<input type="hidden" name="pid" value="${item.productID}"/>										
+											</isif>	
+												<input type="hidden" name="pid" value="${item.productID}"/>	
+											<isif condition="${item.product.primaryCategory}">
+												<input type="hidden" name="category" value="${item.product.primaryCategory.ID}" />	
+											<iselse>
+												<isif condition="${item.product.categories.length > 0}">
+													<input type="hidden" name="category" value="${item.product.categories[0].ID}" />	
+												<iselse />
+												</isif>	
+											</isif>	
+											<input type="hidden" name="rating" value="${item.product.custom.averageProductRatin}" />														
+								
+											<label for="Quantity">
+											<isif condition="${av.inStock}">
+												<div class="qtySec">
+													<span class="label"><isprint value="${Resource.msg('global.qty','locale',null)}" /></span>
+													<input class="input-text" type="number" id="Quantity" inputmode="numeric" pattern="[0-9]*" min="0" step="1" name="Quantity" maxlength="4" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" value="${item.quantity.value.toFixed(0)}"/>
+												</div>
+											<iselse>
+												<span class="productunavailable">${Resource.msg('global.unavailable','locale',null)}</span>
+											</isif>
+											</label>
+											<button type="submit" <isif condition="${!av.inStock}">disabled=disabled</isif> name="${Resource.msg('global.addtocart', 'locale', 'Add to Cart')}" title="${Resource.msg('global.addtocart', 'locale', 'Add to Cart')}" value="${Resource.msg('global.addtobag', 'locale', 'Add to Cart')}" class="button-fancy-small add-to-cart">
+												${Resource.msg('global.addtobag', 'locale', 'Add to Cart')}
+											</button>	
+										</fieldset>
+									</form>							
+								</div>								
+							</div>
+							<div class="itemActions">						
+								<span class="removeLink">
+									<isif condition="${pdict.CurrentCustomer == pdict.ProductList.owner}">
+										<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.giftregistry.remove.htmlName}">
+											<fieldset>	
+												<div class="item-option option-update">
+													<button name="${pdict.CurrentForms.giftregistry.remove.htmlName}" value="${Resource.msg('global.remove','locale',null)}" class="button-text delete-item" type="submit" src="${URLUtils.staticURL('/images/interface/icon_remove.gif')}" >${Resource.msg('global.remove','locale',null)}</button>
+													<input type="hidden" name="itemid" value="${item.ID}"/>
+												</div>
+											</fieldset>
+										</form>
+									</isif>
+								</span>
+								<span class="edit-details">
+									<a href="${dw.web.URLUtils.url('Product-Show', 'pid', item.productID)}" class="blue"><isprint value="${Resource.msg('global.editdetails','locale',null)}" /></a>
+								</span>						
+							</div>						
+						</div>
+					</div>
+					
+				</isloop>	
+			</div>
+			<isif condition="${pdict.ProductList.getItems().length > 1}">
+				<div class="item-option option-add-to-cart add-selected-cart">					
+					<form action="${URLUtils.url('Cart-AddProduct')}" method="post" name="${pdict.CurrentForms.product.addtocart.htmlName}">
+						<fieldset>								
+							<button type="submit" id="add-all-to-cart-registry" name="${Resource.msg('global.addalltocart', 'locale', 'Add to Cart')}" title="${Resource.msg('global.addalltocart', 'locale', 'Add to Cart')}" value="${Resource.msg('global.addalltocart', 'locale', 'Add to Cart')}" class="button-fancy-small add-to-cart" <isif condition="${!empty(inventorychecklist) && !inventorychecklist.contains(true)}">disabled=disabled</isif>>
+								${Resource.msg('global.addalltocart', 'locale', 'Add to Cart')}
+							</button>
+						</fieldset>
+					</form>									
+				</div>
+			</isif>	
+			
+		</isif>
+		
+	</div>
+
+</isdecorate>

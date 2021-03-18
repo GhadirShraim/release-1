@@ -1,0 +1,78 @@
+<isinclude template="util/modules.isml"/>
+<isif condition="${!empty(pdict.CurrentCustomer.profile.addressBook.addresses)}">
+	<iscomment>addresses are sorted, preferred first, than alphabetic </iscomment>
+	<isif condition="${pdict.Status != null && pdict.Status.isError()}">				 
+	 	<!--- Use the error code value to build an appropriate error message --->
+		<span class="form-error">
+			<isprint value="${Resource.msg('addressdetails.' + pdict.Status.code, 'account',null)}"/>
+		</span>
+	</isif>
+	<ul class="address-list">
+	
+	<isloop items="${pdict.CurrentCustomer.profile.addressBook.addresses}" var="address" status="loopstate">
+		<isif condition="${address.custom.addressType.value == 'BILL'}">
+			<li>
+				<isprint value="${Resource.msg('editaddress.billingaddress','account',null)}" />
+				<isminiaddress p_address="${address}"/>
+			 </li>
+		 </isif>
+		
+	</isloop>
+	
+		<isloop items="${pdict.CurrentCustomer.profile.addressBook.addresses}" var="address" status="loopstate">
+			<isscript>
+				var isDefault = !empty(pdict.CurrentCustomer.profile.addressBook.preferredAddress) && (pdict.CurrentCustomer.profile.addressBook.preferredAddress.ID == address.ID);
+				var cssClass = "";
+				if (loopstate.first) { cssClass = "first"; } 
+				else if (loopstate.last) { cssClass = "last"; }
+				
+				if (isDefault) { cssClass+=" default"; }
+			</isscript>
+				<isif condition="${address.custom.addressType.value != 'BILL'}"> 
+					<li class="${cssClass}">
+						<div class="address-info">
+						<iscomment>
+							<isif condition="${!empty(address.ID)}"> 
+								<isprint value="${address.ID}" />
+							</isif>
+						</iscomment>
+							<isminiaddress p_address="${address}"/>
+							<isif condition="${!isDefault}">
+								<div class="btn setdefault">
+									<a href="${URLUtils.url('Address-SetDefault','AddressID', encodeURIComponent(address.ID))}" title="${Resource.msg('editaddress.makedefaultaddress','account',null)}"  class="address-make-default  primaryButtn"> 
+										<isprint value="${Resource.msg('editaddress.makedefaultaddress','account',null)}"/>		
+									</a>
+								</div>
+							</isif>
+							<isif condition="${isDefault}">
+								<div class="h6"><isprint value="${Resource.msg('editaddress.defaultaddress','account',null)}"/></div>
+							</isif>
+							<isif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+								<div class="btn edit">
+									<a href="${URLUtils.url('Address-Edit','AddressID', encodeURIComponent(address.ID))}" title="${Resource.msg('editaddress.editaddress','account',null)}"  class="secondarybtn">
+										<isprint value="${Resource.msg('global.edit','locale',null)}" />
+									</a>
+								</div>
+							<iselseif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'A'}">
+								<div class="btn edit">
+									<a href="${URLUtils.url('Address-Edit','AddressID', encodeURIComponent(address.ID))}" title="${Resource.msg('editaddress.editaddress','account',null)}"  class="secondarybtn">
+										<isprint value="${Resource.msg('global.edit','locale',null)}" />	
+									</a>
+								</div>
+							</isif>
+						</div>
+						<div class="deleteconfirmation">
+							<div class="deleteConfirmmessage">
+							<div><isprint value="${Resource.msg('confirmdeleteaddress','account',null)}"/></div>
+							</div>
+							<div class="btns">
+							<div><a href="${URLUtils.url('Address-Delete','AddressID', encodeURIComponent(address.ID))}" class="primaryButtn yes deleteaddress" ><isprint value="${Resource.msg('account.yes','account',null)}" /></a></div>
+							<div><a class="secondarybtn no canceladdress"><isprint value="${Resource.msg('account.no','account',null)}" /></a></div>
+							</div>
+						</div>
+					</li>
+					
+				</isif>
+		</isloop>
+	</ul>
+</isif>

@@ -1,0 +1,27 @@
+/**
+* Demandware Script File
+*
+*
+*/
+importPackage( dw.order );
+var Logger = require('dw/system').Logger;
+var Site : dw.system.Site = require('dw/system').Site;
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+	
+	try{
+		if(args.CurrentHttpParameterMap.isParameterSubmitted('orderID')){
+			Logger.error('*** is order ID submitted '+ args.CurrentHttpParameterMap.isParameterSubmitted('orderID') + ' orderNo : '+args.CurrentHttpParameterMap.orderID);
+		}else{ 
+			Logger.error('*** is order ID submitted   '+ args.CurrentHttpParameterMap.isParameterSubmitted('orderID'));
+		}
+	}catch(e){ 
+		//exception? laSmesauwce
+		Logger.error('empty Basket '); 
+		return PIPELET_NEXT
+	}
+	
+	return PIPELET_NEXT;
+}

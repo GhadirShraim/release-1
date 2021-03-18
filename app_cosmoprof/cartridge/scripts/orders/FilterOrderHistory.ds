@@ -1,0 +1,114 @@
+/**
+*
+*   @input InputOrderHeader : Object
+*   @input OrderType : String	Order Type
+*   @input ShipId : String		Shiping Address
+
+*   @output OutputOrderHeader : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util);
+importPackage( dw.customer );
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+   try {
+   		var nonFilteredOrders: dw.util.ArrayList  = args.InputOrderHeader,
+   		filteredOrders : dw.util.ArrayList = new ArrayList();
+   		
+   		var orderType = args.OrderType;
+   		
+   		
+   		//Get All the order Status in one String and based on index filter.
+   		var orderStatus : String ="";
+   		
+   		if(nonFilteredOrders.length > 0) {
+   			//Loop Through All Order to filter Order;
+   			
+   			for each(var orderObject in nonFilteredOrders){
+   				//Get Order Type and order Status and convert in LowerCase;
+   				var ordType = orderObject.orderChannel.toString().toLowerCase();
+   				var ordStatus = orderObject.orderStatus.toString().toLowerCase();
+   				
+   				var isWebOrder = false;
+   				
+   				if(orderObject.orderChannel == "DemandwareOrder") {
+   					isWebOrder = true;
+   				}
+   				
+   				if(!empty(orderObject.webOrderNumber)) {
+   					isWebOrder = true;
+   				}
+   				
+   				
+   				// filter for Order Type. If Order type id All then do not filter
+   				
+   				if(!empty(orderType) && orderType != "ALL" ) {
+   					
+   					if(!empty(ordType) && orderType == "SP" && ordType.indexOf("store") > -1) {
+   						filteredOrders.add(orderObject);
+   					} 
+   					else if(orderType == "SHIPMENT" && (!empty(ordType) && ordType.indexOf("store") == -1 || empty(ordType) )) {
+   						filteredOrders.add(orderObject);
+   					}
+   					else if(orderType == "NSP" && isWebOrder){
+   						filteredOrders.add(orderObject);
+   					}
+   				} else {
+   					filteredOrders.add(orderObject);
+   				}
+   			}
+   		}
+   		var nonfiltercount = nonFilteredOrders.length;
+   		var filterOrderlength = filteredOrders.length;
+   		
+   		//Filter for shipping address
+   		if(!empty(args.ShipId)) {
+   			var shippAddr : CustomerAddress = customer.addressBook.getAddress(args.ShipId);
+   			var shipAddressString : String = "";
+   			shipAddressString = shipAddressString + shippAddr.address1.toLocaleLowerCase();
+   			if(!empty(shippAddr.address2)) {
+   				shipAddressString = shipAddressString + shippAddr.address2.toLocaleLowerCase();
+   			}
+   			
+   			shipAddressString = shipAddressString + shippAddr.city.toLocaleLowerCase() + shippAddr.stateCode.toLocaleLowerCase() + shippAddr.postalCode.toLocaleLowerCase();
+   			shipAddressString = shipAddressString.replace(" ","");
+   			
+   			//Get all the orders and compare Shipping Address String
+   			var filteredOrderswithShipAddr : ArrayList = new ArrayList();
+   			var filterOrdersItr : Iterator = filteredOrders.iterator();
+   			while(filterOrdersItr.hasNext()) {
+   				var thisOrd = filterOrdersItr.next();
+   				if(!empty(thisOrd.shippingAddress) && !empty(thisOrd.shippingAddress.address1)) {
+   					var shipAddr = thisOrd.shippingAddress;
+   					var thisshipAddrString : String = "";
+   					thisshipAddrString = thisshipAddrString + shipAddr.address1.toLocaleLowerCase();
+   					if(!empty(shipAddr.address2)) {
+   						thisshipAddrString = thisshipAddrString + shipAddr.address2.toLocaleLowerCase();
+   					}
+   					thisshipAddrString = thisshipAddrString + shipAddr.city.toLocaleLowerCase() + shipAddr.state.toLocaleLowerCase() + shipAddr.zip.toLocaleLowerCase();
+   					thisshipAddrString = thisshipAddrString.replace(" ","");
+   					//Comapre String;
+   					if(shipAddressString.search(thisshipAddrString) > -1) {
+   						filteredOrderswithShipAddr.add(thisOrd);
+   					}
+   					
+   				}
+   			}
+   			args.OutputOrderHeader = filteredOrderswithShipAddr;
+   		}
+   		else {
+   			args.OutputOrderHeader = filteredOrders;
+   		}
+   
+   }
+   catch(e) {
+   	 var a = e;
+   	Logger.error("Could not apply filter to the orders returned"+e.message);
+   	return PIPELET_ERROR;
+   }
+
+    return PIPELET_NEXT;
+}

@@ -1,0 +1,56 @@
+var sf = require("bc_serviceframework");
+var OrderList = require("../objects/OrderList");
+
+/**
+ * Webservice, which checks a creditcard number and provides CC provider
+ * @class
+ */
+var OrderService = sf.getService('AbstractSoapService').extend(
+/** @lends OrderService.prototype */ 
+{
+	/**
+	 * @constructs OrderService
+	 * @augments AbstractSoapService
+	 */
+	init: function() {
+		this._super("OrderHeaderLevel" , new OrderList());
+	},
+	
+	
+	/**
+	 * Initializes the webservice object parsed from the given WSDL File
+	 */
+	initServiceClient: function() {
+		this.webReference = webreferences.LoyaltyDev;			
+		this.serviceClient = this.webReference.getDefaultService();	
+	},
+
+	createRequest: function () {
+		/*var requestObject = new this.webReference.Web_GetOrderHeadersRequest();
+		requestObject.setApiKey(apiKey);
+		requestObject.setCustomerNo(customerNo);	
+		requestObject.setDateFrom(dateFrom);	
+		requestObject.setDateTo(dateTo);	
+		requestObject.setPageNumber(pageNumber);	
+		requestObject.setPageSize(pageSize);	
+		return requestObject;	*/		
+	},
+	
+	initStatusFromResponse: function () {
+		this.status.code = "OK";
+	},
+		
+	/** 
+	 * Call the service and return the response.
+	 * 
+	 */ 
+	executeServiceCall: function() {	
+		//return this.serviceClient.Web_GetOrderHeadersRequest(this.request);
+	},
+	
+	getDummyResponse: function() : Object {
+		return this.object.dummy();
+	}
+});
+
+sf.registerService("OrderService", OrderService);

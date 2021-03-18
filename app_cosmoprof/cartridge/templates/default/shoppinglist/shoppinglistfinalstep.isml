@@ -1,0 +1,43 @@
+<isdecorate template="shoppinglist/pt_shoppinglist">
+	<isinclude template="util/modules"/>
+	<div class="store-selection-outer final-step">
+		<h1 class="content-header list-name">
+			<isprint value="${Resource.msg('store.shoppinglist.store.finalstep','account',null)}" />  
+		</h1>
+		<div class="back-to-previous">
+			<a href="${URLUtils.url('ShoppingList-Start')}"><isprint value="${Resource.msg('store.shoppinglist.back.myshoppinglist','account',null)}" /></a>
+		</div>
+		<div class="store-msg-next">
+			<isprint value="${Resource.msg('shoppinglist.store.finalstepnext','storepickup',null)}" />
+		</div>
+		<div class="store-final-wrapper">
+			<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.giftregistry.htmlName}" id="shopping-list-final-step">
+				<fieldset>
+					<div class="top-inputfield-section">
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.firstname}" type="input" xhtmlclass="customer-firstname"/>
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.lastname}" type="input" xhtmlclass="customer-lastname"/>
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.phone}" type="input" xhtmlclass="customer-phone"/>
+						<iscomment>Removed from Final FSD
+							<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.mobile}" type="input" xhtmlclass="customer-phone phone"/>
+							<div class="update-via-text">
+								<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.mobiletextupdate}" type="checkbox" xhtmlclass="update-via-text"/>
+							</div>
+						 </iscomment>
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.email}" type="input" xhtmlclass="customer-email"/>
+					</div>
+					<div class="textarea-section">
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.note}"  type="textarea" xhtmlclass="customer-note"/>
+						<div class="text-remaining"><span class="char-remain-count">400</span> <span class="chara">characters</span> remaining</div>
+					</div>
+				</fieldset>
+				<div class="contact-msg">
+					<isprint value="${Resource.msg('shoppinglist.store.contactmsg','storepickup',null)}" /></br>
+					<isprint value="${Resource.msg('shoppinglist.store.seeyousoon','storepickup',null)}" />
+				</div>
+				<div class="usemylocation">
+					<button type="submit" name="${pdict.CurrentForms.giftregistry.send.htmlName}" value="${Resource.msg('global.send','locale',null)}" class="send-store" type="submit" ><isprint value="${Resource.msg('shoppinglist.store.sendtostore','storepickup',null)}" /></button>
+				</div>
+			</form>
+		</div>
+	</div>
+</isdecorate>

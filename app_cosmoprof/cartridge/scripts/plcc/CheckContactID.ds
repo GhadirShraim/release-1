@@ -1,0 +1,64 @@
+/**
+* Set the order export status to EXPORT_STATUS_READY
+*
+* @input CurrentCustomer : dw.customer.Customer  This is the account owner
+* @output contactExist : Boolean
+* @output contactID : String
+* 
+*/
+importPackage( dw.order );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try {	
+		
+   		if( pdict.CurrentCustomer.profile.custom.isChildAccount ){   	
+   			var accountNumber = pdict.CurrentCustomer.profile.custom.accountNumber;
+   			var args = null;
+   			if(!empty(accountNumber)){
+   				var queryString = "custom.accountNumber ILIKE '*" + accountNumber + "*'";
+				queryString += " AND custom.isAccountOwner = true";
+				var customers : SeekableIterator = dw.customer.CustomerMgr.searchProfiles(queryString,args,args);
+   				if(!empty(customers) && customers.count > 0)
+   				{
+   					for each (var curProfile : Profile in customers) {
+						if(!empty(curProfile.custom.salesforceContactID))
+   						{
+   							pdict.contactID = curProfile.custom.salesforceContactID;
+   							pdict.contactExist = true;
+   							break;
+   						} else {
+   							pdict.contactExist = false;
+   							pdict.contactID = '';
+   							break;
+   						}
+					}
+   					
+   				} else {
+   					pdict.contactExist = false;
+   					pdict.contactID = '';
+   				}
+   	
+   				} else {
+   				pdict.contactExist = false;
+   				pdict.contactID = '';
+   			}
+   		} else {
+   			if(!empty(pdict.CurrentCustomer.profile.custom.salesforceContactID))
+   			{
+   				pdict.contactID = pdict.CurrentCustomer.profile.custom.salesforceContactID;
+   				pdict.contactExist = true;
+   			} else {
+   				pdict.contactExist = false;
+   				pdict.contactID = '';
+   			}   	
+   		}
+
+	}catch(e)
+		{
+			Logger.error(" " + e);
+			pdict.contactExist = false;
+			pdict.contactID = '';
+		}
+	return PIPELET_NEXT;
+}

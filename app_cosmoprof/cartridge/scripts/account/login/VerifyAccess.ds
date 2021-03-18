@@ -1,0 +1,54 @@
+/**
+* Verify Access.ds
+*   The purpose of this script is to check if the current customer is allowed to login into the portal or default site
+*
+*   @input custChainCode : String
+*	@input preRegister : Boolean
+*   @output approved : Boolean
+*
+*/
+importPackage( dw.system );
+
+var logger = require('dw/system').Logger;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+    try {
+    	//Default the approved boolean to false in case there aren't any matches
+    	var isApproved = false;    	
+    	//Set the customer's chain code to the one passed from the pdict
+    	var custCC = !empty(pdict.custChainCode) ? pdict.custChainCode : '';
+    	
+    	if (!empty(pdict.preRegister) && pdict.preRegister == true) {
+    		custCC = '00'+custCC;
+    	}
+    	//Set the temporary chain code to the code set in the session custom variables when the session is created
+    	var tempChainCode = 'tempChainCode' in session.custom && session.custom.tempChainCode != 'undefined' ? session.custom.tempChainCode.replace('C','') : '';
+	    //Set the site's default chain code based on the site preference in case the current use site isn't a portal site
+	    var defaultChainCode = dw.system.Site.current.preferences.custom.defaultChainCode;
+	    
+	    //Verify the customer has a chain code and a temporary or default chain code, if both conditionals fail then the check is invalid
+    	if((empty(custCC) && empty(tempChainCode)) || (empty(custCC) && defaultChainCode == null)) {
+    		return PIPELET_ERROR;
+    	}
+    	
+    	//Check if the customer's chain code matches either the temporary or default chain code, if so the approval is valid
+    	if(custCC == tempChainCode || (custCC.replace('00','') == defaultChainCode && empty(tempChainCode))) { 
+    		isApproved = true;
+    	} else {
+    		//Check the portal associated table to see if there are any other chain codes allowed for this site besides the temporary chain code
+	    	var associatedTable = JSON.parse(dw.system.Site.getCurrent().getCustomPreferenceValue('portalAssociatedAccess'));
+		  	//Check if the associated portal chain code URL matches the http host
+		  	if(associatedTable[request.httpHost.toLowerCase()].indexOf(custCC) != -1) {
+		  		isApproved = true;
+		  	}
+    	}
+    	//output approval variable
+    	pdict.approved = isApproved;
+    	
+    } catch(e) {
+    	logger.error('VerifyAccess.ds has failed with the following error' + e);
+    	return PIPELET_ERROR;
+    }
+	return PIPELET_NEXT;
+}

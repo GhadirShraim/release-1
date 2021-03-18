@@ -1,0 +1,16 @@
+<isif condition="${!empty(pdict.order_id)}">
+	<isif condition="${'orderStatusSP' in dw.system.Site.current.preferences.custom && !empty(dw.system.Site.current.preferences.custom.orderStatusSP)}">
+		<isset name="orderStatusSP" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('orderStatusSP').toUpperCase()}" scope="page"/>
+	<iselse>
+		<isset name="orderStatusSP" value="STORE PURCHASE" scope="page"/>
+	</isif>
+	<isset name="OrderStatus" value="${pdict.Order.orderStatus.toUpperCase()}" scope="page"/>
+	
+	<isif condition="${OrderStatus != orderStatusSP}">
+		<div class="reorderBtn">
+			<a href="${URLUtils.abs('LoginBarrier-SelectShippingAddress','orderID', pdict.order_id.toString().replace('DWR',''),'format','ajax')}" title="${Resource.msg('headercustomerinfo.changeshipto','components',null)} " data-dlg-options='{"width":450,"height":auto}'>
+				<span>${Resource.msg('reorder.btn','components',null)}</span>
+			</a> 
+		</div>
+	</isif>
+</isif>

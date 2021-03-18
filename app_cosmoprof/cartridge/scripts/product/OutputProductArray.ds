@@ -1,0 +1,68 @@
+/**
+* This script is used to take in a product ID list and break it apart into an array, retrieve the product 
+* object using the PID, and then output an array of product objects.
+* The script allows for a dynamic block size by passing in a number to limit the size of the product object array.
+*
+*   @input productCSV : String
+*	@input blockSize : String
+*
+*   @output productArray : Array
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.catalog );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		//pCSV is an a string delimited by a colon not a comma
+		var pCSV : String = pdict.productCSV;
+		
+		//Break the string apart into an array
+		var splitArray = pCSV.split(':');
+		
+		//This array will contain the product objects
+		var outputArray : Array = [];
+		
+		//This variable will count the loop iterations
+		var counter = 0;
+		
+		//Pass in the block size which controls how many product objects will be in the array
+		var blockSize = !empty(pdict.blockSize) ? pdict.blockSize : '0';
+		
+		//Convert string to integer if blockSize http parameter is passed into the script
+		var gridSize = parseInt(blockSize); 
+		
+		var product = null;
+		
+		//Loop through all product IDs in the array 
+		for each(var pid in splitArray)
+		{
+			if(counter < gridSize)
+			{
+				//Retrieve the product object
+				product = ProductMgr.getProduct(pid);
+				
+				if(product != null)
+				{
+					//Add product object to the new array
+					outputArray.push(product);
+				}
+			}
+			else
+			{
+				break;
+			}
+			counter++;
+		}
+		pdict.productArray = outputArray;		
+	}
+	catch(e)
+	{
+		Logger.error('OutputProductArray.ds has failed with the following error' + e);
+		return PIPELET_ERROR;	
+	}
+   return PIPELET_NEXT;
+}

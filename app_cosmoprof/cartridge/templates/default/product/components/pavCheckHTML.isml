@@ -1,0 +1,53 @@
+<isdecorate template="util/pt_empty">
+<isinclude template="util/modules"/>
+
+	<div class="pavCheck">
+		<isif condition=${empty(pdict.notes)}>
+			<p class="pass ${pdict.pass == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.overallPass','locale',null)}: </span>
+				<isprint value="${pdict.pass == true ? 'Yes' : 'No'}"/>
+			</p>
+			<p class="inventory ${pdict.inventory == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.inventoryPass','locale',null)}: </span>
+				<isprint value="${pdict.inventory == true ? 'Yes' : 'No'}"/>
+			</p>
+			<p class="exclude${pdict.zExclude == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.zipPass','locale',null)}: </span>
+				<isprint value="${pdict.zExclude == true ? 'Yes' : 'No'}"/>
+			</p>
+			<p class="exclude${pdict.pExclude == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.portalPass','locale',null)}: </span>
+				<isprint value="${pdict.pExclude == true ? 'Yes' : 'No'}"/>
+			</p>
+			<p class="exclude${pdict.custExclude == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.custPass','locale',null)}: </span>
+				<isprint value="${pdict.custExclude == true ? 'Yes' : 'No'}"/>
+			</p>
+			<p class="exclude${pdict.voc == true ? 'yes' : 'no'}">
+				<span>${Resource.msg('global.vocPass','locale',null)}: </span>
+				<isprint value="${pdict.voc == true ? 'Yes' : 'No'}"/>
+			</p>
+			
+			<isset name="cssuiteBinaryValsArr" value="${dw.system.Site.getCurrent().getCustomPreferenceValue('showBinaryValsInCSSuite')}" scope="page"/>
+			<isif condition="${!empty(cssuiteBinaryValsArr) && cssuiteBinaryValsArr.indexOf(pdict.CurrentSession.userName) > -1}">
+				<div class="binary-search-values-wrapper">
+					<a class="show-hide-binary">Show/Hide Binary Search Values</a>
+					
+					<div class="binary-search-values-container">
+						<isloop items="${pdict.BinaryVals.keySet()}" var="key">
+							<div>
+								${key}: ${pdict.BinaryVals[key]}
+							</div>
+						</isloop>
+					</div>
+				</div>
+			</isif>
+			
+		<iselse/>
+			<p class="notes">
+				<isprint value="${pdict.notes}"/>
+			</p>
+		</isif>	
+	</div>
+
+</isdecorate>

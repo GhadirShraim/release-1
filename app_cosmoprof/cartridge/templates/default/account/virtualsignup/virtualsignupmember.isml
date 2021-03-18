@@ -1,0 +1,7 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+
+	<iscomment> this is to be made into a slot/asset</iscomment>
+	<h1> you're a member</h1>
+		
+</isdecorate>

@@ -1,0 +1,45 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input MasterProduct : dw.catalog.Product
+*   @input UPC : String
+*   @output UPCProduct : dw.catalog.Product
+*
+*/
+
+importPackage( dw.system );
+importPackage( dw.catalog );
+function execute( args : PipelineDictionary ) : Number
+{
+
+    try {
+    	if (!empty(args.MasterProduct) && args.MasterProduct.master) {
+    		//get All varient and check for UPC
+    		var upc = args.UPC;
+    		var variants =  args.MasterProduct.variants;
+    		for each(var varient in variants) {
+    			if (varient.UPC == upc) {
+    				args.UPCProduct = varient;
+    				break;
+    			}
+    		}
+    	}
+    } catch(e) {
+    	Logger.error("Error while finding UPC FindUPCVarient.ds : " + e.message);
+    	return PIPELET_ERROR;
+    
+    }
+
+   return PIPELET_NEXT;
+}

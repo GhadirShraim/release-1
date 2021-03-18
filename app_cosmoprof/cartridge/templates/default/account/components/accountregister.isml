@@ -1,0 +1,146 @@
+<isinclude template="util/modules"/>
+<iscache status="off">
+<isset name="DecoratorTemplate" value="components/barrier/pt_accountregister" scope="page"/>
+<isset name="isPortalUser" value="${'isPortalUser' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.isPortalUser}" scope="page" />							
+<isdecorate template="${DecoratorTemplate}">
+	<div class="login-box pre-registration reg-type-page">
+		<isscript>
+			var webaccessPortalPref = dw.system.Site.current.preferences.custom.webaccessPreregestration;
+			var tempChaincode = pdict.CurrentSession.custom.tempChainCode;
+			var webaccessPortal = false;
+			if(!empty(webaccessPortalPref)) {
+				for each(var cc in webaccessPortalPref ) {
+					if( !empty(tempChaincode) && (cc == tempChaincode) ) {
+						webaccessPortal = true;
+						break;
+					}
+				}
+			} 
+		 </isscript>
+	
+
+	<isset name="selectedType" value="${!empty(pdict.CurrentHttpParameterMap.selectedType) ? pdict.CurrentHttpParameterMap.selectedType : ''}" scope="Page" />
+	<div class="newcustomer-header">
+		<isprint value="${Resource.msg('accountregister.header','account',null)}" />
+	</div>
+	<div class="newcustomer-back">
+		<a href="${URLUtils.url('Home-Show')}"><isprint value="${Resource.msg('accountregister.back','account',null)}" /></a>
+	</div>
+	<div class="register-form">
+		<form action="${URLUtils.httpsContinue()}" name="${pdict.CurrentForms.preregistration.htmlName}" method="post" id="account-registration-form">	
+			<input type="hidden" name="${dw.web.CSRFProtection.getTokenName()}" value="${dw.web.CSRFProtection.generateToken()}">
+			<fieldset>
+				<div class="registration-type-radio">
+					<isif condition="${!isPortalUser}">
+						<isloop items="${pdict.CurrentForms.preregistration.registration.customerType.options}" var="customerType" status="loopstatus" >
+							<div class="form-row">
+								<isset name="radioID" value="${customerType.value}" scope="page"/>
+								<isif condition="${customerType.value == 'A'}">
+									<isif condition="${!empty(selectedType) && selectedType == 'A'}">
+										<isset name="accountChecked" value="${'checked="checked"'}" scope="page"/>
+									</isif>
+									<div class="reg-type with-account">
+										<input type="radio" ${accountChecked || ''} class="input-radio" name="${pdict.CurrentForms.preregistration.cosmoprofAccount.customerType.htmlName}" value="${customerType.htmlValue}" data-type="${radioID}" id="is-${radioID}" />										
+										<iscomment> CP-1469 Moving the register account message to content asset
+										<div class="label-n-decription">
+											<span class="accounttype-label"><isprint value="${Resource.msg('register.account.msg','account',null)}"/><sup>&reg;</sup> <isprint value="${Resource.msg('register.account.msg2','account',null)}"/></span>
+											<span class="register-msg"><isprint value="${Resource.msg('register.account.msg1','account',null)}"/></span><span class="msg-bold"> <isprint value="${Resource.msg('register.account.bold','account',null)}"/></span>
+											<span class="register-msg"><isprint value="${Resource.msg('register.msg2','account',null)}"/></span>
+										</div>
+										</iscomment>	
+										<iscontentasset aid="registrationpage-account-message"/>									
+									</div>
+								<iselse>
+									<isif condition="${!empty(selectedType) && selectedType == 'C'}">
+										<isset name="cardtChecked" value="${'checked="checked"'}" scope="page"/>
+									</isif>
+									<div class="reg-type with-card">
+										<input type="radio" ${cardtChecked || ''} class="input-radio" name="${pdict.CurrentForms.preregistration.cosmoprofAccount.customerType.htmlName}" value="${customerType.htmlValue}" data-type="${radioID}" id="is-${radioID}" />
+										<iscomment>CP-1469 Moving the register card message to content asset
+										<div class="label-n-decription">
+											<span class="accounttype-label"><isprint value="${Resource.msg('register.card.msg','account',null)}"/></span>
+											<span class="register-msg"><isprint value="${Resource.msg('register.card.msg1','account',null)}"/></span><span class="msg-bold"> <isprint value="${Resource.msg('register.card.bold','account',null)}"/></span>
+											<span class="register-msg"><isprint value="${Resource.msg('register.msg2','account',null)}"/></span>
+										</div>
+										</iscomment>
+										<iscontentasset aid="registrationpage-card-message"/>
+									</div>
+								</isif>
+								
+							</div>
+						</isloop>
+					 </isif>
+					 <input type="hidden" name="selectedType" class="selected-type" value="${!empty(pdict.CurrentHttpParameterMap.selectedType) ? pdict.CurrentHttpParameterMap.selectedType : ''}">
+				</div>
+				<div class="fields-type hide">
+					<div class="regtype-filed-section">
+						<div class="required-field">
+							<isprint value="${Resource.msg('accountregister.required.field','account',null)}" />
+						</div>
+						<div class="regtype-filed">
+							<div id="div-card" class="reg-C hide" >
+								<a href="javascript:void(0)" class="cosmoprofcard"><isprint value="${Resource.msg('registration.cosmoprofCard', 'account', null)}" /></a>
+								<div class="cardhelplink">
+									<iscontentasset aid="cosmoprof-customer-cardNumber"/>
+ 								</div>
+								<isinputfield formfield="${pdict.CurrentForms.preregistration.registration.cardNumber}"  type="input" astrickfornonmandatory="true" xhtmlclass="required" />
+							</div>
+							
+							
+							
+							<div id="div-account" class="reg-A hide" >
+								<a href="javascript:void(0)" class="cosmoprofaccount"><isprint value="${Resource.msg('registration.cosmoprofAccountNumber', 'account', null)}" /></a>
+								<div class="accounthelplink">
+									<iscontentasset aid="cosmoprof-customer-accountNumber"/>
+ 								</div>
+							<div class="form-field-tooltip">
+								<div class="tooltip">
+				    				<div class="tooltip-content" data-layout="small tooltip-cvn">
+				    					${Resource.msg('accountregisterInfo','account',null)}
+				    				</div>
+			    				</div>
+							</div>
+								<isinputfield formfield="${pdict.CurrentForms.preregistration.registration.accountNumber}" type="input" astrickfornonmandatory="true" xhtmlclass="required" />
+							</div>
+							
+							<isinputfield formfield="${pdict.CurrentForms.preregistration.registration.zip}" type="input" requiredtext="${Resource.msg('forms.errorZipParse','forms',null)}" rowclass="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA' ? 'select-zip noerror' : 'select-zip-CA noerror'}" astrickfornonmandatory="true" xhtmlclass="required" />
+						</div>
+						<div class="form-row pre-reg-button">
+							<button type="submit" value="submit" class="primaryButtn"  name="${pdict.CurrentForms.preregistration.cosmoprofAccount.register.htmlName}" data-siteid="${dw.system.Site.current.ID}">
+								${Resource.msg('accountregister.submit','account',null)}
+							</button>
+							<a href="${URLUtils.url('Home-Show')}"><isprint value="${Resource.msg('accountregister.cancel','account',null)}" /></a>
+						</div>
+						
+					</div>
+				</div>	
+				
+				<input type="hidden" name="${pdict.CurrentForms.preregistration.secureKeyHtmlName}" value="${pdict.CurrentForms.preregistration.secureKeyValue}"/>	
+			</fieldset>	
+		</form>
+		<div id="preregisterErrorMessage">
+			<!-- CP-732 -->
+			<div class="hide redirectionerror">
+				<isif condition="${dw.system.Site.current.ID == 'CosmoProf'}">
+					<isprint value="${Resource.msg('forms.preregistration.redirect.CA','forms',"null")}" />
+				 </isif>
+			</div>
+			
+			<isif condition="${pdict.InvalidFormError}"> 
+				<div class="error-form"><isprint value="${Resource.msg('forms.preregisterinvalid','forms',"null")}" /></div>
+			<iselseif condition="${!empty(pdict.serviceErrorCode)}" >
+				<div class="error-form"><isprint value="${Resource.msg(pdict.serviceErrorCode,'forms','null')}" /></div>
+			<iselseif condition="${pdict.exclusionError}">
+				${Resource.msg('forms.errorShipTo','forms',"forms.preregister.invalid")}
+		 	<iselseif condition="${!empty(pdict.ErrorCode)}">
+		 		<div class="error-form"><isprint value="${pdict.ErrorCode}" /></div>
+			<iselseif condition="${!empty(pdict.ErrorCodeReg)}">
+		 		<isprint value="${Resource.msg('form.accountalreadyregister1','forms',null)}" />
+		 		<a id="password-reset" href="${URLUtils.url('Account-PasswordResetDialog')}" title="${Resource.msg('logininclude.forgotpassword','account',null)}" data-dlg-action='{"test":100}' data-dlg-options='{"width":"auto","height":"auto"}'>
+					<isprint value="${Resource.msg('form.accountalreadyregister2','forms',null)}" />
+				</a>
+				<isprint value="${Resource.msg('form.accountalreadyregister3','forms', null)}" />
+		 	</isif>
+		</div>
+	</div>
+</isdecorate>

@@ -1,0 +1,154 @@
+/**
+* Verifies whether existing non-gift-certificate payment instrument method / cards
+* are still applicable on base of the given attributes.
+* Puts the collection of valid and invalid payment instruments into pipeline dictionary.
+*
+* @input PaymentInstruments : dw.util.Collection The collection of payment instruments to validate.
+* @input Customer : dw.customer.Customer The current customer.
+* @input CountryCode : String The country code.
+* @input PaymentAmount : Number The payment amount.
+* @output ValidPaymentInstruments : dw.util.Collection The collection of valid payment instruments.
+* @output InvalidPaymentInstruments : dw.util.Collection The collection of invalid payment instruments.
+*/
+importPackage( dw.customer );
+importPackage( dw.object );
+importPackage( dw.order );
+importPackage( dw.system );
+importPackage( dw.util);
+importPackage( dw.value );
+
+importScript("checkout/Utils.ds");
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	// get basket from pipeline dictionary
+    var paymentInstruments : Collection = pdict.PaymentInstruments;
+    
+    // get customer from pipeline dictionary
+    var customer : Customer = pdict.Customer;
+    
+    // get country code from pipeline dictionary
+    var countryCode = pdict.CountryCode;
+    
+    // get payment amount from pipeline dictionary
+    var amount : Number = pdict.PaymentAmount;
+    
+    // get applicable payment methods
+    var methods : List = PaymentMgr.getApplicablePaymentMethods(customer, countryCode, amount);
+    
+    // get applicable payment cards from CREDIT_CARD payment method
+    var ccMethod : PaymentMethod = PaymentMgr.getPaymentMethod(PaymentInstrument.METHOD_CREDIT_CARD);
+    var cards : List = ccMethod != null ? ccMethod.getApplicablePaymentCards(customer, countryCode, amount) : List.EMPTY_LIST;
+    
+    // collects all not applicable payment instruments
+    var validPaymentInstruments : Collection = new ArrayList(paymentInstruments);
+    var invalidPaymentInstruments : Collection = new ArrayList();
+    
+    // get payment instruments from basket
+    for each( var pi : PaymentInstrument in paymentInstruments )
+	{
+        // ignore gift certificate payment instruments
+        if( PaymentInstrument.METHOD_GIFT_CERTIFICATE.equals(pi.paymentMethod) )
+        {
+        	continue;
+        }
+        
+        // get payment method
+        var method : PaymentMethod = PaymentMgr.getPaymentMethod(pi.getPaymentMethod());
+
+		// check, whether payment method is still applicable
+		if( method != null && contains(method, methods) )
+		{
+			// in case of method CREDIT_CARD, check payment cards
+	        if( PaymentInstrument.METHOD_CREDIT_CARD.equals(pi.paymentMethod) )
+	        {
+	        	// get payment card
+	            var card : PaymentCard = PaymentMgr.getPaymentCard(pi.creditCardType);
+	            
+	        	// check, whether payment card is still applicable
+				if( card != null && contains(card, cards) )
+				{
+					continue;
+				}
+	        }
+	        else
+	        {
+	        	// continue, if method is applicable
+				continue;
+	        }
+		}
+		
+		// collect invalid payment instruments
+		invalidPaymentInstruments.add(pi);
+		validPaymentInstruments.remove(pi);
+	}
+	
+   
+    pdict["ValidPaymentInstruments"] = validPaymentInstruments;
+    
+    //Create a two list. One will contain Default CC And other will contain Non-Default CC.
+    var custConsolidationCode = customer.profile.custom.consolidationCode;
+    var disallowConsCodes : ArrayList = new ArrayList(dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard);
+    var isDisallowCCSave = disallowConsCodes.contains(custConsolidationCode);
+    //Empty payment default for customer
+    if(isDisallowCCSave) {
+    	if(!empty(customer.profile.custom.paymentDefault)) {
+    		customer.profile.custom.paymentDefault = '';
+    	}
+    }
+    var defaultCCList : ArrayList = new ArrayList();
+    var nonDefaultCCList : ArrayList = new ArrayList();
+    var newvalidPaymentInstruments : ArrayList = new ArrayList();
+     //Get Current Customer Default Card.
+    if(!empty(validPaymentInstruments) && validPaymentInstruments.size() > 0 && !isDisallowCCSave) {
+    	//In case Non of the card is defaulted.
+    	if(empty(customer.profile.custom.paymentDefault)) {
+    		customer.profile.custom.paymentDefault = validPaymentInstruments[0].UUID;
+    	}
+    	var getDefaultCardUUID = customer.profile.custom.paymentDefault;
+    	if(!empty(getDefaultCardUUID)) {
+    		for each(var paymentIns in validPaymentInstruments) {
+    			if(paymentIns.UUID == getDefaultCardUUID) {
+    				defaultCCList.add(paymentIns);
+    			}
+    			else {
+    				nonDefaultCCList.add(paymentIns);
+    			}
+    		}
+    	}
+    	if(!empty(defaultCCList) && defaultCCList.size() > 0) {
+    		newvalidPaymentInstruments.addAll(defaultCCList);
+    	}
+    	if(!empty(nonDefaultCCList) && nonDefaultCCList.size() > 0) {
+    		newvalidPaymentInstruments.addAll(nonDefaultCCList);
+    	}
+    }
+    
+    if(!empty(newvalidPaymentInstruments)) {
+    	pdict["ValidPaymentInstruments"] = newvalidPaymentInstruments;
+    }
+    else {
+    	pdict["ValidPaymentInstruments"] = validPaymentInstruments;
+    }
+    
+    if( !invalidPaymentInstruments.empty )
+    {
+    	pdict["InvalidPaymentInstruments"] = invalidPaymentInstruments;
+    	return PIPELET_ERROR;
+    }
+    
+    return PIPELET_NEXT;
+}
+
+function contains(object : PersistentObject, objects : Collection)
+{
+	for each( var anObject : PersistentObject in objects )
+	{
+	    if( object.UUID.equals( anObject.UUID ) )
+	    {
+	        return true;
+	    }
+	}
+	
+	return false;
+}

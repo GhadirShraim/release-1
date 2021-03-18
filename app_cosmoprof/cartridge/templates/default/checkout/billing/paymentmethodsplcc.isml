@@ -1,0 +1,56 @@
+<!--- TEMPLATENAME: paymentmethods.isml --->
+<isinclude template="util/modules"/>
+<isset name="hasOnAccount" value="false" scope="page" />
+<iscomment>CP-558 </iscomment>
+<isset name="disallowcardsaving" value="${false}" scope="Page" />
+<isset name="custConsCode" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}" scope="Page" />
+<isif condition="${!empty(custConsCode)}">
+	<isset name="DisallowConsCodes" value="${dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard}" scope="Page" />
+	<isloop items="${DisallowConsCodes}" var="conscode" > 
+		<isif condition="${conscode == custConsCode }">
+			<isset name="disallowcardsaving" value="${true}" scope="Page" />
+			<isbreak>
+		 </isif>
+	</isloop>
+ </isif>
+
+
+	<fieldset>
+		<div class="page-header">
+			${Resource.msg('billing.pageheader','checkout',null)}
+		</div>
+	
+		<div id="payment-method-container">
+			<div id="plccsessiontimeout-popup" class="hide">
+				<div class="alert-message">WAIT!</div>
+				<div class="">
+					<iscontentasset aid="plcc-sessiontimeout-popup">
+				</div>
+				<p>${Resource.msg('plcc.billingPopuptext.button','checkout',null)}</p>
+				<div class="confirm-buttons">
+					<button class="button btn-primary btn-block plcc-confirm-button" type="submit" name="submit" value="submit-payment"  data-vansrc="${URLUtils.https('COBilling-VANRemoval')}">${Resource.msg('plcc.billingPopupconfirm.button','checkout',null)}</button>
+					<button class="button btn-primary btn-block plcc-cancel-button" value="cancel-payment">${Resource.msg('plcc.billingPopupcancel.button','checkout',null)}</button>
+				</div>
+			</div>
+			<isif condition="${!empty(pdict.CurrentSession.custom.isPlccFirst) && pdict.CurrentSession.custom.isPlccFirst}" >
+				<div class="plcc-payment-approval">
+				    <div class="plcc-payment-img"> </div>
+				    <div class="plcc-payment-details">
+					    <div class="plcc-row-1"><span class="plcc-bold">${Resource.msg('plcc.pageheader','checkout',null)}</span>${Resource.msg('plcc.subpageheader','checkout',null)}</div>
+					    <div class="plcc-row-2">${Resource.msg('plcc.subpageheadertwo','checkout',null)}</div>
+					</div>
+				</div>
+				<div class="plcc-pay-card">
+					<div class="plcc-pay-card-info">${Resource.msg('plcc.cardinfo','checkout',null)}</div>
+					<div class="plcc-pay-card-block row no-gutters">
+						<div class="next-step-button col-12 col-md-4">
+							<button class="button btn-primary btn-block submit-payment-billing" type="submit" name="submit" value="submit-payment">${Resource.msg('plcc.billing.button','checkout',null)}</button>
+						</div>
+						<div class="plcc-other-payment-container col-12 col-md-4">
+							<button class="button button--third btn-block plcc-other-payment" type="button">${Resource.msg('plcc.billing.changepaymentbutton','checkout',null)}</button>
+						</div>
+					</div>
+				</div>	
+			</isif>
+		</div>			
+  </fieldset>

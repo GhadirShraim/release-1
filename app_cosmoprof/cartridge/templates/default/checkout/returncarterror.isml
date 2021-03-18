@@ -1,0 +1,42 @@
+<isdecorate template="checkout/pt_checkout"/>
+<isinclude template="util/modules"/>
+
+	<div class="returnErrorContainer">
+		<div class="errorMessage">
+			<p>
+				<span>${Resource.msg('checkouterror.message1','checkout',null)}</span>
+			</p>
+			<p>
+				<span>${Resource.msg('checkouterror.message2','checkout',null)}</span>
+			</p>
+			<p>
+				<span>${Resource.msg('checkouterror.message3','checkout',null)}</span>
+			</p>
+		</div>
+		
+		<div class="returnToCart">
+			<a class="header" href="${URLUtils.https('Cart-Show')}" title="${Resource.msg('global.accountlink','locale',null)} " class="return-to-cart-btn button-fancy-medium">
+				${Resource.msg('checkouterror.returntocartbtn','checkout',null)}
+			</a>
+		</div>
+		
+		<div class="questionsMessage">
+			<p>
+				<span>${Resource.msg('checkouterror.questions1','checkout',null)}</span>
+			</p>
+			<p>
+				<span>${Resource.msg('checkouterror.questions2','checkout',null)}</span>
+				<isprint value="${pdict.CurrentSession.custom.phonenumber}"/>
+			</p>
+			<p>
+				<span>${Resource.msg('checkouterror.questions3','checkout',null)}</span>
+				<a class="header" href="${URLUtils.https('CustomerService-ContactUs')}" title="${Resource.msg('global.accountlink','locale',null)} " class="user-account">
+					${Resource.msg('passwordresetconfirm.contactlink','account',null)}
+				</a>
+				<span>${Resource.msg('checkouterror.questions4','checkout',null)}</span>
+			</p>
+			
+		</div>
+	</div>
+	
+</isdecorate>

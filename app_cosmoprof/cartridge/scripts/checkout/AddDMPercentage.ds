@@ -1,0 +1,38 @@
+/**
+*	AddDMPercentage.ds
+*
+*	Adds discount model percentage to the order as custom attributes
+*
+*	@input Order : dw.order.Order
+*
+*/
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	if(empty(args.Order)){
+		Logger.error("[AddDMPercentage.ds] No order supplied");
+		return PIPELET_NEXT;
+	}
+	var theOrder = args.Order,
+		percents = new dw.util.ArrayList();
+	
+	//DiscountModels apply only to lineitems, check each lineitem
+	for each(let pli in theOrder.getProductLineItems()){
+		//check each promotional price adjustment
+		for each(let pa in pli.getPriceAdjustments()){
+			//is this promotion a DM promotin and have we already calculated it?
+			if('discountModel' in pa.promotion.custom && pa.promotion.custom.discountModel &&
+				!percents.contains(pa.promotion.custom.discountModelPercentage)){
+				percents.add(pa.promotion.custom.discountModelPercentage);
+			}
+		}
+	}
+	
+	theOrder.custom.discountModelPercentage = percents.join(',');
+	if('discpercent' in session.privacy && session.privacy.discpercent !=""){
+		theOrder.custom.discountModelPercentage = session.privacy.discpercent;		
+	}
+
+	return PIPELET_NEXT;
+}

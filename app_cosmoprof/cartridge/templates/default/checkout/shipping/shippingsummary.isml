@@ -1,0 +1,80 @@
+<div class="page-header">
+	${Resource.msg('shipping.pageheader','checkout',null)}
+</div>
+<isif condition="${!empty(pdict.CurrentForms.singleshipping.shippingAddress.addressFields.Id.value)}">
+	<isset name="activeAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getAddress(pdict.CurrentForms.singleshipping.shippingAddress.addressFields.Id.value)}" scope="page" />
+<iselse>
+	<isset name="activeAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID)}" scope="page" />
+ </isif>
+<iscomment>
+<isset name="activeAddress" value="${pdict.ShippingAddress}" scope="page" />
+</iscomment>
+<isscript>
+	importScript("util/ViewHelpers.ds");
+	if(dw.system.Site.getCurrent().ID != 'CosmoProf-CA'){
+		var POBOXNotInAddr = ViewHelpers.checkPOBOXGeneral(pdict.Basket != null ? pdict.Basket:'');
+	}
+</isscript>
+<div id="selected-shipping-container">
+	<table class="containertable">
+	<tr>
+		<td class="left">
+ 	<isif condition="${activeAddress != null}">
+	   	<div class="fullborder pad5">
+	   	   <iscomment> 
+	   		<isif condition="${'addressLabel' in activeAddress.custom && !empty(activeAddress.custom.addressLabel)}">
+		    	<b><isprint value="${activeAddress.custom.addressLabel}"/></b></br>
+		    </isif>
+		    
+		    <isif condition="${'attentionTo' in activeAddress.custom && !empty(activeAddress.custom.attentionTo)}">
+		    	<isprint value="${Resource.msgf('global.attnto', 'locale', null, activeAddress.custom.attentionTo)}"/><br>
+		    </isif>
+		     </iscomment>
+		    <isprint value="${activeAddress.companyName}"/></br>
+		    <b><isprint value="${activeAddress.firstName}"/> <isprint value="${activeAddress.lastName}"/><br></b>
+		    <isprint value="${activeAddress.address1}"/></br>
+		    <isif condition="${(activeAddress.address2 != null) && (activeAddress.address2 != "")}">
+		    	<isprint value="${activeAddress.address2}"/></br>
+		    </isif>
+		    <isprint value="${activeAddress.city}"/>, <isprint value="${activeAddress.stateCode}"/> <isprint value="${activeAddress.postalCode}"/>
+		    <isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+		    &nbsp;&nbsp;&nbsp;<a href="${URLUtils.abs('LoginBarrier-SelectShippingAddress')}" title="${Resource.msg('global.accountlink','locale',null)} " class="dialogify">
+    				${Resource.msg('global.edit','locale',null)}
+    		</a>
+    		</isif>
+	    </div>
+	    <isif condition="${!pdict.CurrentSession.custom.isPortalUser && !empty(pdict.Basket.custom.preferredDeliveryTime) && pdict.Basket.custom.isSDDBasket == true && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+			<div class="delivery-time-label"><isprint value="${Resource.msg('cart.sdd.delivery.label','checkout',null)}" /></div>
+			<div class="delivery-time">
+				<isset name="currCalader" value="${dw.util.StringUtils.formatCalendar(new dw.util.Calendar(), 'EEEE, MM/dd')}" scope="Page" />
+				<isset name="sddTime" value="${pdict.Basket.custom.preferredDeliveryTime}" scope="page" />
+				<isset name="preferredSddTime" value="${sddTime.split('T')}" scope="page" />
+				<isset name="sddDate" value="${preferredSddTime[0].split('-')}" scope="page" />
+				<isset name="dateInstance" value="${new Date(sddDate[0], sddDate[1] - 1, sddDate[2])}" scope="page" />
+				<isscript>
+					var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+					var sddDayName = days[dateInstance.getDay()]; 
+				</isscript>								
+				<isset name="sddDeliveryDay" value="${sddDayName+','+(new Number(dateInstance.getMonth())+1)+'-'+dateInstance.getDate()+'-'+dateInstance.getFullYear()}" scope="page" />
+				<isprint value="${sddDeliveryDay+' '+preferredSddTime[1]}" />
+			</div>				
+	    </isif>
+	    <input type="hidden" id="selectedshippingaddr" value="${activeAddress.ID}" name="selectedshippingaddr">
+    </isif>
+    </td>
+    
+    <td class="right">
+    	<div class="<isif condition="${(!empty(pdict.CurrentCustomer.profile.custom.customerType) && pdict.CurrentCustomer.profile.custom.customerType == 'A') && pdict.ShippingAddresses.length == 1}">disablebtn</isif>">
+		    <a href="<isif condition="${(!empty(pdict.CurrentCustomer.profile.custom.customerType) && pdict.CurrentCustomer.profile.custom.customerType == 'A') && pdict.ShippingAddresses.length == 1}">javascript:void(0);<iselse>${URLUtils.https('COShipping-Start')}</isif>" title="${Resource.msg('global.accountlink','locale',null)} " class="secondarybtn"  <isif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'A' && pdict.ShippingAddresses.length == 1}">disabled='disabled'</isif>>
+		    		${Resource.msg('global.change','locale',null)}
+		    </a>
+	    </div>
+    </td>
+	</tr>
+	</table>
+	<isif condition="${POBOXNotInAddr != null && !POBOXNotInAddr}">
+		<div class="cart-error error-left">
+       		${Resource.msg('forms.address.poboxaccount','forms',null)}
+        </div>
+	</isif>
+</div>

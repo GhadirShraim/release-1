@@ -1,0 +1,3 @@
+<!-- redirect to continue VSU flow -->
+<isset scope="page" name="Location" value="${URLUtils.https('VirtualSignup-ContinueForm')}"/>
+<isredirect location="${Location}"/>

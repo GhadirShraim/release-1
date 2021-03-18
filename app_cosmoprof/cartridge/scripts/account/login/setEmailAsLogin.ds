@@ -1,0 +1,36 @@
+/**
+*	This script will set the child login	
+*	@input currentCustomer : dw.customer.Customer
+*	@input currentPassword : String
+*/
+
+var System : dw.system.System = require("dw/system").System;
+var Logger : dw.system.Logger = require('dw/system').Logger;
+var Customer : dw.customer.Customer = require("dw/customer").Customer;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try
+	{
+		var cust : dw.customer.Customer = args.currentCustomer;
+		var email : String = args.currentCustomer.profile.email;
+		var credentials : dw.customer.Credentials;
+		var currentPassword : String = args.currentPassword;
+		
+		if(!empty(cust) && !empty(email))
+		{
+			credentials = cust.profile.getCredentials().setLogin(email, currentPassword);
+		}
+		
+		if(!credentials)
+		{
+			throw "There was an error";
+		}
+	}
+	catch(e)
+	{
+		var ex = e;
+		return PIPELET_ERROR;
+	}
+	return PIPELET_NEXT;
+}

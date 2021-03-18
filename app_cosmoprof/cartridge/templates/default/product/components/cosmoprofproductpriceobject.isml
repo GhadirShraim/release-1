@@ -1,0 +1,19 @@
+<iscomment>
+	Get the price model for this product.	
+</iscomment>
+<isset name="PriceModel" value="${pdict.Product.getPriceModel()}" scope="page"/>
+<iscomment>
+	Get the Cosmo Product Price Object for this product.
+</iscomment>
+<isscript>
+	var CosmoProductPriceObjectUtils = require("app_cosmoprof/cartridge/scripts/product/CosmoProductPriceObjectUtils").CosmoProductPriceObjectUtils;
+	var dscPricebookID = !empty(pdict.CurrentSession.custom.dscPricebookID) ? pdict.CurrentSession.custom.dscPricebookID : null;
+	var CurrentOptionModel = !empty(pdict.CurrentOptionModel) ? pdict.CurrentOptionModel : null;
+	var cosmoProductPriceObject = CosmoProductPriceObjectUtils.getCosmoProductPriceObject(pdict.Product,pdict.CurrentCustomer,dscPricebookID,CurrentOptionModel);
+	var pva = pdict.Product.variationModel.productVariationAttributes;
+	for (var key in pva){
+		if(pva[key].getAttributeID() != 'color'  &&  pva[key].getAttributeID() == 'size'){
+			var cosmoProductDMPriceObject = CosmoProductPriceObjectUtils.getCosmoProductDMPriceObject(pdict.Product,pdict.CurrentCustomer,dscPricebookID,CurrentOptionModel);
+		}	
+	}
+</isscript>

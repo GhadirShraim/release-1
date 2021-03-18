@@ -1,0 +1,5 @@
+ <div class="home-bottom-slots cp_Slot2">
+		<div class="home-bottom-left">
+			 <isslot id="home-bottom-left" description="Bottom content below flash banner - left side" context="global" />
+		</div>
+</div>

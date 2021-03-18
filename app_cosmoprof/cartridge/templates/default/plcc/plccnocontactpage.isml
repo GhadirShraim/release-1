@@ -1,0 +1,12 @@
+<!--- TEMPLATENAME: plcclandingpage.isml --->
+<isinclude template="util/modules"/>
+<isdecorate template="content/home/pt_storefront">
+<div id="primary" class="primary-content">
+<isinclude url="${URLUtils.url('PLCC-LandingContent')}"/>
+<div id="primary" class="primary-content plcc-unregistered user-pending hide">
+	<p><iscontentasset aid="apply-pending-user" encoding="off"/></p>
+</div>
+</div>
+</isdecorate>
+
+

@@ -1,0 +1,50 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+	<isscript>var pageContext={title:'Order History', type:'OrderHistory', ns:'account'};</isscript>
+	<isinclude template="util/modules"/>
+	<iscomment>Include all important information globally , e.g. meta-data, link information, and javascript.</iscomment>
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="account/orderhistory/pt_orderhistory_UI"/>
+	<iscomment>Add template-specific header information here.</iscomment>	
+</head>
+
+<body>
+	<div id="wrapper" class="pt_order viewlessorder">
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		<div id="main" role="main" class="page-content clearfix">
+			<iscomment>
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+					<isif condition="${empty(pdict.Order)}">
+						<isbreadcrumbs bcurl1="${URLUtils.https('Account-Show')}" bctext1="${Resource.msg('account.header','account',null)}" bctext2="${!empty(pdict.bctext2) ? pdict.bctext2 : Resource.msg('orders.orderhistory','account',null)}"/>
+					<iselse>
+						<isbreadcrumbs bcurl1="${URLUtils.https('Account-Show')}" bctext1="${Resource.msg('account.header','account',null)}" bcurl2="${URLUtils.https('Order-History')}" bctext2="${Resource.msg('orders.orderhistory','account',null)}" bctext3="${pdict.Order.orderNo}"/>
+					</isif>
+				</isif>
+			</iscomment>
+				<div id="primary" class="primary-content">
+					<isreplace/>
+				</div>
+			<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">		
+				<div id="secondary" class="nav">
+					<nav>		
+						<h1 class="visually-hidden"><isprint value="${Resource.msg('global.secondarynavheading','locale',null)}" /></h1>	
+						<div class="secondary-navigation">
+							<isinclude url="${URLUtils.url('Account-IncludeNavigation')}"/>
+						</div>
+					</nav>
+				</div>
+			</isif>			
+		</div><!-- /main -->
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="account/orderhistory/pt_orderhistory_VARS"/>
+	</div>
+</body>
+</html>

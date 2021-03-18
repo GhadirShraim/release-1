@@ -1,0 +1,36 @@
+<isinclude template="util/modules"/>
+<iscache status="off">
+<isif condition="${!empty(pdict.Product) && pdict.CurrentCustomer.authenticated && !pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+	<isset name="sddEnabled" value="${false}" scope="page" />
+	<isif condition="${(pdict.view == 'PLP' && pdict.Product.isMaster()) || ('SDDAvailable' in pdict.Product.custom && pdict.Product.custom.SDDAvailable == true)}">
+		<isset name="sddEnabled" value="${true}" scope="page" />
+	</isif>
+	<isif condition="${pdict.view == 'PRODUCT'}">
+		<div class="sdd-pdpsection ${sddEnabled == true?'ShowSDDMessage':'HideSDDMessage'}">
+			<a href="${URLUtils.url('Page-Show', 'cid', '777-cs-landing')}" class="pdp-sdd-label"><div class="eligible-sdd-pdp">${Resource.msg('global.pdpsddmessage','sdd',null)}</div></a>
+			<div class="sdd-pdptooltip">
+				<div class="tooltip" extraClass="sdd-pdptooltip">
+    				<div class="tooltip-content" data-layout="small tooltip-cvn">
+    					<iscontentasset aid="sdd-tooltipmessage"/>
+    				</div>
+   				</div>
+			</div>
+		</div>
+	<iselseif condition="${pdict.view == 'QUICKVIEW'}" >
+		<a href="${URLUtils.url('Page-Show', 'cid', '777-cs-landing')}" class="quickview-sdd-label"><div class="eligible-sdd-quickview ${sddEnabled == true?'ShowSDDMessage':'HideSDDMessage'}">${Resource.msg('global.pdpsddmessage','sdd',null)}</div></a>
+	<iselseif condition="${pdict.view == 'PLP' && sddEnabled == true}" >
+		<isset name="sddEnabledProduct" value="${true}" scope="page" />
+		<isif condition="${pdict.Product.isMaster()}">
+			<isset name="sddEnabledProduct" value="${false}" scope="page" />	
+			<isloop items="${pdict.Product.getVariants()}" var="variant" status="variantloopstatus">
+				<isif condition="${'SDDAvailable' in variant.custom && variant.custom.SDDAvailable == true && variant.online}">
+					<isset name="sddEnabledProduct" value="${true}" scope="page" />
+					<isbreak/>
+				</isif>
+			</isloop>
+		</isif>
+		<isif condition="${sddEnabledProduct == true}">
+			<a href="${URLUtils.url('Page-Show', 'cid', '777-cs-landing')}" class="plp-sdd-label"><div class="eligible-sdd-plp">${Resource.msg('global.plpsddmessage','sdd',null)}</div></a>
+		</isif>
+	</isif>
+</isif>

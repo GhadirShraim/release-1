@@ -1,0 +1,311 @@
+ /**
+ * ValidateCartForCheckout.ds
+ *
+ * This script implements a typical shopping cart checkout validation. 
+ * The script is provided with the Demandware reference application. Some 
+ * parts of the validation script are specific to the reference application
+ * logic and might not be applicable to our customer's storefront applications.
+ * However, the shopping cart validation script can be customized to meet 
+ * specific needs and requirements.
+ * 
+ * The script implements the validation of the shopping cart against specific
+ * conditions. This includes the following steps:
+ * - validate that total price is not N/A
+ * - validate that all products in the basket are still in site catalog and online
+ * - validate that all coupon codes in the basket are valid
+ * - validate that the taxes can be calculated for all products in the basket (if ValidateTax in put paramter is true)
+ *
+ * @input  Basket : dw.order.Basket
+ * @input  ValidateTax : Boolean
+ * @output BasketStatus : dw.system.Status
+ * @output EnableCheckout : Boolean
+ * @output isValidShipAddr : Boolean
+ */
+
+importPackage( dw.campaign ); 
+importPackage( dw.catalog ); 
+importPackage( dw.order );
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.value );
+importPackage( dw.web );
+
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+var isCosmoProfUS = Site.getCurrent().ID != 'CosmoProf-CA';
+
+/**
+ * Function: execute
+ *
+ * Main function of the validation script. 
+ */
+function execute( pdict : PipelineDictionary ) : Number
+{
+    // ===================================================
+	// =====     	PROCESS INPUT PARAMETERS 		 ===== 
+    // ===================================================
+	
+	var basket : Basket = pdict.Basket;
+	var validateTax : Boolean = pdict.ValidateTax;
+
+    // ===================================================
+	// =====   VALIDATE PRODUCT EXISTENCE            ===== 
+    // ===================================================
+	// Check if all products in basket can still be resolved
+	// and are online
+	
+	var productExistence = validateProductExistence(basket, pdict);
+	
+    // ===================================================
+	// =====             VALIDATE CONTENT            ===== 
+    // ===================================================
+	// Check if basket contains products or gift certificates
+	var hasContent = validateContent(basket);
+	
+    // ===================================================
+	// =====    CHECK MERCHANDIZE TOTAL NET PRICE   ====== 
+    // ===================================================
+
+	// Checks the availability of the basket's merchandize
+	// total price (net or gross depending on taxation policy)
+	var pricesAvailable = basket.merchandizeTotalPrice.available;
+	
+    // ===================================================
+	// =====             VALIDATE COUPONS           ====== 
+    // ===================================================	
+	var allCouponsValid = validateCoupons(basket, pdict);
+	
+	// ===================================================
+	// =====             VALIDATE TAXES             ====== 
+    // ===================================================	
+	var hasTotalTax : Boolean = true;
+	if (validateTax != null && validateTax == true)
+	{
+		//hasTotalTax = basket.totalTax.available;
+	}
+	
+	// ===================================================
+	// =====         CHECK STATE EXCLUSIONS         ====== 
+    // ===================================================	
+	var isExcludedState = checkStateExclusions(basket);
+	
+	// ===================================================
+	// =====         	 CHECK PO BOX		        ====== 
+    // ===================================================	
+    if(isCosmoProfUS){
+    	var isValidShippingAddress = checkPOBOX(basket, pdict);
+    }
+	
+	
+    // ===================================================
+	// =====           EVALUATE CONDITIONS           =====
+    // ===================================================
+    
+	if(!pricesAvailable || !productExistence)
+	{
+		// there are either any product line items without existing 
+		// product or one or more line items has no price
+		pdict["BasketStatus"] = new Status(Status.ERROR);
+		return PIPELET_ERROR;
+	}
+	else if(!allCouponsValid)
+	{
+		// there are invalid coupon line items.
+		// exit with an error.
+		pdict["BasketStatus"] = new Status(Status.ERROR, "CouponError");
+		return PIPELET_ERROR;
+	}
+	else if(!hasContent)
+	{
+		// there are neither products nor gift certificates in the 
+		// basket; we exit with an error however the basket status is OK
+		pdict["BasketStatus"] = new Status(Status.OK);
+		return PIPELET_ERROR;
+	}
+	else if (!hasTotalTax)
+	{
+		pdict["BasketStatus"] = new Status(Status.ERROR, "TaxError");
+		return PIPELET_ERROR;
+	}
+	else if (isExcludedState)
+	{
+		pdict["BasketStatus"] = new Status(Status.ERROR, "ExcludedStateError");
+		return PIPELET_ERROR;
+	}
+
+
+    // ===================================================
+	// =====            DONE                         =====
+    // ===================================================
+	
+	pdict["BasketStatus"] = new Status(Status.OK);
+	
+	if ('deliveryInstructions' in basket.custom && basket.custom.deliveryInstructions) {
+		basket.custom.deliveryInstructions = replaceSpecialChar(basket.custom.deliveryInstructions);
+	}
+    return PIPELET_NEXT;
+}
+
+/**
+ * FUNCTION: validateProductExistence
+ */
+function validateProductExistence(basket : Basket, pdict : PipelineDictionary)
+{
+	var isValid : Boolean = true;
+	var plis : Iterator = basket.getProductLineItems().iterator();
+	
+	while(plis.hasNext())
+	{
+		var pli : ProductLineItem = plis.next();
+		if(pli.product == null || !pli.product.online)
+		{
+			return false;
+		}
+		
+		var newInventoryLogicEnabled : Boolean = dw.system.Site.getCurrent().getCustomPreferenceValue("newInventoryLogicEnabled");
+		if(newInventoryLogicEnabled) {
+			if(basket.customer.profile.custom.inventoryListID && ProductInventoryMgr.getInventoryList(customer.profile.custom.inventoryListID)) {
+				Transaction.wrap(function() {
+		        	pli.setProductInventoryList(ProductInventoryMgr.getInventoryList(customer.profile.custom.inventoryListID));
+		    	});
+			}
+		}
+		
+		isValid = isValid && ProductUtils.getAvailability(pli.product, false).inStock;
+		if (!session.custom.isPortalUser && 'isEligibleForSSD' in session.privacy && !empty(session.privacy.isEligibleForSSD) && 'bsgOrders' in session.privacy && !empty(session.privacy.bsgOrders)) {
+			if ('SDDAvailable' in pli.product.custom && pli.product.custom.SDDAvailable == true && 'isSDDEligible' in pli.custom && pli.custom.isSDDEligible == true && pli.custom.deliveryMethod == 'SDD') {
+				var productListInventory = dw.catalog.ProductInventoryMgr.getInventoryList('sdd_inventory_list');
+				if (!empty(productListInventory)) {
+					var availabilityModel : dw.catalog.ProductAvailabilityModel = pli.product.getAvailabilityModel(productListInventory);
+					// If Product is SDD elogible and avialable in SDD inventory, It's valid Basket  
+					if (!empty(availabilityModel.inventoryRecord) && availabilityModel.inventoryRecord.perpetual) {
+						isValid = true;
+					}
+				}
+			}
+		}
+
+		if(isValid == undefined){
+			// isvalid is undefined as ProductUtils.getAvailability(pli.product, false) returns false instead of availability
+			Logger.error("WarehouseCode is missing in the selected address, could not fetch the warehouseInventoryListName.");
+			isValid = false;
+		}
+		
+		if(!isValid){ break; }
+	}
+	pdict.EnableCheckout = isValid;
+	
+	return isValid;
+}
+
+/**
+ * FUNCTION: validateContent
+ */
+function validateContent(basket : Basket)
+{
+	var plis : Collection = basket.getProductLineItems();
+	var gclis : Collection = basket.getGiftCertificateLineItems();
+	
+	if(plis.size() == 0 && gclis.size() == 0)
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * FUNCTION: validateCoupons
+ */
+function validateCoupons(basket : Basket, pdict : PipelineDictionary)
+{
+	var clis : Iterator = basket.getCouponLineItems().iterator();
+	
+	while (clis.hasNext())
+	{
+		var cli : CouponLineItem = clis.next();
+		if (! cli.isValid())
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+/**
+ * FUNCTION: checkStateExclusions
+ *
+ * return false if check does not fail and shipping address is valid
+ *
+ */
+function checkStateExclusions(basket : Basket)
+{
+	var shippingExclusions = dw.system.Site.getCurrent().getCustomPreferenceValue('excludedShippingStates');
+	
+	//Do not execute loops if site preference does not have any values
+	if(shippingExclusions == null || empty(shippingExclusions))
+	{
+		return false;
+	}
+	
+	var shipments = basket.getShipments();
+	var shipAddr;
+	
+	for each(var shipment in shipments)
+	{
+		shipAddr = shipment.getShippingAddress();
+
+		if(shipAddr != null && shipAddr.stateCode != null)
+		{
+			for each(var exclusion in shippingExclusions)
+			{
+				if(shipAddr.stateCode.toString() == exclusion.toString())
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * FUNCTION: checkPOBOX
+ *
+ * return false if check does not fail and shipping address is valid
+ *
+ */
+function checkPOBOX(basket : Basket, pdict : PipelineDictionary) 
+{	
+	var shipments = basket.getShipments();
+	var regExp : RegExp = new RegExp('^[af][ .]?p[ .]?(o\s*$)|((post [O|o])[.]?(ffice)?[ ]?(box)?(bin)?)|(\bp[ .]?\s?o[ .]?\s?box)|(P[.]?[O]?[.]?B[.]?\b)|((post [B|b]ox))|(\b(P[.]?O[.]?[ ]?\b)([a-zA-Z0-9]+)?)','i');
+	var shipAddr;
+	
+	if(!empty(shipments)) {
+		for each(var shipment in shipments)	{
+			shipAddr = shipment.getShippingAddress();
+			if(!empty(shipAddr)) {
+				if(regExp.test(shipAddr.address1) || regExp.test(shipAddr.address2) || regExp.test(shipAddr.city)) {
+					pdict.EnableCheckout = false;
+					pdict.isValidShipAddr = false;
+					return false;
+				}
+			}
+			
+		}
+	}
+	return true;
+}
+
+function replaceSpecialChar(input) {
+	var output = "";
+	if (!empty(input)) {
+	    var inputString = input.toString();
+	    for (var i=0; i<inputString.length; i++) {
+	        if (inputString.charCodeAt(i) <= 127) {
+	            output += inputString.charAt(i);
+	        }
+	    }
+	}	
+    return !empty(input) ? output : input;
+}

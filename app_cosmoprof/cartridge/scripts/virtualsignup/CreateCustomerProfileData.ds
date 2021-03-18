@@ -1,0 +1,72 @@
+/**
+*	@input CurrentCustomer : dw.customer.Customer
+*	@input ContactParams : Object
+*	@input newCardNumber : String
+*	@input CardParams : Object
+*	@input vsuNewForm : dw.web.FormGroup  
+*/
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+			var ccustomer = args.CurrentCustomer,
+			profile = ccustomer.profile,
+			cardparams = !empty(args.CardParams) ? args.CardParams : "",
+			params = !empty(args.ContactParams) ? JSON.parse(args.ContactParams) : "";
+			profile1 = args.vsuNewForm;
+			profile.firstName = !empty(params.firstName) ? params.firstName : "";
+			profile.lastName = !empty(params.lastName) ? params.lastName : "";
+			profile.companyName = !empty(params.salonName) ? params.salonName : "";
+			profile.email = !empty(params.emailAddress) ? params.emailAddress : "";
+			profile.custom.customerType = "C";		
+			
+			//employee type
+			
+			profile.custom.owner == params.employeeType.toString() == "Owner" ? true : false;
+			profile.custom.suiterenter == params.employeeType.toString() == "Suite Renter" ? true : false;
+			profile.custom.chairrenter == params.employeeType.toString() == "Chair Renter" ? true : false;
+			profile.custom.salonemployee == params.employeeType.toString() == "Salon Employee" ? true : false;
+			profile.custom.student == params.employeeType.toString() == "Student" ? true : false; 
+			//profile.custom.independent = !empty(params.isContactIndependent) ? params.isContactIndependent : "";
+			//profile.custom.commission = !empty(params.isContactCommission) ? params.isContactCommission : "";
+			
+			//Profession Type
+			profile.custom.cosmetologist = params.isContactCosmetologist;
+			profile.custom.barber = params.isContactBarber;
+			profile.custom.nailtechnician = params.isContactCosmetologist;
+			profile.custom.esthetician = params.isContactNailTechnician;
+			profile.custom.massagetherapist = params.isContactMassageTherapist;
+			
+			//Opt Ins
+			profile.custom.emailOptIn = params.emailOptIn;
+			profile.custom.mobileOptIn = params.phoneMobileTextOptIn;			
+			profile.custom.directMailOptIn = params.mailOptIn;
+			                            	
+			//DATA FROM SALESFORCE
+			profile.custom.salesforceContactID = !empty(cardparams.salesforceContactID) ? cardparams.salesforceContactID : "";
+			profile.custom.cardNumber = !empty(args.newCardNumber) ? args.newCardNumber : "";
+			
+			//Phone Numbers
+			//profile.phoneHome = params.phoneHome;
+			profile.phoneMobile = !empty(params.phoneMobile) ? params.phoneMobile : "";
+			profile.custom.phoneWork = !empty(params.phoneWork) ? params.phoneWork : "";
+			
+			profile.custom.phonetypeBusiness = !empty(profile1.phonetypeBusiness.htmlValue) ? profile1.phonetypeBusiness.htmlValue : "";
+            profile.custom.phonetypeMobile = !empty(profile1.phonetypeMobile.htmlValue) ? profile1.phonetypeMobile.htmlValue : "";
+								
+			//Custom Parameters
+			if(session.custom.hasOwnProperty('vsuemployee') && session.custom.vsuemployee){
+				profile.custom.profilestatustype = "accepted";
+				profile.custom.onetimepass = false;
+			}else{
+				profile.custom.profilestatustype = "pending";
+				profile.custom.onetimepass = true;
+			}
+	}
+	catch(e) {
+		Logger.error("[CreateCustomerProfileData.ds]Create Customer Fail: " + e.message);
+		return PIPELET_ERROR;
+	}
+	return PIPELET_NEXT;
+}

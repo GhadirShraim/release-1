@@ -1,0 +1,5 @@
+<isdecorate template="content/home/pt_storefront">
+	<div class="succes-msg">
+		<h3>${Resource.msg('salon.successmessage', 'forms', null)}</h3>
+	</div>
+</isdecorate>

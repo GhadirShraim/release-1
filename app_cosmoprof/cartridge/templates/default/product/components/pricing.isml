@@ -1,0 +1,478 @@
+<iscomment>
+	If it is a master product without a price range, get its pricing from its first variant.	
+</iscomment>
+
+<isif condition="${pdict.Product.master && !pdict.Product.priceModel.isPriceRange() && pdict.Product.variationModel.variants.size() > 0}"/>
+	<iscomment>Preserve current product instance</iscomment>
+	<isset name="OrgProduct" value="${pdict.Product}" scope="pdict"/>
+	<iscomment> Find next variation that's in stock </iscomment>
+	<isloop items="${pdict.OrgProduct.variationModel.variants}" var="variant" status="loopstatus">
+		<isset name="Product" value="${variant}" scope="pdict"/>
+		<isif condition="${pdict.Product.getAvailabilityModel().isInStock()}">
+			<isbreak/>
+		</isif>
+	</isloop>
+</isif>
+
+<isinclude template="product/components/cosmoprofproductpriceobject" />
+
+<iscomment>
+	Check whether this product has price in the sale pricebook.  If so, then
+	display two prices:  crossed-out standard price and sales price.
+</iscomment>
+
+<isinclude template="product/components/standardprice"/>
+
+<isset name="PriceTable" value="${PriceModel.getPriceTable()}" scope="page"/>
+<isset name="SalesPrice" value="${PriceModel.getPrice()}" scope="page"/>
+<isset name="BasePriceQuantity" value="${PriceModel.getBasePriceQuantity()}" scope="page"/>
+<isset name="ShowStandardPrice" value="${StandardPrice.available && SalesPrice.available && StandardPrice.compareTo(SalesPrice) == 1}" scope="page"/>
+<isset name="currencyCode" value="${dw.system.Site.getCurrent().currencyCode}" scope="page"/>
+
+<iscomment>
+	Check whether there are any active customer promotions for this product.  If so, then
+	display two prices:  crossed-out pricebook price and promotional price.
+
+	Note:  we never display two crossed-out prices even if there is both a price-book
+	discount and a promotion.
+</iscomment>
+
+	<isset name="YourPriceV" value="0" scope="pdict" />
+	<isset name="SalePriceV" value="0" scope="pdict" />
+	<isset name="SalonPriceV" value="0" scope="pdict" />
+	<isset name="SaveV" value="0" scope="pdict" />
+	
+	<isif condition="${(GridValue == null)}" >
+		<isset name="GridValue" value="${false}" scope="page" />
+	</isif>
+
+ 	<div class="product-price" >
+	<isif condition="${pdict.CurrentCustomer.authenticated}">	
+  		<isif condition="${pdict.Product.productSet }">
+			<isset name="ProductMinPrice" value="${new dw.value.Money(0, currencyCode)}" scope="pdict" />
+			<isset name="ProductMaxPrice" value="${new dw.value.Money(0, currencyCode)}" scope="pdict" />
+			<isset name="ProductSetStandardPrice" value="${new dw.value.Money(0, currencyCode)}" scope="pdict" />
+			<isset name="ProductSetSalesPrice" value="${new dw.value.Money(0, currencyCode)}" scope="pdict" />
+			
+			<isloop items="${pdict.ProductSetList}" var="product" status="loopstatus">
+				<isset name="Product" value="${product}" scope="pdict" />
+				<isinclude template="product/components/setpricing" />
+			</isloop>
+						
+			<isset name="CurrencyCode" value="${dw.system.Site.getCurrent().getCurrencyCode()}" scope="pdict" />
+
+			<isif condition="${pdict.ProductMinPrice > 0 && pdict.ProductMaxPrice > 0}">
+				<div class="pricerange"><isprint value="${dw.util.StringUtils.formatMoney(dw.value.Money(pdict.ProductMinPrice, pdict.CurrencyCode))}" /> - <isprint value="${dw.util.StringUtils.formatMoney(dw.value.Money(pdict.ProductMaxPrice, pdict.CurrencyCode))}" /></div>
+			<iselseif condition="${pdict.ProductSetSalesPrice > pdict.ProductSetStandardPrice}">
+				<div class="standardprice"><isprint value="${dw.util.StringUtils.formatMoney(dw.value.Money(pdict.ProductSetStandardPrice, pdict.CurrencyCode))}" /></div>
+			<iselseif condition="${pdict.ProductSetStandardPrice > pdict.ProductSetSalesPrice}">
+				<div class="salesprice"><isprint value="${dw.util.StringUtils.formatMoney(dw.value.Money(pdict.ProductSetSalesPrice, pdict.CurrencyCode))}" /></div>
+			</isif>
+			
+		<iselseif condition="${pdict.Product.master && pdict.Product.priceModel.isPriceRange()}" >
+			<iscomment>Display Discount Model price range as first option, else show Product master price range depending on the represented variants</iscomment>
+ 
+			<div class="min-max-price">
+			  	<isif condition="${!empty(cosmoProductPriceObject) && !empty(cosmoProductPriceObject.lowDMPrice) && !empty(cosmoProductPriceObject.highDMPrice) && ((cosmoProductPriceObject.lowDMPrice != dw.value.Money.NOT_AVAILABLE) || (cosmoProductPriceObject.highDMPrice != dw.value.Money.NOT_AVAILABLE))}">
+ 					<isprint value="${cosmoProductPriceObject.lowDMPrice}"/> - <isprint value="${cosmoProductPriceObject.highDMPrice}"/>
+				<iselseif condition="${cosmoProductDMPriceObject.lowDMPrice !=null && !empty(cosmoProductDMPriceObject.lowDMPrice && cosmoProductDMPriceObject.lowDMPrice != 0)}">
+					${Resource.msg('global.dollar','locale',null)}<isprint value="${cosmoProductDMPriceObject.lowDMPrice}"/> - ${Resource.msg('global.dollar','locale',null)}<isprint value="${cosmoProductDMPriceObject.highDMPrice}"/>
+				<iselse/>
+					<isprint value="${pdict.Product.priceModel.minPrice}"/> - <isprint value="${pdict.Product.priceModel.maxPrice}"/>
+				</isif>
+			</div>
+			
+		<iselse>
+			<iscomment>Is the Cosmoprof Dynamic Product Price Object available?</iscomment>
+			<isif condition="${!empty(cosmoProductPriceObject) && (!empty(cosmoProductPriceObject.YourPrice) || !empty(cosmoProductPriceObject.SalonPrice)) }">
+				<isif condition="${!empty(cosmoProductPriceObject.YourPrice) && (cosmoProductPriceObject.YourPrice.valueOrNull != null)}">
+					<isset name="YourPriceV" value="${cosmoProductPriceObject.YourPrice}" scope="pdict" />
+				</isif>
+				<isif condition="${!empty(cosmoProductPriceObject.SalePrice) && (cosmoProductPriceObject.SalePrice.valueOrNull != null)}">
+					<isset name="SalePriceV" value="${cosmoProductPriceObject.SalePrice}" scope="pdict" />
+				</isif>
+				<isif condition="${!empty(cosmoProductPriceObject.SalonPrice) && (cosmoProductPriceObject.SalonPrice.valueOrNull != null)}">
+					<isset name="SalonPriceV" value="${cosmoProductPriceObject.SalonPrice}" scope="pdict" />
+				</isif>
+				<isif condition="${!empty(cosmoProductPriceObject.SavePrice) && (cosmoProductPriceObject.SavePrice.valueOrNull != null)}">
+					<isset name="SaveV" value="${cosmoProductPriceObject.SavePrice}" scope="pdict" />
+				</isif>
+				<isif condition="${GridValue}">
+					<isif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV != '0') && (pdict.YourPriceV != '0')}">
+						 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+						 	<isif condition="${pdict.SalePriceV <= pdict.YourPriceV}">
+						 		<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							<iselseif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) && pdict.SalePriceV >= pdict.YourPriceV}">
+								<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							<iselseif condition="${pdict.SalePriceV < pdict.YourPriceV}" />
+								<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							<iselseif condition="${(pdict.SalonPriceV > pdict.SalePriceV) && (pdict.SalePriceV > pdict.YourPriceV)}" />
+								<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							<iselseif condition="${(pdict.SalonPriceV < pdict.SalePriceV) && (pdict.SalonPriceV < pdict.YourPriceV)}" />
+								<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							<iselseif condition="${(pdict.SalonPriceV > pdict.SalePriceV) && (pdict.YourPriceV > pdict.SalePriceV)}" />
+								<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 </isif>
+						 <iselse>
+						 	<isif condition="${pdict.SalePriceV <= pdict.YourPriceV}">
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.SalePriceV}"/> </span></br>
+							<iselseif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) && pdict.SalePriceV >= pdict.YourPriceV}">
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.YourPriceV}"/> <small>${Resource.msg('item.sale','product',null)}</small></span></br>
+							<iselseif condition="${pdict.SalePriceV < pdict.YourPriceV}" /> 
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.SalePriceV}"/> </span></br>
+							<iselseif condition="${(pdict.SalonPriceV > pdict.SalePriceV) && (pdict.SalePriceV > pdict.YourPriceV)}" />
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.YourPriceV}"/> </span></br>
+							<iselseif condition="${(pdict.SalonPriceV < pdict.SalePriceV) && (pdict.SalonPriceV < pdict.YourPriceV)}" />
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.SalonPriceV}"/> </span></br>
+							<iselseif condition="${(pdict.SalonPriceV > pdict.SalePriceV) && (pdict.YourPriceV > pdict.SalePriceV)}" />
+								<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.SalePriceV}"/> </span></br>
+							 </isif>
+						 </isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV != '0') && (pdict.YourPriceV == '0')}">
+						 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+						 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+						 	<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+						 <iselse>
+						 	<span class="product-sales-price" title="Sale Price"><isprint value="${pdict.SalePriceV}"/> <small>${Resource.msg('item.sale','product',null)}</small></span></br>
+						 </isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV == '0') && (pdict.YourPriceV != '0')}">
+						 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+						 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+						 	<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+						 <iselse>
+						 	<span class="product-standard"><isprint value="${pdict.YourPriceV}"/></span></br>
+						 </isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV == '0') && (pdict.YourPriceV == '0')}">
+						 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+						 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+						 	<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+						 <iselse>
+						 	<span class="product-standard"><isprint value="${pdict.SalonPriceV}"/></span></br>
+						 </isif>
+					</isif>
+				<iselseif condition="${pdict.isMyList}">
+					<isscript>
+						var al : dw.util.ArrayList = new  dw.util.ArrayList();
+						var minprice;
+						if(pdict.SalonPriceV != '0' && pdict.SalePriceV != '0' && pdict.YourPriceV != '0') {
+							al.add(pdict.SalonPriceV);
+							al.add(pdict.SalePriceV);
+							al.add(pdict.YourPriceV);
+							if(!empty(al)) {
+								minprice = al.get(0);
+								var itr : dw.util.Iterator = al.iterator();
+								while(itr.hasNext()) {
+									var price = itr.next();
+									if(price < minprice) {
+								    	minprice = price;
+								    }
+								}
+							}
+						}
+						else if(pdict.SalonPriceV != '0' && pdict.SalePriceV != '0' && pdict.YourPriceV == '0') {
+							al.add(pdict.SalonPriceV);
+							al.add(pdict.SalePriceV);
+							minprice = al.get(0);
+							if(al[0] > al[1]) {
+								minprice = al[1];
+							}
+							
+						}
+						else if(pdict.SalonPriceV != '0' && pdict.SalePriceV == '0' && pdict.YourPriceV != '0') {
+							al.add(pdict.SalonPriceV);
+							al.add(pdict.YourPriceV);
+							minprice = al.get(0);
+							if(al[0] > al[1]) {
+								minprice = al[1];
+							}
+							
+						}
+						else {
+							al.add(pdict.SalonPriceV != '0' && pdict.SalePriceV == '0' && pdict.YourPriceV == '0' ? pdict.SalonPriceV : (pdict.SalonPriceV == '0' && pdict.SalePriceV != '0' && pdict.YourPriceV == '0') ? pdict.SalePriceV : pdict.YourPriceV); 
+							minprice = al.get(0);
+						}
+					 </isscript>
+					 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+					 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(minprice.multiply(thisqty))}" scope="Page" />
+					  	<isprint value="${minprice.multiply(thisqty)}"/>
+					 <iselse>
+					 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+					 	<span class="price-your-black"><isprint value="${minprice}"/></span></br>
+					 </isif>
+					
+				<iselse/>
+				
+					<isif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV != '0') && (pdict.YourPriceV != '0')}">
+					
+						<isif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) && pdict.SalePriceV.equals(pdict.YourPriceV) }"> 
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV < pdict.SalePriceV && pdict.SalePriceV < pdict.YourPriceV }"> 
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.SalonPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) && !pdict.SalonPriceV.equals(pdict.YourPriceV) && pdict.SalePriceV > pdict.YourPriceV }" >	
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.YourPriceV.equals(pdict.SalePriceV) && !pdict.SalonPriceV.equals(pdict.YourPriceV) && pdict.SalonPriceV > pdict.YourPriceV}">
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>	
+							 </isif>
+						<iselseif condition="${pdict.SalePriceV > pdict.YourPriceV && pdict.SalePriceV < pdict.SalonPriceV }" >	
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-sales-msg">${Resource.msg('product.sale.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.SalePriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalePriceV < pdict.YourPriceV && pdict.YourPriceV < pdict.SalonPriceV  }" >
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.SalePriceV}"/></span></br>
+							 </isif>	
+						<iselseif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) && !pdict.SalonPriceV.equals(pdict.YourPriceV) && pdict.SalePriceV < pdict.YourPriceV }" >
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.YourPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.SalePriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV.equals(pdict.YourPriceV) &&  pdict.SalePriceV < pdict.YourPriceV }" >	
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.YourPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.SalePriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV < pdict.YourPriceV && pdict.SalonPriceV < pdict.SalePriceV &&  pdict.SalePriceV > pdict.YourPriceV }" >
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-sales-msg">${Resource.msg('product.sale.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.pdict.SalePriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV < pdict.YourPriceV && pdict.SalonPriceV < pdict.SalePriceV &&  pdict.SalePriceV > pdict.YourPriceV }" >	
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-sales-msg">${Resource.msg('product.sale.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.pdict.SalePriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselse>
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-sales-msg">${Resource.msg('product.sale.price','product',null)}</span>
+								<span class="price-sales"><isprint value="${pdict.SalePriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						</isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV != '0') && (pdict.YourPriceV == '0')}" >
+						
+						<isif condition="${pdict.SalonPriceV.equals(pdict.SalePriceV) }"> 
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.SalePriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV < pdict.SalePriceV }" >
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.SalonPriceV}"/></span></br>
+							 </isif>
+						<iselse>
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalePriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalePriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.SalePriceV}"/></span></br>
+							 </isif>
+						</isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV == '0') && (pdict.YourPriceV != '0')}" >
+						<isif condition="${pdict.SalonPriceV.equals(pdict.YourPriceV)}">
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						<iselseif condition="${pdict.SalonPriceV < pdict.YourPriceV }" >
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your-black"><isprint value="${pdict.SalonPriceV}"/></span></br>
+							 </isif>
+						<iselse>
+							 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+							 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.YourPriceV.multiply(thisqty))}" scope="Page" />
+								<isprint value="${pdict.YourPriceV.multiply(thisqty)}"/>
+							 <iselse>
+							 	<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+								<span class="price-salon-save"><isprint value="${pdict.SalonPriceV}"/></span></br>
+								<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+								<span class="price-your"><isprint value="${pdict.YourPriceV}"/></span></br>
+							 </isif>
+						 </isif>
+					<iselseif condition="${(pdict.SalonPriceV != '0') && (pdict.SalePriceV == '0') && (pdict.YourPriceV == '0')}" >
+						 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+						 	<isset name="storeItemsTotal" value="${storeItemsTotal.add(pdict.SalonPriceV.multiply(thisqty))}" scope="Page" />
+						 	<isprint value="${pdict.SalonPriceV.multiply(thisqty)}"/>
+						 <iselse>
+						 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+						 	<span class="price-your-black"><isprint value="${pdict.SalonPriceV}"/></span></br>
+						 </isif>
+						
+					</isif>
+				</isif>
+				
+			<iselse/>
+				<iscomment>This is the default functionality of the PDP</iscomment>
+				 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+				 	<isif condition="${(SalesPrice.valueOrNull != null && SalesPrice.valueOrNull > 0) || (!empty(isPromoPrice) && isPromoPrice)}">
+				 		<isset name="storeItemsTotal" value="${storeItemsTotal.add(SalesPrice.multiply(thisqty))}" scope="Page" />
+						<isprint value="${SalesPrice.multiply(thisqty)}"/>
+					<iselse>
+						${Resource.msg('pricing.noprice','product',null)}
+					</isif>
+				 <iselse>
+				 	<span class="price-your-msg-black">${Resource.msg('product.your.price','product',null)}</span>
+					<span class="price-your-black">
+						<isif condition="${(SalesPrice.valueOrNull != null && SalesPrice.valueOrNull > 0) || (!empty(isPromoPrice) && isPromoPrice)}">
+							<isprint value="${SalesPrice}"/>
+						<iselse>
+							${Resource.msg('pricing.noprice','product',null)}
+						</isif>
+					</span>
+				 </isif>
+				
+			</isif>		
+		</isif>
+		</isif>
+		<isset name="displayPrice" value="${(SalesPrice.valueOrNull != null && SalesPrice.valueOrNull > 0) ? SalesPrice : new dw.value.Money(0, currencyCode)}" scope="pdict"/> 
+	
+		<isif condition="${typeof showTieredPrice !== 'undefined' && showTieredPrice == true}">
+			<iscomment> show price table, avoid display of empty table. Open div and table on demand. </iscomment>
+			<isset name="scaledPriceTagOpened" value="${false}" scope="PAGE"/>
+		
+			<isloop iterator="${PriceTable.getQuantities()}" var="Quantity" status="pricingloopstatus">
+				<iscomment> Don't show the price table entry that represents the sales price
+					  for the products minimum order quantity (already shown above) </iscomment>
+				<isif condition="${Quantity.compareTo(BasePriceQuantity) != 0}">
+					<isif condition="${pricingloopstatus.getIndex() == 1}">
+						<isset name="scaledPriceTagOpened" value="${true}" scope="PAGE"/>
+						<div class="price-tiered">
+							<isif condition="${PriceTable.getPercentage(Quantity) > 0}">
+								${Resource.msg('pricing.payless','product',null)}
+							<iselse>
+								${Resource.msg('pricing.paymore','product',null)}
+							</isif>
+					</isif>
+		
+					<isset name="NextQuantity" value="${PriceTable.getNextQuantity(Quantity)}" scope="PAGE"/>	
+				<div class="price-tiered-values">
+						<isif condition="${NextQuantity != null}">						
+							<isprint value="${Quantity}" formatter="#"/><isif condition="${Quantity != NextQuantity.getValue()-1}"><span class="divider">${Resource.msg('global.symbol.dash','global',null)}</span><isprint value="${NextQuantity.getValue()-1}" formatter="#"/></isif> ${Resource.msg('pricing.items','product',null)}						
+						<iselse>						
+							<isprint value="${Quantity}" formatter="#"/> ${Resource.msg('pricing.more','product',null)}						
+						</isif>
+						<iscomment>
+							show percentages based on shown list price if list price is shown at all,
+						 	otherwise show it based on effective price
+						</iscomment>
+						<isprint value="${PriceTable.getPrice(Quantity)}"/>
+						(<isif condition="${ShowStandardPrice}"><isprint value="${PriceTable.getPrice(Quantity).percentLessThan(StandardPrice)}" formatter="#"/><iselse><isprint value="${PriceTable.getPercentage(Quantity)}" formatter="#"/></isif>${Resource.msg('pricing.off','product',null)})
+					</div>
+				</isif>
+			</isloop>
+			<iscomment> make sure, we close our tags, if opened </iscomment>
+			<isif condition="${scaledPriceTagOpened}">			
+				</div>
+			</isif>
+		</isif>
+		
+		 <isif condition="${!empty(isStorePickupCart) && isStorePickupCart}">
+		 	<!-- Do not display it for Store Pickup items. -->
+		 <iselse>
+		 	<isif condition="${cosmoProductPriceObject.premiumPricing}">
+				<div class='pdp-promo-msg pricing-messaging <isif condition="${showColorSelector}">color-pdp-mixmatch</isif> <isif condition="${showSizeSelector}">size-pdp-mixmatch</isif> <isif condition="${isSimpleProduct}">simple-kit-pdp-mixmatch</isif> <isif condition="${pdict.Product.bundle}">bundle-pdp-mixmatch</isif>'>
+					${Resource.msg('product.premiumpricing','product',null)}
+				</div>
+			</isif>
+		 </isif>
+		
+	</div>
+	
+<isif condition="${!empty(pdict.OrgProduct)}">
+	<iscomment>Restore current product instance</iscomment>
+	<isset name="Product" value="${pdict.OrgProduct}" scope="pdict"/>
+	<isset name="OrgProduct" value="${null}" scope="pdict"/>
+</isif>

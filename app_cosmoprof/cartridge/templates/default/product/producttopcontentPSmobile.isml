@@ -1,0 +1,139 @@
+<!--- TEMPLATENAME: producttopcontentPSmobile.isml --->
+
+<isset name="isQuickView" value="${pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist'}" scope="page"/>
+
+<!-- dwMarker="product" dwContentID="${pdict.Product.UUID}" -->
+
+<isset name="OrigProduct" value="${pdict.Product}" scope="page"/>
+<isset name="ProductSet" value="${pdict.Product}" scope="pdict"/>
+<isset name="ProductSetList" value="${new dw.util.ArrayList()}" scope="pdict" />
+<isset name="isBundle" value="${pdict.Product.bundle}" scope="pdict"/>
+<isset name="isSet" value="${pdict.Product.productSet}" scope="pdict"/>
+
+<isloop items="${pdict.Product.productSet ? pdict.ProductSet.getProductSetProducts() : pdict.ProductSet.getBundledProducts()}" var="SetProduct" status="productSetLoop">	
+	<isif condition="${SetProduct.online}">	
+		<isscript>
+			if( SetProduct.master ) {
+				var _variants = SetProduct.getVariants();
+				if(_variants != null) {
+					if(_variants.length > 0) {
+						for each(var _p : dw.product.Product in _variants) {
+							if(_p.onlineFlag == true) {
+								SetProduct = _p;
+								break;
+							}
+						}
+					} 
+				} 
+			}
+			
+			pdict.ProductSetList.add(SetProduct);
+		</isscript>
+	</isif>
+</isloop>
+<h1 class="product-brand" itemprop="name"><isprint value="${pdict.Product.brand}"/></h1>		
+<h1 class="product-name"  itemprop="name"><isprint value="${pdict.Product.name}"/></h1>
+
+
+<!-- Product Set Mini-Grid -->
+<isif condition=${!pdict.isBundle}>
+	<div id="product-set-grid" class="product-col-1 product-set">
+		
+		<isset name="FirstProductInSet" value="${pdict.ProductSetList[0]}" scope="pdict" />
+		<isset name="imageProduct" value="${pdict.ProductSet}" scope="page"/>
+	
+		<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+			<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getURL()}" scope="page"/>
+			<isset name="imageAlt" value="${imageProduct.getImage('large', 0).alt}" scope="page"/>
+			<isset name="imageTitle" value="${imageProduct.getImage('large', 0).title}" scope="page"/>
+		<iselse>
+			<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+			<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+			<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+		</isif>
+		
+		<div class="product-primary-image">
+			<h2 class="visually-hidden">Images</h2>
+			<isset name="href" scope="page" value="${'name=product_detail_image'}" />
+				
+			<a ${href} class="product-image main-image" title="${pdict.Product.name}${imageTitle}">
+				<img itemprop="image" class="primary-image" src="${imageUrl}" alt="${imageAlt}" title="${pdict.Product.name}${imageTitle}"/>
+			</a>
+		</div>
+				
+		<isloop items="${pdict.ProductSet.getProductSetProducts()}" var="prodSetProd" status="prodSetStatus">
+			<isinclude url="${URLUtils.url('Product-HitTile', 'pid', prodSetProd.ID)}"/>
+		</isloop>
+	
+	</div>
+</isif>
+<!-- END - Product Set Mini-Grid -->
+
+<!-- Product Bundle PDP -->
+	
+	<isif condition=${pdict.isBundle}>
+		<form action="${URLUtils.url('Cart-AddProduct')}" method="post" id="${pdict.CurrentForms.product.addtocart.dynamicHtmlName}" class="pdpForm bundle">
+	
+			<div class="product-col-1 product-set"><!-- dwMarker="product" dwContentID="${pdict.Product.UUID}" -->
+			
+				<isset name="FirstProductInSet" value="${pdict.ProductSetList[0]}" scope="pdict" />
+				<isset name="imageProduct" value="${pdict.Product}" scope="page"/>
+			
+				<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+					<isset name="imageUrl" value="${imageProduct.getImage('large', 0).getURL()}" scope="page"/>
+					<isset name="imageAlt" value="${imageProduct.getImage('large', 0).alt}" scope="page"/>
+					<isset name="imageTitle" value="${imageProduct.getImage('large', 0).title}" scope="page"/>
+				<iselse>
+					<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+					<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+					<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+				</isif>
+				
+				<isif condition="${!empty(imageProduct.getImage('large', 0))}">
+					<isset name="imageUrlHiRes" value="${imageProduct.getImage('large', 0).getURL()}" scope="page"/>
+				<iselse>
+					<isset name="imageUrlHiRes" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+				</isif>
+				
+				<div class="product-primary-image">
+					<h2 class="visually-hidden">Images</h2>
+					
+					<isif condition="${!empty(imageProduct.getImages('hi-res')) && imageProduct.getImages('hi-res').length>0}">
+						<isset name="hi_res" scope="page" value="${imageProduct.getImages('hi-res')[0].getURL().toString()}" />
+						<isset name="href" scope="page" value="${'href='+hi_res+' target=_blank'}" />
+					<iselse>
+						<isset name="hi_res" scope="page" value="${''}" />
+						<isset name="href" scope="page" value="${'name=product_detail_image'}" />
+					</isif>
+					<a ${href} class="product-image main-image" title="${pdict.Product.name}${imageTitle}">
+						<img itemprop="image" class="primary-image" src="${imageUrl}" alt="${imageAlt}" title="${pdict.Product.name}${imageTitle}"/>
+					</a>
+				</div>
+		
+			</div>
+		
+			<div class="product-col-2  product-bundle">
+				
+				<span class="visually-hidden" itemprop="url">${URLUtils.http('Product-Show','pid', pdict.Product.ID)}</span>
+					
+				<div class="product-number">
+					${Resource.msg('product.item','product',null)} <span itemprop="productID"><isprint value="${ pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) }"/></span>
+				</div>
+				<isif condition="${!empty(pdict.Product.UPC)}">
+					<div class="product-number">
+						${Resource.msg('product.upc','product',null)} <span itemprop="productID"><isprint value="${pdict.Product.UPC}"/></span>
+					</div>
+				</isif>	
+			
+			</div>
+	
+			<isinclude template="product/components/mobile-bundle-details"/>
+		
+			<isset name="Product" value="${psProduct}" scope="pdict"/>
+	
+		</form>
+
+	</isif>
+<!-- END - Product Bundle PDP -->
+
+<isset name="Product" value="${OrigProduct}" scope="pdict" />

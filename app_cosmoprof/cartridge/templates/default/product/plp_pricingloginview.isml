@@ -1,0 +1,83 @@
+<isinclude template="util/modules"/>
+<iscache status="off">
+<isif condition="${pdict.view == 'searchproducthitA'}">
+	<isif condition="${pdict.CurrentCustomer.authenticated}"> 	
+		<isset name="isGrid" value="${true}" scope="page"/>
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+		<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+	</isif>
+<iselseif condition="${pdict.view == 'productpricerange'}" >
+	<iscomment>Product master price range depending on the variants</iscomment>
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isprint value="${pdict.Product.priceModel.minPrice}"/> - <isprint value="${pdict.Product.priceModel.maxPrice}"/>
+	<iselse>
+		<a href="${URLUtils.https('LoginBarrier-Show')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+	</isif>
+</iselseif>
+<iselseif condition="${pdict.view == 'productmainpricehandling'}" >
+	<iscomment>
+		Regular pricing through price model of the product. If the product is an option product, 
+		we have to initialize the product price model with the option model.
+	</iscomment>
+	<isif condition="${pdict.Product.optionProduct}">
+		<isset name="PriceModel" value="${pdict.Product.getPriceModel(pdict.Product.getOptionModel())}" scope="page"/>
+	<iselse>
+		<isset name="PriceModel" value="${pdict.Product.getPriceModel()}" scope="page"/>
+	</isif>
+
+	<iscomment>
+		Check whether the product has price in the sale pricebook. If so, then
+		display two prices: crossed-out standard price and sales price.
+	</iscomment>
+	<isinclude template="product/components/standardprice"/>
+	<isset name="SalesPrice" value="${PriceModel.getPrice()}" scope="page"/>
+	<isset name="ShowStandardPrice" value="${StandardPrice.available && SalesPrice.available && StandardPrice.compareTo(SalesPrice) == 1}" scope="page"/>
+	
+	<isif condition="${ShowStandardPrice}">
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<div class="product-discounted-price">
+				<span class="price-salon-msg">${Resource.msg('product.salon.price','product',null)}</span>
+				<span class="product-standard-price" title="Regular Price"><isprint value="${StandardPrice}"/></span><br>
+				<span class="price-your-msg">${Resource.msg('product.your.price','product',null)}</span>
+				<span class="product-sales-price" title="Sale Price"><isprint value="${SalesPrice}"/></span>
+			</div>
+		<iselse>
+			<isif condition="${pdict.isQuickView}">
+				<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect', 'isquickview', 'true', 'pid', pdict.Product.ID)}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+			<iselse>
+				<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+			</isif>
+		</isif>
+	<iselse>
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<span class="product-sales-price" title="Sale Price"><isprint value="${SalesPrice}"/></span>
+		<iselse>
+			<isif condition="${pdict.isQuickView}">
+				<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect', 'isquickview', 'true', 'pid', pdict.Product.ID)}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+			<iselse>
+				<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+			</isif>
+		</isif>
+	</isif>
+</iselseif>
+<iselseif condition="${pdict.view == 'productsetViewD'}" >
+	<iscomment>Product set pricing</iscomment>
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<span class="product-set-price">${Resource.msg('global.buyall','locale',null)}</span>
+	<iselse>
+		<isif condition="${pdict.isQuickView}">
+			<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect', 'isquickview', 'true', 'pid', pdict.Product.ID)}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+		<iselse>
+			<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+		</isif>
+	</isif>
+</iselseif>
+<iselse/>
+	<isif condition="${pdict.CurrentCustomer.authenticated}"> 	
+		<isset name="isGrid" value="${true}" scope="page"/>
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+		<a class="logintoviewprice" href="${URLUtils.https('LoginBarrier-LoginRedirect')}"><isprint value="${Resource.msg('login.toviewprice','account',null)}"/> </a>
+	</isif>
+</isif>

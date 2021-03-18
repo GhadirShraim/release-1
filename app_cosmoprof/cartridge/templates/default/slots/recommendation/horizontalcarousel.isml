@@ -1,0 +1,45 @@
+<isscript>
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+</isscript>
+<isinclude template="util/modules"/>
+
+<h2 class="carousel-heading"><isprint value="${slotcontent.calloutMsg}" encoding="off" /></h2>
+
+<ul id="recommendations-horizontal-carousel" class="recommendations-horizontal-carousel">
+	<isloop items="${slotcontent.content}" var="product">
+        <isif condition="${product.availabilityModel.isOrderable(1)}">
+            <li>
+                <isproducttile product="${product}" showswatches="${true}" showpricing="${true}" showpromotion="${true}" showrating="${true}"/>
+            </li>
+        </isif>
+	</isloop>
+</ul>
+
+<script>
+    $('.recommendations-horizontal-carousel').slick({
+        infinite: false,
+        speed: 300,
+        slidesToShow: 4,
+        slidesToScroll: 4,
+        dots: true,
+        responsive: [
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 3,
+                    arrows: false
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
+                    arrows: false
+                }
+            }
+        ]
+    });
+
+</script>

@@ -1,0 +1,41 @@
+/**
+* CopyAddressDetails
+* Updates one address with the details of another address.
+* TODO:  Figure out why UpdateObjectWithForm pipelet not working in ManageUsers-AddAddressesToChild
+*
+* @input baseAddress : dw.customer.CustomerAddress  The base address to get details from
+* @input copyAddress : dw.customer.CustomerAddress  The address that is getting copied details.  Typically new.
+*
+*
+*/
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		if ( !empty(args.baseAddress) && !empty(args.copyAddress)){
+			for (var key in args.baseAddress){
+				if ((key != 'saluation') 
+					&& (key != 'custom') 
+					&& (key != 'UUID') 
+					&& (key != 'lastModified') 
+					&& (key != 'creationDate')
+					&& (key != 'fullName') 
+					&& (typeof args.baseAddress[key] != 'function')){
+						args.copyAddress[key] = args.baseAddress[key];
+				}
+			}
+			for (var key in args.baseAddress.custom){
+				args.copyAddress.custom[key] = args.baseAddress.custom[key];
+			}
+		}
+	}
+	catch (ex){
+		Logger.error("[CopyAddressDetails] There was an error copying the address details: {0}",ex);
+		
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

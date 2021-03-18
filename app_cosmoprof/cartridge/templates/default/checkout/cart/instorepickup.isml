@@ -1,0 +1,132 @@
+<isinclude template="util/modules"/>
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+<isif condition="${isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+	<div class="mini-cart-total store-pickup-total">
+		<isscript>
+			// calculate the total number of items in pickup in store by adding quantities together
+			var qty : Number = 0;
+			if(!empty(pdict.GetShoppingList)){
+				var pliIt : dw.util.Iterator =  pdict.GetShoppingList.items.iterator();
+				
+				while (pliIt.hasNext()) { 
+					var pli  = pliIt.next(); 
+					qty += pli.quantity; 
+				}
+			}
+			
+		</isscript>
+		<a href="${URLUtils.https('ShoppingList-Start')}" title="${Resource.msg('ministorepickup.viewstorepickup','checkout',null)}" class="mini-cart-link store-pickup-cart">
+			<isif condition="${qty > 0}">
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+					<span class="mini-cart-label">${Resource.msg('ministorepickup.torepickup','checkout',null)}</span>
+					<span class="mini-cart-total-label">
+						<span><isprint value="${qty}" formatter="##" /></span
+					</span>
+				</isif>
+			<iselse>
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+				    <span class="mini-cart-label">${Resource.msg('ministorepickup.torepickup','checkout',null)}</span>
+					<span class="mini-cart-total-label empty">
+						<span><isprint value="${qty}" formatter="##" /></span>
+					</span>
+				</isif>
+			</isif>
+		</a>
+	</div>
+	<div class="mini-cart-content pickup-in-store">
+	<div class="store-pickup-detail view-list-detail">
+		<div class="minicat-checkout-closeicon">	 
+ 			 <div class="minicart-checkoutlink">
+				<a class="mini-cart-link-checkout button button-fancy-medium black-button" href="${URLUtils.https('ShoppingList-Start')}" title="${Resource.msg('minicart.viewlist','checkout',null)}">${Resource.msg('minicart.viewlist','checkout',null)}</a>
+			 </div>
+			 <div class="minicart-close-icon instore-close-icon">
+			 </div>
+		</div>
+		<div class="store-pickup-nearest-store">
+			<iscomment><div class="your-nearest-store">
+				<isprint value="${Resource.msg('ministorepickup.torepickup','checkout',null)}" />
+			</div></iscomment>
+			<!-- Store Instruction -->
+			<div class="shopping-list-wrapper">
+				<iscontentasset aid="shopping-list-header-instruction" />
+			</div>
+			<!-- Check if Customer already save any Store -->
+			<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.savedStore)}">
+				<isset name="savedStore" value="${JSON.parse(pdict.CurrentCustomer.profile.custom.savedStore)}" scope="Page" />
+			</isif>
+	
+			<div class="sl-dropdwn-content address-detail">
+				<div class="img">
+					<img src="${URLUtils.staticURL('/images/list-view.png')}" alt="" />
+				</div>
+				<isif condition="${!empty(savedStore)}">
+					<div class="addr-outer">
+						<div class="sl-closest-store">
+							<isprint value="${Resource.msg('shoppinglist.header.savedStore','storepickup',null)}" />
+						</div>
+	
+						<!-- Get first Store -->
+	
+						<isif condition="${!empty(savedStore.address1)}">
+							<div class="address1">
+								<isprint value="${savedStore.address1}" />
+							</div>
+						</isif>
+	
+						<isif condition="${!empty(savedStore.address2)}">
+							<div class="address2">
+								<isprint value="${savedStore.address2}" />
+							</div>
+						 </isif>
+						 <isif condition="${!empty(savedStore.city)}"><span class="city"><isprint value="${savedStore.city}" />,</span></isif> <isif condition="${!empty(savedStore.region)}"><span class="state"><isprint value="${savedStore.region}" />,</span></isif> <isif condition="${!empty(savedStore.postalcode)}"><span class="zip"><isprint value="${savedStore.postalcode}" /></span></isif>
+						 <isif condition="${!empty(neareststore.local_phone)}">
+						 	<div class="local-phone"><isprint value="${neareststore.local_phone}" /></div>
+						 </isif>
+					</div>
+				<iselseif condition="${!empty(pdict.Stores)}">
+					<div class="addr-outer">
+						<div class="sl-closest-store">
+							<isprint value="${Resource.msg('shoppinglist.header.closeststore','storepickup',null)}" />
+						</div>
+	
+						<!-- Get first Store -->
+						<isset name="neareststore" value="${pdict.Stores[0]}" scope="Page" />
+						<isif condition="${!empty(neareststore.address_1)}">
+							<div class="address1">
+								<isprint value="${neareststore.address_1}" />
+							</div>
+						</isif>
+	
+						<isif condition="${!empty(neareststore.address_2)}">
+							<div class="address2">
+								<isprint value="${neareststore.address_2}" />
+							</div>
+						 </isif>
+						 <isif condition="${!empty(neareststore.city)}"><span class="city"><isprint value="${neareststore.city}" />,</span></isif> <isif condition="${!empty(neareststore.region)}"><span class="state"><isprint value="${neareststore.region}" />,</span></isif> <isif condition="${!empty(neareststore.post_code)}"><span class="zip"><isprint value="${neareststore.post_code}" /></span></isif>
+						 <isif condition="${!empty(neareststore.local_phone)}">
+						 	<div class="local-phone"><isprint value="${neareststore.local_phone}" /></div>
+						 </isif>
+					 </div>
+				 </isif>
+			</div>
+			<span class="mini-cart-close">Close</span>
+		</div>
+		<isif condition="${!empty(pdict.GetShoppingList) && pdict.GetShoppingList.items.length > 0}">
+			<div class="mini-cart-header store-pickup-header">Added to my Pickup In Store List</div>
+		<iselse>
+			<div class="mini-cart-header store-pickup-header">Your In Store List is Empty</div>
+		</isif>
+	</div>
+	
+	<!-- In store Pickup detail -->
+	<div class="store-pickup-content">
+		<div class="mini-cart-products custom-scroll update-mini-store-pickup">
+			<isif condition="${!empty(pdict.GetShoppingList) && pdict.GetShoppingList.items.length > 0}">
+				 <isinclude url="${URLUtils.url('Cart-StoreItems')}"/>
+			</isif>
+		</div>
+	</div>
+	
+	</div>
+</isif>

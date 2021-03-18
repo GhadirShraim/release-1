@@ -1,0 +1,50 @@
+/**
+* BuildSearchShowIncludeURL.ds
+*
+*-Description - Get exclusion rules from site prefs
+*
+*	@input HPM : dw.web.HttpParameterMap
+*	@input CustomerExclusionVal : String
+*	@input PortalExclusionVal : String
+*	@input ZipExclusionVal : String
+*	@input VOCExclusionVal : String
+*	@output IncludeURL : String
+*
+*/
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var currentHPM = args.HPM,
+		ignoredParams = ["custNo","portalCode","zip"];
+	
+	var loc = dw.web.URLUtils.http("Search-ShowInclude");
+	
+	//add new parameters
+	//add consolidation exclude
+	if(args.ZipExclusionVal){
+		loc.append("ze",args.ZipExclusionVal);
+	}
+	//add customer exclude
+	if(args.PortalExclusionVal){
+		loc.append("pe",args.PortalExclusionVal);
+	}
+	//add zip exclude
+	if(args.CustomerExclusionVal){
+		loc.append("ce",args.CustomerExclusionVal);
+	}
+	
+	if(args.VOCExclusionVal){
+		loc.append("ve",args.VOCExclusionVal);
+	}
+	
+	if(!empty(currentHPM.parameterNames)){
+		for each(let param in currentHPM.parameterNames){
+			if(ignoredParams.indexOf(param) == -1){
+				loc.append(param, currentHPM[param].stringValue);
+			}
+		}
+	}
+	args.IncludeURL = loc.toString();
+	
+	return PIPELET_NEXT;
+}

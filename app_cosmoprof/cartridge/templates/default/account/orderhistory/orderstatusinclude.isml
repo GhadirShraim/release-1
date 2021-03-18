@@ -1,0 +1,42 @@
+<isinclude template="util/modules"/>
+<iscomment>
+	This template renders an order's status.
+	There must be an object called 'Order' in page scope.
+</iscomment>
+ 
+<div class="order-status">
+	
+	<iscomment>CPUAT-153
+		<span class="label">${Resource.msg('orderstatusinclude.statuslabel','account',null)}</span>
+	 </iscomment>
+	<isif condition="${!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'SHIPPED'.toLocaleLowerCase()}">
+		<span class="value order_shipped"><isprint value="${Resource.msg('orderstatusinclude.ordershipped','account',null)}" /></span>
+
+	<iselseif condition="${(!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'OPEN'.toLocaleLowerCase())}">
+
+		<span class="value processing order_processed"><isprint value="${Resource.msg('orderstatusinclude.orderprocessed','account',null)}" /></span>
+	
+	<iselseif condition="${(!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'STORE PURCHASE'.toLocaleLowerCase())}">
+
+		<span class="value order_store_purchase"><isprint value="${Resource.msg('orderchannel.storepurchase','account',null)}" /></span>
+
+	<iselseif condition="${!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'CANCELLED'.toLocaleLowerCase()}">
+
+		<span class="value order_canceled"><isprint value="${Resource.msg('orderstatusinclude.ordercanceled','account',null)}" /></span>
+		
+	<iselseif condition="${!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'PROCESSING'.toLocaleLowerCase()}">
+
+		<span class="value order_canceled"><isprint value="${Resource.msg('orderstatusinclude.orderprocessing','account',null)}"/></span>
+		
+	<iselseif condition="${!empty(OrderStatus) && OrderStatus.toLocaleLowerCase() == 'RETURN'.toLocaleLowerCase()}">
+
+		<span class="value order_canceled"><isprint value="${Resource.msg('orderstatusinclude.orderreturn','account',null)}"/></span>
+
+	<iselse>
+		&nbsp
+		<iscomment> CP-611. Removed if No any status from CRM.
+		<span class="value clearfix">${Resource.msg('orderstatusinclude.ordercontact','account',null)}</span>
+		 </iscomment>
+	</isif>
+	
+</div> 

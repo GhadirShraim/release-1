@@ -1,0 +1,57 @@
+<isinclude template="util/modules"/>
+
+<div class="address-shipto-change">
+	<isif condition="${pdict.CurrentCustomer.profile != null && !empty(pdict.CurrentCustomer.profile.custom.activeShipAddressID)}">
+		<div>
+			<isset name="selectedAddress" value="${pdict.CurrentCustomer.addressBook.getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID)}" scope="page"/>
+			<isif condition="${!empty(selectedAddress)}">
+				<span class="address-choseShipTo">
+					${Resource.msg('addressselect.choseShipTo','account',null)}:
+				</span><br/>
+				<isprint value="${selectedAddress.fullName}"/><br/>
+				<isprint value="${selectedAddress.address1}"/><br/>
+				<isif condition="${!empty(selectedAddress.address2)}">
+					<isprint value="${selectedAddress.address2}"/><br/>
+				</isif>
+				<isprint value="${selectedAddress.city + ', ' + selectedAddress.stateCode + '  ' + selectedAddress.postalCode}"/>
+			</isif>
+		</div>
+	</isif>
+	
+	<div class="address-unabletoship">
+		<span class="red">
+			${Resource.msg('addressselect.unabletoship','account',null)}
+		</span>
+		<iscontentasset aid="unable-to-ship" encoding="off"/>
+	</div>
+
+	<div class="no-ship-items-list">
+		<isloop items="${pdict.UnshippableProducts}" var="pli"	status="loopstate">
+			<div class="no-ship-items-loop">
+				<isset name="prod" value="${dw.catalog.ProductMgr.getProduct(pli)}" scope="page"/>
+				<isprint value="${prod.name}"/><br>
+				<isprint value="${'Item No: ' + prod.ID}"/><br>
+				<isif condition="${!empty(prod.custom.size)}">
+					${Resource.msg('global.size','locale',null)}
+					<isprint value="${prod.custom.size}"/><br>
+				</isif>
+			</div>
+		</isloop>
+	</div>
+	
+	<form action="${URLUtils.httpsContinue()}" name="${pdict.CurrentForms.shipcarterror.htmlName}" class="ship-cart-error-form">	
+		<button class="cancel cancel-button" type="submit" name="${pdict.CurrentForms.shipcarterror.cancel.htmlName}" value="${Resource.msg('global.cancel','locale',null)}">
+			${Resource.msg('addressselect.backAddressSelection','account',null)}
+		</button>
+		
+		<button class="apply-button" type="submit" name="${pdict.CurrentForms.shipcarterror.confirm.htmlName}" value="${Resource.msg('global.confirm','locale',null)}">
+			${Resource.msg('addressselect.confirm','account',null)}
+		</button>
+	</form>
+</div>
+<div class="shippingAddressDialog" style="display:none">
+  <isinclude template="account/addressbook/shippingaddressdialog"/>
+</div>
+<script type="text/javascript">
+	app.shippingcarterrordialog.init();
+</script>

@@ -1,0 +1,104 @@
+/**
+* BuildSearchPhrase.ds
+*
+*-Description - Get exclusion rules from site prefs
+*
+*	@input CustomerExclusionVal : String
+*	@input PortalExclusionVal : String
+*	@input ZipExclusionVal : String
+*	@input VOCExclusionVal : String
+*	@input SearchPhraseIn : String
+*   @input CurrentCustomer : dw.customer.Customer Current customer.
+*	@output SearchPhraseOut : String
+*	@output SearchPhraseBreadcrumbs : String
+*
+*/
+var su = require('dw/util').StringUtils;
+var site = require('dw/system').Site;
+var Customer : dw.customer.Customer = require('dw/customer').Customer;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var sf = args.SearchPhraseIn || ('baselineSearchValue' in site.current.preferences.custom ? site.current.preferences.custom.baselineSearchValue : '');
+	
+	//CPUAT-255 : PRELOGIN BLOCK CERTAIN PRODUCTS - START
+	if(!empty(args.CurrentCustomer) && !(args.CurrentCustomer.authenticated)) {
+		var currentSiteURL = request.httpHost; // Fail safe in case Site Pref is empty.
+		var defaultChainCode = 'defaultChainCode' in site.current.preferences.custom ? site.current.preferences.custom.defaultChainCode : '';
+		var portalToURLTable = 'PortalToURL' in site.current.preferences.custom ? JSON.parse(site.current.preferences.custom.PortalToURL) : '';
+		var preLoginExclusionTable = 'preLoginExclusion' in site.current.preferences.custom ? JSON.parse(site.current.preferences.custom.preLoginExclusion) : '';
+		
+		//NOT GOOD PRACTICE, CAN BE REMOVED ONCE DEFAULTCHAINCODE SITE PREF SET WITH VALUE 00 PREFIX 
+		if(defaultChainCode.length < 5){
+			defaultChainCode = '00' + defaultChainCode;
+		}
+	
+		if(!empty(defaultChainCode) && !empty(portalToURLTable)  && !empty(preLoginExclusionTable)) {		
+			currentSiteURL = portalToURLTable[defaultChainCode];
+			if (!empty(currentSiteURL)){
+				var preLoginExclusionVal = preLoginExclusionTable[currentSiteURL];
+				if(!empty(preLoginExclusionVal) && preLoginExclusionVal.indexOf('|') === -1){
+					if(sf.indexOf(preLoginExclusionVal) === -1) {
+						sf = su.format('{0} -"|{1}|"',sf,preLoginExclusionVal);
+					}
+				} else if(!empty(preLoginExclusionVal) && preLoginExclusionVal.indexOf('|') != -1 ){
+					var preLoginExclusionValArray = preLoginExclusionVal.split('|');
+					for each (var preLoginExclusionValue in preLoginExclusionValArray ){
+						if(sf.indexOf(preLoginExclusionValue) === -1){
+							sf = su.format('{0} -"|{1}|"',sf,preLoginExclusionValue);
+						}
+					}
+				}
+			}
+		}
+	}
+	//CPUAT-255 : PRELOGIN BLOCK CERTAIN PRODUCTS - END
+	
+	if(!empty(args.CustomerExclusionVal) || !empty(args.PortalExclusionVal) || !empty(args.ZipExclusionVal) || !empty(args.VOCExclusionVal))
+	{		
+		if(!empty(args.CustomerExclusionVal))
+		{
+			if(sf.indexOf(args.CustomerExclusionVal) === -1)
+			{
+				sf = su.format('{0} -"|{1}|"',sf,args.CustomerExclusionVal);
+			}
+		}
+		
+		if(!empty(args.PortalExclusionVal))
+		{
+			if(sf.indexOf(args.PortalExclusionVal) === -1)
+			{
+				sf = su.format('{0} -"|{1}|"',sf,args.PortalExclusionVal);
+			}
+		}
+		
+		if(!empty(args.ZipExclusionVal))
+		{
+			if(sf.indexOf(args.ZipExclusionVal) === -1)
+			{
+				sf = su.format('{0} -"|{1}|"',sf,args.ZipExclusionVal);
+			}
+		}
+		
+		if(!empty(args.VOCExclusionVal))
+		{
+			if(sf.indexOf(args.VOCExclusionVal) === -1)
+			{
+				sf = su.format('{0} -"|{1}|"',sf,args.VOCExclusionVal);
+			}
+		}
+	}
+	
+	var bSV = 'baselineSearchValue' in site.current.preferences.custom ? site.current.preferences.custom.baselineSearchValue : '';
+	var breadCrumb;
+	
+	if(!empty(bSV))
+	{
+		breadCrumb = sf.substring(0, sf.indexOf('-'));
+	}
+	
+	args.SearchPhraseBreadcrumbs = breadCrumb;
+	args.SearchPhraseOut = sf;
+	
+	return PIPELET_NEXT;
+}

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19" secure="true">
+	<group formid="cosmoprofAccount">
+		<field formid="customerType" type="string" default-value="A">
+			<options>
+				<option optionid="C" label="customerType.proclubCardNumber" value="C"/>
+				<option optionid="A" label="customerType.cosmoprofAccountNumber" value="A"/>
+			</options>	
+		</field>
+		
+		<field formid="accountNumber" label="preregistration.accountNumber" type="string" mandatory="false" 
+			binding="accountNumber" max-length="50"/>
+		<field formid="cardNumber" label="preregistration.cardNumber" type="string" mandatory="false" binding="cardNumber" min-length="12" max-length="50" range-error="forms.errorCardNumberLength"
+			regexp="(^[0-9]*(30|50)+$)" parse-error="forms.errorCardNumberInvalid"/>
+		
+		<field formid="zip" label="forms.billingzippostalcode" type="string" mandatory="false" min-length="5" max-length="10" 
+		   regexp="(^\d{5}(-\d{4})?$)|(^[abceghjklmnprstvxyABCEGHJKLMNPRSTVXY]{1}\d{1}[A-Za-z]{1} *\d{1}[A-Za-z]{1}\d{1}$)" 
+		   binding="postalCode" parse-error="forms.errorZipParse"
+		   missing-error="forms.errorzip"/>
+		
+		<action formid="register" valid-form="true"/>
+	</group>
+	
+	<group formid="registration">
+		<field formid="customerType" type="string" default-value="A">
+			<options>
+				<option optionid="A" label="customerType.cosmoprofAccountNumber" value="A"/>
+				<option optionid="C" label="customerType.proclubCardNumber" value="C"/>
+			</options>	
+		</field>
+		
+		<field formid="accountNumber" label="registration.accountNumber" type="string" mandatory="false" 
+			binding="accountNumber" max-length="50"/>
+		<field formid="cardNumber" label="registration.cardNumber" type="string" mandatory="false" binding="cardNumber" min-length="12" max-length="50" range-error="forms.errorCardNumberLength"
+			regexp="(^[0-9]*(30|50)+$)" parse-error="forms.errorCardNumberInvalid"/>
+		
+		<field formid="zip" label="registration.billingzippostalcode" type="string" mandatory="false" min-length="5" max-length="10" 
+		   regexp="(^\d{5}(-\d{4})?$)|(^[abceghjklmnprstvxyABCEGHJKLMNPRSTVXY]{1}\d{1}[A-Za-z]{1} *\d{1}[A-Za-z]{1}\d{1}$)" 
+		   binding="postalCode" parse-error="forms.errorZipParse"
+		   missing-error="forms.errorzip"/>
+		
+		<action formid="register" valid-form="true"/>
+	</group>
+</form>

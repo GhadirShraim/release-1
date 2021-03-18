@@ -1,0 +1,39 @@
+<isdecorate template="account/orderhistory/pt_orderhistory">
+<isinclude template="util/modules"/>
+
+	<isif condition="${!empty(pdict.OrderDetails[0])}">
+	
+		<isset name="order" value="${pdict.OrderDetails[0]}" scope="page"/>
+		<isset name="dwOrderID" value="${pdict.CurrentHttpParameterMap.orderID.toString().replace('DWR','')}" scope="page"/>
+		<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('recentOrder') && pdict.CurrentHttpParameterMap.recentOrder == 'true'}">
+			<isset name="dwOrderID" value="${pdict.OrderNo}" scope="page"/>
+		</isif>
+		
+		<isorderdetails order="${order}" page="history"/>
+		<div class="form-row order-detail-options">
+			<isif condition="${pdict.CurrentCustomer.authenticated}">
+				<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID')}"> 
+					<isreorder order_id="${pdict.CurrentHttpParameterMap.isParameterSubmitted('dwreOrderID') ? pdict.CurrentHttpParameterMap.dwreOrderID : ''}"/>
+				<iselseif condition="${!empty(dwOrderID) && dwOrderID !=null}">
+					<isreorder order_id="${dwOrderID}"/>
+				</isif>
+			</isif>
+		</div>
+		
+	<iselse>
+
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<div class="back">
+				<a href="${request.httpReferer}" title="${Resource.msg('orderdetails.returnorder','account',null)}">
+					${Resource.msg('orderdetails.returnorder','account',null)}
+				</a>
+			</div>
+		</isif>
+		
+		<div class="not-found">
+			${Resource.msg('orders.notfound','account',null)}
+		</div>
+	
+	</isif>
+
+</isdecorate>

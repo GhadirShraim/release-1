@@ -1,0 +1,243 @@
+<iscache type="relative" hour="24" varyby="price_promotion"/>
+<isinclude template="util/modules"/>
+
+<iscomment><!--
+  This template displays a 2-level category tree as top navigation.
+  Only categories marked with showInMenu are shown.
+
+  A custom attribute named "headerMenuBanner" can be defined on top level
+  categories to display a banner.
+
+  The template used for adding the banner is:
+
+    <p>
+       <a href="$url('Search-Show', 'cgid', 'CATEGORY_ID')$">
+          <img src="http://ipsumimage.appspot.com/200x150,f25bb0" width="200" height="150" alt="CATEGORY_ID" />
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+       </a>
+    </p>
+
+--></iscomment>
+
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isscript>
+	importScript( "util/ViewHelpers.ds" );
+	//var unclickablecat = 
+	if('unclickableCaregoryId' in dw.system.Site.getCurrent().preferences.custom && !empty(dw.system.Site.getCurrent().getCustomPreferenceValue('unclickableCaregoryId'))) {
+		var unclkblecat : dw.util.ArrayList = new dw.util.ArrayList(dw.system.Site.getCurrent().getCustomPreferenceValue('unclickableCaregoryId'));
+	}
+	
+	var isPortalUser = pdict.CurrentSession.customerAuthenticated;
+	var custVerified = pdict.CurrentCustomer.authenticated;
+	
+	var conCode = pdict.conCode;
+    var cCode = pdict.cCode;
+    
+    if(empty(cCode) || cCode == null)
+    {
+    	cCode = '00' + dw.system.Site.current.preferences.custom.defaultChainCode;
+    }
+	
+	topLevel = getTopLevelCategory();
+</isscript>
+<iscomment>CP-558 </iscomment>
+	<isset name="disallowcardsaving" value="${false}" scope="Page" />
+	<isset name="custConsCode" value="" scope="page" />
+	<isif condition="${!empty(pdict.CurrentCustomer.profile)}">
+		<isset name="custConsCode" value="${pdict.CurrentCustomer.profile.custom.consolidationCode}" scope="Page" />
+	</isif>
+	<isif condition="${!empty(custConsCode)}">
+		<isset name="DisallowConsCodes" value="${dw.system.Site.current.preferences.custom.consolidationtodisallowSavingCard}" scope="Page" />
+		<isloop items="${DisallowConsCodes}" var="conscode" > 
+			<isif condition="${conscode == custConsCode }">
+				<isset name="disallowcardsaving" value="${true}" scope="Page" />
+				<isbreak>
+			 </isif>
+		</isloop>
+	 </isif>
+
+	<isif condition="${topLevel}">
+	
+		<ul class="menu-category level-1 clearfix">
+		<iscomment>Move Login Logout to Top CP-411 </iscomment>
+		<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+			<iscomment>Don't Show Login/Logout menu in app </iscomment>
+		<iselse>
+			<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated)}">
+				<li class="level-1 hide-desktop logout">
+					  <a class="logout-btn" href="${URLUtils.https('Login-Logout')}">${Resource.msg('global.signout','locale',null)} </a>
+				</li>
+			<iselse>
+				<li class="level-1 hide-desktop">
+					<a title="Login" href="${URLUtils.https('LoginBarrier-MobileLogin')}" class="user-login">${Resource.msg('global.login','locale',null)}</a>
+				</li>
+				<li class="level-1 hide-desktop">  
+					<a title="Login" href="${URLUtils.https('LoginBarrier-NewCustomer')}" class="user-login">${Resource.msg('globalaccount.createheader','locale',null)}</a>
+				</li>
+			</isif>
+		</isif>
+			<iscomment><!-- Use two loops because the demo catalog has too many nested categories --></iscomment>
+			<isloop items="${getSubcategoriesInMenuForCategory(topLevel)}" var="topCat" status="catstatus">
+				<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest) && !empty(topCat.custom.notShowInApp) && topCat.custom.notShowInApp}">
+					<iscomment>Don't Show Category for app</iscomment>
+				<iselse>
+					<isif condition="${!isPortalUser && !checkIfExcluded(conCode,cCode,topCat) && Boolean(topCat.custom.enablePurchaseHistory) === false}">
+						<li  ${'categoryClass' in topCat.getCustom() && topCat.getCustom().categoryClass != null ? 'class=' + topCat.getCustom().categoryClass : ''} ${catstatus.first ? 'class=first' : ''} ${catstatus.last ? 'class=last' : ''}>
+							<isif condition="${!empty(unclkblecat) && unclkblecat.contains(topCat.getID()) } "> 
+								<a href="javascript:void(0)"  class="level-1">
+									<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+								</a>
+								<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+							<iselse>
+								<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest) && !empty(topCat.custom.app_alternative_url)}">
+									<a href="${topCat.custom.app_alternative_url}"  class="level-1 noUpperCase">
+										<isprint value="${topCat.getDisplayName()}"/>
+									</a>
+								<iselseif condition="${!empty(topCat.custom.alternativeUrl)}">
+									<a href="${topCat.custom.alternativeUrl}"  class="level-1 noUpperCase">
+										<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+									</a>
+								<iselse>
+									<a href="${URLUtils.https('Search-Show','cgid',topCat.getID())}"  class="level-1">
+										<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+									</a>
+								 </isif>
+								
+								<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+							</isif>
+								
+						</li>
+						
+					<iselseif condition="${isPortalUser && custVerified && !checkIfExcluded(conCode,cCode,topCat)}"> 
+						<li  ${'categoryClass' in topCat.getCustom() && topCat.getCustom().categoryClass != null ? 'class=' + topCat.getCustom().categoryClass : ''} ${catstatus.first ? 'class=first' : ''}   ${Boolean(topCat.custom.enablePurchaseHistory) === true ? 'class=hide-desktop' : ''} ${catstatus.last ? 'class=last' : ''}>
+							<isif condition="${!empty(unclkblecat) && unclkblecat.contains(topCat.getID()) } "> 
+								<a href="javascript:void(0)" class="level-1">
+									<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+								</a>
+							<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+							<iselse>
+								<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest) && !empty(topCat.custom.app_alternative_url)}">
+									<a href="${topCat.custom.app_alternative_url}"  class="level-1 noUpperCase">
+										<isprint value="${topCat.getDisplayName()}"/>
+									</a>
+								<iselseif condition="${!empty(topCat.custom.alternativeUrl)}">
+									<a href="${topCat.custom.alternativeUrl}"  class="level-1 noUpperCase">
+										<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+									</a>
+								<iselse>
+									<a href="${URLUtils.https('Search-Show','cgid',topCat.getID())}" class="level-1">
+										<isprint value="${topCat.getDisplayName()}"/> <isif condition="${'secondCategoryName' in topCat.getCustom() && topCat.getCustom().secondCategoryName != null}">  <span class="second-cat"><isprint value="${topCat.getCustom().secondCategoryName}" /></span> <iselse/> </isif>
+									</a>
+								</isif>
+								
+								<iscatportalflyout category="${topCat}" conCode="${conCode}" chainCode="${cCode}"/>
+							
+							</isif>
+							
+						</li>
+					</isif>
+				</isif>
+			</isloop>
+			<iscomment>As Per redesign ecatalog should come before Learn 
+				<li class="level-1">	
+					<a href="${URLUtils.https('Page-Show','cid','publications')}"  title="${Resource.msg('global.ecatalog','locale',null)}" class="level-1"><isprint value="${Resource.msg('global.ecatalog','locale',null)}" />
+					</a>
+				</li>
+				<li class="level-1">	
+					<a href="${URLUtils.https('Search-ShowContent','fdid','blog-777')}"  title="${Resource.msg('global.blog','locale',null)}" class="level-1"><isprint value="${Resource.msg('global.blog','locale',null)}" />
+					</a>
+				</li>
+			 </iscomment>
+		<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated)}">
+			<li class="level-1 hide-desktop">
+				<a href="${URLUtils.https('Account-Show')}" title="${Resource.msg('registration.myaccount','account',null)}" class="level-1">
+				   <isprint value="${Resource.msg('registration.myaccount','account',null)}	" />
+				</a>
+				<div class="user-info level-2">
+				<ul  class="level-2" ><li><a class="personalinfo" title="Show or update your personal information" href="${URLUtils.https('Account-ViewProfile')}"><isprint value="${Resource.msg('account.myinformation','account',null)}" /></a></li>
+					<li><a class="addresses" title="Manage your billing and shipping addresses" href="${URLUtils.https('Address-List')}"><isprint value="${Resource.msg('addresslist.header','account',null)}" /></a></li>
+					<isif condition="${!disallowcardsaving}"> 
+						<li><a class="creditcards" title="Manage Credit Cards" href="${URLUtils.https('PaymentInstruments-List')}"><isprint value="${Resource.msg('paymentinstrumentlist.header','account',null)}" /></a></li>
+					</isif>
+					<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.isAccountOwner) && pdict.CurrentCustomer.profile.custom.isAccountOwner && pdict.CurrentCustomer.profile.custom.customerType.value == 'A'}">
+						<li><a class="manageusers" title="Manage Users" href="${URLUtils.https('ManageUsers-Show')}"><isprint value="${Resource.msg('account.manageusers','account',null)}" /></a></li>
+					</isif>
+					<li><a class="chngpwd" title="Change Password" href="${URLUtils.https('Account-ChangePassword')}"><isprint value="${Resource.msg('account.changepassword','account',null)}" /></a></li>
+				</ul>
+				</div>
+			</li>
+			
+			<li class="level-1 hide-desktop favorites">		
+				<a href="${URLUtils.https('Wishlist-Show')}" title="${Resource.msg('headercustomerinfo.favorites','components',null)} " class="user-account">
+					<span class="favoritesmenu"><isprint value="${Resource.msg('headercustomerinfo.favorites','components',null)}" /></span>
+					<span class="heart-menu"><img src="${URLUtils.staticURL('/images/header/favorites-menu.png')}" alt=""  class="rightarrow" /></span>
+				</a>
+			</li>
+			<li class="level-1 hide-desktop mylist">
+			 	<a href="${URLUtils.https('GiftRegistry-Start')}" title="${Resource.msg('headercustomerinfo.lists','components',null)} " class="user-account level-1">
+			  		<isprint value="${Resource.msg('headercustomerinfo.lists','components',null)} " />    		
+			    </a>
+			  	<div  class="level-2">
+					<div class="menu-wrapper">
+						<ul  class="level-2">
+							<li>
+								<isinclude url="${URLUtils.url('GiftRegistry-ListName')}"/>
+		    
+							</li>
+						</ul>
+					</div>
+				</div>
+				
+			</li>
+			
+			<iscomment> CP-834 Commenting the order-history 
+			<li class="level-1 hide-desktop orderhis">
+				<a href="${URLUtils.https('Order-History')}" title="${Resource.msg('orders.purchasehistory', 'account', null)}">
+				  	<isprint value="${Resource.msg('orders.purchasehistory', 'account', null)}" />
+				</a>
+			</li>
+			</iscomment>
+			
+			<li class="level-1 hide-desktop quickorder">
+				<a href="${URLUtils.https('Account-QuickOrder')}" title="${Resource.msg('headercustomerinfo.quickorder','components',null)}">
+				  	<isprint value="${Resource.msg('headercustomerinfo.quickorder','components',null)}" />
+				</a>
+			</li>
+			<isif condition="${isCosmoUser}">
+				<li class="level-1 hide-desktop mylist">
+					<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+						<a href="http://stores.cosmoprofbeauty.com?cosmoprof_app=true" title="${Resource.msg('header.storelocator','components',null)}"> ${Resource.msg('header.storelocator','components',null)} </a>
+					<iselse>
+						<a href="http://stores.cosmoprofbeauty.com/" title="${Resource.msg('header.storelocator','components',null)}"> ${Resource.msg('header.storelocator','components',null)} </a>
+					</isif>
+				</li>
+			</isif>
+			<iscomment>Moved To Top
+			<li class="level-1 hide-desktop logout">
+			      <a class="logout-btn" href="${URLUtils.https('Login-Logout')}">
+								${Resource.msg('global.signout','locale',null)}
+				  </a>
+			</li>
+			 </iscomment>
+		<iselse/>
+		<iscomment>Moved To Top
+			<li class="level-1 hide-desktop">  
+				<a title="Login" href="${URLUtils.https('LoginBarrier-Show')}" class="user-login">Login</a>
+			</li>
+		 </iscomment>
+			<isif condition="${isCosmoUser}">
+				<li class="level-1 hide-desktop">
+				   <isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+						<a href="http://stores.cosmoprofbeauty.com?cosmoprof_app=true" title="${Resource.msg('header.storelocator','components',null)}">
+					<iselse>
+						<a href="http://stores.cosmoprofbeauty.com/" title="${Resource.msg('header.storelocator','components',null)}">
+					</isif>
+				   <isprint value="${Resource.msg('header.storelocator','components',null)}" />  </a>
+				</li>
+			</isif>
+			<li class="level-1 hide-desktop">
+			   <a href="${URLUtils.https('Account-QuickOrder')}"  title="${Resource.msg('global.quickorder','locale',null)}"><isprint value="${Resource.msg('global.quickorder','locale',null)}" /></a>
+			</li>
+		</isif>
+	</ul>
+</isif>

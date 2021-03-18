@@ -1,0 +1,60 @@
+<tr>
+	<td style="${Resource.msg('email.tablecell','email',null)}">
+		<iscomment>Display product line and product using module</iscomment>
+		<isdisplayliproduct p_productli="${productLineItem}" p_editable="${false}"/>
+	</td>
+
+	<td style="${Resource.msg('email.tablecell','email',null)}">
+    	<iscomment>Render quantity. If it is a bonus product render word 'Bonus'</iscomment>
+    	<isset name="CurrencyCode" value="${dw.system.Site.getCurrent().getCurrencyCode()}" scope="pdict" />
+		<isset name="PriceEach" value="${productLineItem.adjustedPrice/productLineItem.quantity}" scope="pdict"/> 
+    	<isif condition="${productLineItem.bonusProductLineItem}">
+    		${Resource.msg('global.bonus','locale',null)}
+    	<iselse>
+           	<isprint value="${dw.value.Money(pdict.PriceEach, pdict.CurrencyCode)}" />
+           	<isif condition="${productLineItem.optionProductLineItems.size() > 0}">
+				<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+				<isset name="PriceEach2" value="${optionLI.adjustedPrice/productLineItem.quantity}" scope="pdict"/> 
+					<p style="${Resource.msg('email.error','email',null)}">+ <isprint value="${dw.value.Money(pdict.PriceEach2, pdict.CurrencyCode)}" /></p>
+				</isloop>
+			</isif>
+		</isif>
+    </td>
+    
+    <td align="center" style="${Resource.msg('email.tablecell','email',null)}">
+   		<isprint value="${productLineItem.quantity}"/>
+   	</td>
+
+    <td style="${Resource.msg('email.tablecell','email',null)}">
+    	<iscomment>Render quantity. If it is a bonus product render word 'Bonus'</iscomment>
+    	<isif condition="${productLineItem.bonusProductLineItem}">
+    		${Resource.msg('global.bonus','locale',null)}
+    	<iselse>
+           	<isprint value="${productLineItem.adjustedPrice}"/>		
+            <isif condition="${productLineItem.optionProductLineItems.size() > 0}">
+				<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+					<p style="${Resource.msg('email.error','email',null)}">+ <isprint value="${optionLI.adjustedPrice}"/></p>
+				</isloop>
+			</isif>
+		</isif>
+    </td>
+
+  		<iscomment>only show shipping address for first pli in shipment</iscomment>
+    <isif condition="${pliloopstate.first}">
+    	<isset name="rowSpan" value="${shipment.productLineItems.size()}" scope="page"/>
+	    <td rowspan="${rowSpan.toFixed()}" style="${Resource.msg('email.tablecell','email',null)} ${Resource.msg('email.tablecellshipping','email',null)}">
+	    	<div>
+	    		<isminishippingaddress p_shipment="${shipment}" p_editable="${false}" p_showmethod="${false}" p_showpromos="${false}"/>
+	    	</div>
+	    	
+	    	
+	    	
+	    	<isif condition="${!empty(shipment) && !empty(shipment.trackingNumber)}">
+		    	<div>
+		    		${Resource.msg('orderdetails.tracking','components',null)}
+		    		<!-- Tracking Number --><isprint value="${shipment.trackingNumber}"/>
+		    	</div>
+	    	</isif>
+	    </td>
+    </isif>
+</tr>

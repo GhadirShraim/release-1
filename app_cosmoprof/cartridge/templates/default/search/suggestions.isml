@@ -1,0 +1,91 @@
+<iscontent type="application/json" charset="UTF-8" compact="true"/>
+
+<iscomment>
+	This template renders the search suggestions as JSON response.
+	Each suggestion is composed of a suggested phrase (the suggestion itself)
+	and a count of hits, the suggested phrase would produce.
+</iscomment>
+
+<isscript>
+	var ojson = pdict.Suggestions;
+</isscript>
+
+	
+<isif condition="${ojson.category.available}"> 
+	<isif condition="${ojson.category}">
+		<isset name="showCat" value="${true}" scope="Page" />
+		<div>
+		<isset name="brandPortfolioCat" value="${'brandPortfolioCategory' in dw.system.Site.current.preferences.custom ? new dw.util.ArrayList(dw.system.Site.current.preferences.custom.brandPortfolioCategory) : ''}" scope="Page" />
+		
+			<isloop items="${ojson.category.categories}" alias="cat" >
+			<iscomment>Check for the parents category, if belongs to Brnad Portfolio, don't include in suggestions. We can check parent cat upto root as well in future.</iscomment>
+				<isif condition="${!empty(brandPortfolioCat) && !brandPortfolioCat.contains(cat.category.parent.ID)}">
+					<isif condition="${cat.category != null && cat.category.getOnlineFlag() && cat.category.getOnlineProducts().length > 0}"> 
+						<isif condition="${showCat}">
+							<div class="jsSearchTitle"> Categories </div>
+							<isset name="showCat" value="${false}" scope="Page" />
+						</isif>
+						<a class="jsEnhancedSearch" href="${URLUtils.url('Search-Show', 'cgid', cat.category.getID() )}" data-key= "${cat.category.displayName}"><span class="searchkeywrd">${ojson.keyword}</span> found in ${cat.category.displayName}</a></br>
+					</isif>
+				</isif>
+			</isloop>
+		</div>
+	</isif>
+</isif>
+
+<isif condition="${ojson.brand.available}"> 
+	<isif condition="${ojson.brand}">
+		<div class="jsSearchTitle"> Brands </div>
+		<div>
+			<isloop items="${ojson.brand.phrases}" alias="brand" >
+				<a class="jsEnhancedSearch" href="${URLUtils.url('Search-Show', 'cgid', 'shop-by-brand', 'prefn1', 'manufacturerName', 'prefv1', brand.phrase )}" data-key= "${brand.phrase}" >${brand.phrase}</a></br>
+			</isloop>
+		</div>
+	</isif>
+</isif>
+
+<isif condition="${ojson.bestSelerproduct.available}"> 
+	<isif condition="${ojson.bestSelerproduct}">
+		<isset name="count" value="${0}" scope="Page" />
+		<div class="jsSearchTitle"> Best Sellers </div>
+		<isloop items="${ojson.bestSelerproduct.productHits}" alias="prodHits">
+			<isif condition="${count < 5}">
+				<a class="jsEnhancedSearch" href="${URLUtils.url('Product-Show', 'pid', prodHits.product.ID)}" data-key= "${prodHits.product.name}" >${prodHits.product.name}</a></br>
+			<iselse>
+				</isbreak>
+			</isif>
+			<isset name="count" value="${count + 1}" scope="Page" />
+		</isloop>
+	</isif>
+</isif>
+<isif condition="${count > 5}"> 
+	<div class="view-all">
+		<a class="" href="${URLUtils.url('Search-Show', 'q', ojson.keyword, 'viewAllSearchPage', 'true')}" title="${Resource.msg('searchsuggestions.viewall','search',null)}">
+		    <isprint value="${Resource.msg('searchsuggestions.viewall','search',null)}" />
+		</a>
+	</div>
+</isif>
+
+
+<isif condition="${ojson.videos.available}"> 
+	<isif condition="${ojson.videos}">
+		<isset name="suggestionSize" value="${10}" scope="Page" />
+		<isset name="videocount" value="${0}" scope="Page" />
+		<isset name="fdid" value="${'digitallibrary'}" scope="page" />
+		<div>
+			<isset name="showLearn" value="${true}" scope="Page" />
+			<isloop items="${ojson.videos.content}" alias="suggestedContent"> 
+				<isloop items="${suggestedContent.getContent().folders}" var="folder">
+					<isif condition="${folder.ID == fdid && suggestedContent.getContent().custom.isVideo.value}"> 
+						<isif condition="${showLearn}">
+							<div class="jsSearchTitle">Learns</div>
+							<isset name="showLearn" value="${false}" scope="Page" />
+						</isif>
+						<a class="jsEnhancedSearch" href="${URLUtils.url('Page-Show', 'cid', suggestedContent.getContent().ID)}" data-key= "${suggestedContent.getContent().name}" >${suggestedContent.getContent().name}</a></br>
+					</isif>
+					<isset name="videocount" value="${count + 1}" scope="page" />
+				</isloop>
+			</isloop>
+		</div>
+	</isif>
+</isif>

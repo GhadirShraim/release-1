@@ -1,0 +1,83 @@
+/**
+* ExecBinaryWithCustomObject.ds
+*
+*-Description - Get exclusion rules from site prefs
+*
+*	@input CustomerNumber : String
+*	@input PortalCode : String
+*	@input ZipCode : String
+*	@output CustomerExclusionVal : String
+*	@output PortalExclusionVal : String
+*	@output ZipExclusoinVal : String
+*
+*/
+var su = require('dw/util').StringUtils;
+var CustomObjectMgr = require('dw/object').CustomObjectMgr;
+var PDSUtils = require("bc_pdsutils/cartridge/scripts/PDSUtils").PDSUtils;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	if(empty(args.CustomerNumber) || empty(args.PortalCode) || empty(args.ZipCode))
+	{ 
+		return PIPELET_ERROR; 
+	}
+	
+	var site = dw.system.Site.getCurrent();
+	var stringToSearch;
+	
+	//****PORTAL EXCLUDES****
+	var portalCode = su.format("P{0}",args.PortalCode);
+	args.PortalExclusionVal = portalCode;
+	
+	//Check for ****ZIPCODE EXCLUDES****
+	//Sample US exclude site pref id: USA_excl_txt_0
+	//Sample CA exclude site pref id: CAN_excl_txt_A0
+	var zipCodeInput = args.ZipCode.replace(/[^a-zA-Z\d:]/g,"");
+	var zipStartCharacter = zipCodeInput.charAt(0);
+	var zipSearchString = zipCodeInput.substr(1);
+	var exclusionCountryCode = "USA";
+	var zipSitePrefID = su.format("{0}_excl_txt_{1}",exclusionCountryCode,zipStartCharacter);
+	//stringToSearch = site.getCustomPreferenceValue(zipSitePrefID);
+	stringToSearch = CustomObjectMgr.getCustomObject("PAVData",zipSitePrefID).custom.binarySearchString;
+	args.ZipExclusoinVal = PDSUtils.binarySearch(stringToSearch,zipSearchString,4,8);
+	
+	//****CUSTOMER EXCLUDES****
+	//CXE_excl_txt
+	var customerNumber = args.CustomerNumber;
+	//stringToSearch = site.getCustomPreferenceValue("CXE_excl_txt");
+	stringToSearch = CustomObjectMgr.getCustomObject("PAVData","CXE_excl_txt").custom.binarySearchString;
+	args.CustomerExclusionVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,12);
+	
+	//****CUSTOMER INCLUDES****
+	//0325004I001
+	//CXI_txt - 0016836I001
+	//stringToSearch = site.getCustomPreferenceValue("CXI_txt");
+	var includeRecordVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,12);	
+	
+	//*****REPLACEMENTS FOR INCLUDES*****
+	//Replacements_I001 - P016P103
+	if(!empty(includeRecordVal)){
+	
+		var replacementStringPrefVal = su.format("Replacements_{0}",includeRecordVal);
+	
+		//stringToSearch = site.getCustomPreferenceValue(replacementStringPrefVal);
+		stringToSearch = CustomObjectMgr.getCustomObject("PAVData",replacementStringPrefVal).custom.binarySearchString;
+		
+		var portalExclusionVal = PDSUtils.binarySearch(stringToSearch,portalCode,4,8);
+		if(portalExclusionVal != null){
+			args.PortalExclusionVal = portalExclusionVal;
+		}
+		
+		var zipExclusoinVal = PDSUtils.binarySearch(stringToSearch,args.ZipExclusoinVal,4,8);
+		if(zipExclusoinVal != null){
+			args.ZipExclusoinVal = zipExclusoinVal;
+		}
+		
+		var customerExclusionVal = PDSUtils.binarySearch(stringToSearch,args.CustomerExclusionVal,4,8);
+		if(customerExclusionVal != null){
+			args.CustomerExclusionVal = customerExclusionVal;
+		}
+	}
+		
+	return PIPELET_NEXT;
+}

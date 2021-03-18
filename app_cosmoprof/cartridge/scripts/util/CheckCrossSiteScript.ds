@@ -1,0 +1,79 @@
+/** This Script is used to finding and Removing the XSS Parameters.
+*   @input CurrentRequest : dw.system.Request
+*   @output newUrlToRedirect : String
+*	@output XSSParamFound : Boolean
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.value );
+importPackage( dw.web );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	var xSSParamFound :  Boolean = false;
+	var currentRequest : Request = pdict.CurrentRequest;
+	var url : String = currentRequest.httpURL.toString();
+	var queryString : String = currentRequest.httpQueryString;
+	var UrlToRedirect : String = "";
+	var finalqueryString : String = "";
+		
+		// Getting the list of XSS Cross Site Scripting strings from Site Preferences for verification
+		var listOfXSSStrings: Object = JSON.parse(Site.current.getCustomPreferenceValue("listOfXSSStrings"));
+		
+		// List of XSS Patterns
+		var xssListOfPatterns : Array = listOfXSSStrings["XSSListOfPatterns"];
+			
+		try {
+		    if (!empty(queryString)) {
+		
+		        Logger.debug("\n Query String for XSS Cross site scripting check: before decoding " + queryString);
+		
+		        queryString = decodeURIComponent(queryString);
+		        Logger.debug("\n Query String for XSS Cross site scripting check: after decoding " + queryString);
+		        
+				// Step 1: Check if Regex patterns are found in the query string and replace the parameters from the query string with empty string. 
+		        if(!empty(xssListOfPatterns)){
+					finalqueryString = checkForXSSPattern(queryString, xssListOfPatterns);
+				}
+				// Step 2: Check if query string is empty or not.If not add the query string to the url.
+				if(!empty(finalqueryString))
+				{
+					UrlToRedirect = currentRequest.httpPath + '?' + finalqueryString;
+					xSSParamFound = true;
+		   		} 
+		    }
+		    
+		}catch (e) {
+		    Logger.error("Error in executing CheckCrossSiteScript.ds \ " + e);
+		    return PIPELET_ERROR;
+		}
+		
+	pdict.newUrlToRedirect = UrlToRedirect;
+	pdict.XSSParamFound = xSSParamFound;
+	return PIPELET_NEXT;
+} 
+
+// This is to find if configured Regex patterns are found in the query string and replacing it.
+
+function checkForXSSPattern(queryStr : String, listOfPattern : Array)
+{
+	var finalqueryString : String = "";
+	if(!empty(queryStr) && !empty(listOfPattern)){
+		var regexp : RegExp;
+		
+		//var queryString  = queryStr;
+	    for(var i =0; i < listOfPattern.length; i++)
+	    {
+	       regexp = new RegExp(listOfPattern[i]);
+	       if(queryStr.toLowerCase().search(regexp) != -1)
+	       {
+	        	finalqueryString = queryStr.toLowerCase().replace(regexp,'');
+	        	//if(finalqueryString != queryString){
+			        Logger.debug("\n Query String has XSS Cross site scripting regex: "+ regexp );
+			        return finalqueryString;
+		        //}
+	    	}
+	    }
+	}
+    return finalqueryString;
+}

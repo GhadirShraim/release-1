@@ -1,0 +1,31 @@
+/**
+* BuildOnAccountCardsRequest.ds
+*
+*-Description - Hits IBM iSeries Service to retrieve On Account cards.
+*
+*   @input Customer : dw.customer.Customer
+*   @output Result : Object
+*
+*/
+
+var Logger = require('dw/system/Logger');
+
+function execute( pdict : PipelineDictionary ) : Number
+{	
+	try {
+		var salesforceAccountId = pdict.Customer.profile.custom.accountNumber;
+		var responseObject = require('app_cosmoprof/cartridge/scripts/checkout/onaccount/OnAccountFacade').doServiceCall(salesforceAccountId);
+		if (responseObject.error == true) {
+			Logger.error("BuildOnAccountCardsRequest.ds :: An error occured while retrieving the On Account Cards data from IBM iSeries.");
+			return PIPELET_ERROR;
+		}
+		
+		// Assign the json repsonse the service returned to the pipeline dictionary.
+		pdict.Result = responseObject.details.jsonServiceResponse;
+	} catch (e) {
+		Logger.error("BuildOnAccountCardsRequest.ds :: An error occured while retrieving the On Account Cards data from IBM iSeries." + e);
+		return PIPELET_ERROR;
+	}
+		
+	return PIPELET_NEXT;
+}

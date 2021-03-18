@@ -1,0 +1,108 @@
+<isdecorate template="account/pt_account">
+	<isinclude template="util/modules"/>
+	<h1>
+		<isprint value="${Resource.msg('orders.quickorder','account',null)}" />
+	</h1>
+	<isif condition="${pdict.eProds != null}">
+		<div class="errorMessage">
+			<isset name="prodsArray" value="${pdict.eProds.split(',')}" scope="page"/>
+			<p>
+				<isprint value="${Resource.msg('global.errorqo','locale',null)}" />
+			</p>
+			<isloop items="${prodsArray}" var="prodID" begin="1">
+				<p>
+					<isprint value="${prodID}"/>
+				</p>
+			</isloop>
+		</div>
+	</isif>
+	<div class="quickorderHeader">
+	<iscontentasset aid="quickorderHeader"/>
+	</div>
+	<div class="qoContainerHeader">		
+		<span class="label quantity"><isprint value="${Resource.msg('global.qty','locale',null)}" /></span>
+		<span class="label sku"><isprint value="${Resource.msg('orders.sku','account',null)}" /></span>
+		<span class="label desc"><isprint value="${Resource.msg('global.description','locale',null)}" /></span>
+	</div>
+	
+<form method="post" action="${URLUtils.httpContinue()}" id="quick-order-form" name="${pdict.CurrentForms.quickorder.htmlName}">	
+	<fieldset>
+		<isif condition="${pdict.Status != null && pdict.Status.isError()}">				 
+		 	<!--- Use the error code value to build an appropriate error message --->
+			<span class="form-error">
+				<isprint value="${Resource.msg('addressdetails.' + pdict.Status.code, 'account',null)}"/>
+			</span>
+		</isif>
+		
+		<div class="qorder-rows">
+			<isloop items="${pdict.CurrentForms.quickorder.products}" var="prod" status="statusVal">
+			
+				<isset value="${prod.object}" name="obj" scope="page"/>
+					<isif condition="${statusVal.first}">
+					 	<div class="qoContainer" id="qo${statusVal.index}">
+					</isif>
+			<isif condition="${!statusVal.first}"> 
+				<div class="quickorder-row">					
+					<div class="quantity">
+						<input type="number" inputmode="numeric" pattern="[0-9]*" id="Quantity" name="${prod.quantity.htmlName}" size="4" maxlength="4" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" value="${prod.quantity.value}" class="quantity${statusVal.index} input-text ${statusVal.index}"  placeholder="${Resource.msg('global.quickorderqty','locale',null)}" /></div>
+					<div class="sku">
+						<input type="number" inputmode="numeric" pattern="[0-9]*" name="${prod.sku.htmlName}" size="4" maxlength="20" value="${prod.sku.value}" class="input-text ${statusVal.index} skuVal sku${statusVal.index}" placeholder="${Resource.msg('global.quickordersku','locale',null)}" /></div>
+					<div class="desc">
+						<input type="text" name="${prod.description.htmlName}" disabled="disabled" size="4" maxlength="100"	value="${prod.description.value}" class="input-text ${statusVal.index} textInput desc${statusVal.index}" placeholder="${Resource.msg('global.quickorderdescription','locale',null)}"  />
+					</div>
+					<div class="clear-btn">
+						<a class="buttonstyle clearRow" id="row${statusVal.index}">
+							<isprint value="${Resource.msg('searchrefinebar.clearselection','search',null)}" />
+						</a>
+					</div>
+				</div>
+			</isif>
+		
+			<isif condition="${statusVal.last}"> 
+				<div class="quickorder-row">					
+					<div class="quantity">
+						<input type="text" name="${prod.quantity.htmlName}" size="4" maxlength="4" value="${prod.quantity.value}" id="Quantity" class="quantity${statusVal.index} input-text ${statusVal.index}" /></div>
+					<div class="sku">
+						<input type="text" name="${prod.sku.htmlName}" size="4" maxlength="20" value="${prod.sku.value}" class="input-text ${statusVal.index} skuVal sku${statusVal.index}" /></div>
+					<div class="desc">
+						<input type="text" name="${prod.description.htmlName}" disabled="disabled" size="4" maxlength="100"	value="${prod.description.value}" class="input-text ${statusVal.index} textInput desc${statusVal.index}" />
+					</div>
+					<div class="clear-btn">
+						<a class="buttonstyle clearRow" id="row${statusVal.index}">
+							<isprint value="${Resource.msg('searchrefinebar.clearselection','search',null)}" />
+						</a>
+					</div>
+				</div>
+			</isif>
+		 
+				<isif condition="${statusVal.index%12 == 0 && !statusVal.first && !statusVal.last}">
+					<div class="addRows"> 
+					 	<a class="addRows" id="${statusVal.index}">
+							<isprint value="${Resource.msg('orders.addrows','account',null)}" />
+						</a>
+					</div>
+		 	</div><!-- end QO container in between increments of 10 -->
+				 	<div class="qoContainer" id="qo${statusVal.index}">
+				</isif>
+			</isloop>
+					</div><!-- end QO container increment of 10 -->
+		</div><!-- end qorder-rows -->
+
+			<div class="qorder-button">
+				<button class="submitorder quickorder-addtocart" type="submit" name="${pdict.CurrentForms.quickorder.submitOrder.htmlName}" value="${Resource.msg('orders.quickorder.addtocart','locale',null)}">
+				 <isprint value="${Resource.msg('orders.quickorder.addtocart','account',null)}" />	
+				</button>
+				<div class="qorder-links">
+					<button class="wishlistadd favorites quickorderfav quickorder-addtowishlist" type="submit" name="${pdict.CurrentForms.quickorder.wishlistadd.htmlName}">
+						<isprint value="${Resource.msg('global.addtowishlist','locale',null)}" />
+					</button>				
+					<button class="wishlistadd wishlist quickorderlist quickorder-addtoproduct" type="submit" name="${pdict.CurrentForms.quickorder.mylistsadd.htmlName}" value="${Resource.msg('global.addtogiftregistry','locale',null)}">
+						<span><isprint value="${Resource.msg('global.addtogiftregistry','locale',null)}" /></span>
+					</button>
+				</div>
+			</div>
+	</fieldset>
+		
+</form>
+
+</isdecorate>

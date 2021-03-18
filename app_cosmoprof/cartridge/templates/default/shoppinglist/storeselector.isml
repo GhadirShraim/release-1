@@ -1,0 +1,140 @@
+<isdecorate template="shoppinglist/pt_shoppinglist">
+	<isinclude template="util/modules"/>
+	<isscript>importScript("checkout/Utils.ds");</isscript>
+<div class="store-selection-outer">
+	<h1 class="content-header list-name">
+		<isprint value="${Resource.msg('store.shoppinglist.store.selection','account',null)}" />
+	</h1>
+	<div class="back-to-previous">
+		<a href="${URLUtils.url('ShoppingList-Start')}"><isprint value="${Resource.msg('store.shoppinglist.back.myshoppinglist','account',null)}" /></a>
+	</div>
+		 
+	<div class="choose-store-msg">
+		<p><isprint value="${Resource.msg('shoppinglist.store.choosemsg','storepickup',null)}" /></p>
+	</div>
+	<div class="store-wrapper">
+		<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.giftregistry.htmlName}" id="select-store-form">
+			<div class="use-current-location">
+				<!-- Store Locator Field -->
+				<fieldset>
+					<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.ziporcity}" type="input" xhtmlclass="ziporcity" attribute1="placeholder" value1="Zip or City, State"  />
+					<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.radius}" type="select" xhtmlclass="radius"/>
+				</fieldset>
+				<div class="action">
+					<button name="${pdict.CurrentForms.giftregistry.findstore.htmlName}" value="${Resource.msg('global.find','locale',null)}" class="find-store" type="submit" >${Resource.msg('global.find','locale',null)}</button>
+				</div>
+				<div class="usemylocation hide">
+					<button name="${pdict.CurrentForms.giftregistry.usecurrentlocation.htmlName}" value="${Resource.msg('global.mylocation','locale',null)}" class="find-store" type="submit" >${Resource.msg('global.mylocation','locale',null)}</button>
+				</div>
+				<div class="geo-location">
+					<span id="use-current-geolocation"  class="currentgeo-location"><isprint value="${Resource.msg('shoppinglist.store.currentlocation','storepickup',null)}" /> </span>
+					<span id="current-loaction-not-supported"></span>
+				</div>
+			</div>
+			<!-- When We have Stores -->
+			<div class="storessearch-result">
+			<div class="storessearch-result-outer"> 
+				<isif condition="${!empty(pdict.Stores)}">
+					<div class="search-result-msg">
+						<isif condition="${pdict.IsNearestLocation}">
+							<isprint value="${Resource.msg('shoppinglist.store.searchresult.neartoyou','storepickup',null )}" />
+						<iselse>
+							<isprint value="${Resource.msgf('shoppinglist.store.searchresult','storepickup',null, pdict.CurrentForms.giftregistry.store.ziporcity.value )}" />
+						 </isif>
+					</div>
+					<isloop items="${pdict.Stores}" var="store" status="loopstatus"  >
+						<isset name="storeInJSON" value="${StoreInJSONObj(store)}" scope="Page" />
+						<div class="store-detail">
+							<div class="store-description">
+								<div class="shopping-store-address">
+									<div class="store-no"><isprint value="${(loopstatus.index + 1).toFixed()}" />&#183; <isprint value="${Resource.msgf('shoppinglist.store.cosmostore','storepickup',null, store.fid )}" /></div>
+									<isif condition="${store.address_1}">
+										<div class="address-1"><isprint value="${store.address_1}" /> </div>
+									 </isif>
+									 <isif condition="${store.address_2}">
+										<div class="address-2"><isprint value="${store.address_2}" /> </div>
+									 </isif>
+									 
+									 <div><isif condition="${!empty(store.city)}"><span class="city"><isprint value="${store.city}" /></span></isif> <isif condition="${!empty(store.region)}"><span class="state"><isprint value="${store.region}" /></span></isif> <isif condition="${!empty(store.post_code)}"><span class="zip"><isprint value="${store.post_code}" /></span></isif></div>
+								 </div>
+								 <isif condition="${!empty(store.distance)}"> 
+								 
+									 <div class="store-distance">
+									 	<isprint value="${Resource.msgf('shoppinglist.store.storedistance','storepickup',null, store.distance)}" />
+									 </div>
+								 </isif>
+								 <isif condition="${!empty(store.local_phone)}">
+					 				<div class="local-phone"><isprint value="${store.local_phone}" /></div>
+					 			 </isif>
+					 			 <span class="store-detail-json" data-storedetail='<isprint value="${JSON.stringify(storeInJSON).replace("'","^")}" encoding="off"/>'></span>
+					 			 <div class="view-details">
+					 				 <isset name="viewDetailUrl" value="${'https://stores.cosmoprofbeauty.com/' + store.region.replace(' ', '').toLowerCase() + '/' + store.city.replace(' ', '').toLowerCase() + '/' + 'salon-supply-' + store.city.replace(' ', '').toLowerCase() + '-' + store.region.replace(' ', '').toLowerCase() + '-' + store.fid + '.html'}" scope="Page" />
+					 			 	<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+										<isset name="viewDetailUrl" value="${viewDetailUrl + '?cosmoprof_app=true'}" scope="Page" />
+									</isif>
+					 				<a href="${viewDetailUrl}" target="_blank"><isprint value="${Resource.msg('shoppinglist.store.viewdetails','storepickup',null)}" /></a>
+					 			 </div>
+				 			 </div>
+				 			 
+					 			 <span class="label-selected-radio"><isprint value="${Resource.msg('shoppinglist.store.storeselected','storepickup',null)}" /></span>
+					 			 <div class="save-my-store savetomystore hide">
+					 			 		<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.makethismystore}" type="checkbox" attribute1="checked" value1="false"   />
+					 			 </div>
+				 			 <isset name="storeStates" value="${''}" scope="Page" />
+				 			 <iscomment>CP-1230 Listing the allowing states </iscomment>
+				 			 
+				 			 <isloop items="${dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().split('|')}" var="element" status="storeLoopstatus">
+					 			 <isif condition="${storeLoopstatus.first}">
+					 			 	<isset name="storeStates" value="${element}" scope="page" />
+					 			 <iselseif condition="${!storeLoopstatus.last}">
+				 			 		<isset name="storeStates" value="${storeStates+', '+element}" scope="page" />
+				 			 	<iselse/>
+				 			 		<isset name="storeStates" value="${storeStates+' and '+element}" scope="page" />
+				 			 	</isif>					 			
+							 </isloop>
+				 			 <div class="button-section">
+				 			 	<!-- CP-1230 Check for State which is in pilot. -->
+				 			 	<isset name="disableStoreSelect" value="${true}" scope="Page" />
+				 			 	<isif condition="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(store.region) > -1}">
+				 			 		<isset name="disableStoreSelect" value="${false}" scope="Page" />
+				 			 	</isif>
+				 			 	
+				 			 	<isif condition="${disableStoreSelect}">
+				 			 		<div class="limit-store"><iscontentasset aid="store-limit-message" /><span class="limit-store-value"> ${storeStates}.</span></div>
+				 			 	</isif>
+				 			 	
+				 			 	<isset name="derectionURL" value="${'https://maps.google.com/maps?hl=en&daddr=' + store.address_1 + ' '}" scope="Page" />
+				 			 	<isif condition="${!empty(store.address_2)}">
+				 			 		<isset name="derectionURL" value="${derectionURL + store.address_2 + ' ' }" scope="Page" />
+				 			 	 </isif>
+				 			 	<isset name="derectionURL" value="${derectionURL +  store.city + ' ' + store.region + ' ' + store.post_code }" scope="Page" />
+				 			 	<a href="${derectionURL}" class="direction-btn" target="_blank"><isprint value="${Resource.msg('shoppinglist.store.direction','storepickup',null)}" /></a>
+				 			 	
+				 			 	<isif condition="${disableStoreSelect}">
+				 			 		<!-- Add Button in disable state -->
+				 			 		<button class="select-store-disabled">SELECT</button>
+				 			 	<iselse>
+				 			 		<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.selectstore}" type="radio" xhtmlclass="select-store ${disableStoreSelect ? 'disable-store': ''}" rowclass="select-store" dynamic_id="${pdict.CurrentForms.giftregistry.store.selectstore.htmlName + loopstatus.index}" />
+				 			 	</isif>
+				 			 	
+				 			 	
+				 			 </div>
+						 </div>
+					 </isloop>
+					 <div class="hide">
+					 	<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.selectedstore}" type="input" xhtmlclass="selectes-store"/>
+					 </div>
+					 <div class="usemylocation finalize-store">
+						<button name="${pdict.CurrentForms.giftregistry.sendtofinalstep.htmlName}" value="${Resource.msg('shoppinglist.store.sendtostore','storepickup',null)}" class="send-to-final-step" type="submit" ><isprint value="${Resource.msg('shoppinglist.store.finalizestore','storepickup',null)}" /></button>
+					 </div>
+					 <div class="error-msg"></div>
+				</isif>
+				<div class="brand-avail-msg">
+					<em><isprint value="${Resource.msg('shoppinglist.store.brandavailmsg','storepickup',null)}" /></em>
+				</div>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</isdecorate>

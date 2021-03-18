@@ -1,0 +1,133 @@
+<iscache type="relative" hour="24"/>
+
+<isdecorate template="content/home/pt_storefront">
+	<isinclude template="util/modules"/>
+	<isimagesizes />
+	
+	<iscomment>Only certain chain codes can see blog comments (add chain code to site pref)</iscomment>
+	<isscript>		
+		var displayComments = false;
+		var cCodes = dw.system.Site.current.preferences.custom.blogChainCodes;
+		var currentCC = (pdict.CurrentCustomer.authenticated && 'chainCode' in pdict.CurrentCustomer.profile.custom && !empty(pdict.CurrentCustomer.profile.custom.chainCode)) ? pdict.CurrentCustomer.profile.custom.chainCode.substring(2) : dw.system.Site.current.preferences.custom.defaultChainCode;
+		
+		if(currentCC && cCodes != null)
+		{
+			//iterate through all the chain codes that are stored in the custom site preference "blogChainCodes"
+			for each(var c in cCodes)
+			{
+				//if the chain code in the site pref equls the current chain code then remove tags and comments from the blog
+				if(c == currentCC)
+				{
+					displayComments = true;
+					break;
+				}
+			}
+		}
+	</isscript>
+	
+	
+			
+	<isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+		<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode.replace('00','')}" scope="page"/>
+	<iselse/>
+		<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode.replace('00','')}" scope="page"/>
+	</isif>
+	
+	<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('blogName')}">
+		<isset name="displayArchive" value="${pdict.CurrentHttpParameterMap.blogName.toString().indexOf('Archive') > 0 ? true : false}" scope="page"/>
+	<iselse/>
+		<isset name="displayArchive" value="${false}" scope="page"/>
+ 	</isif>
+		
+	<isset name="blog" value="${pdict.Content}" scope="page"/>
+	<iscomment>
+	<isif condition="${displayArchive}">
+		<isbreadcrumbs bcurl1="${URLUtils.https('Search-ShowContent','fdid','blog-archive-' + cCode)}" bctext1="${pdict.CurrentHttpParameterMap.isParameterSubmitted('blogName') ? pdict.CurrentHttpParameterMap.blogName : Resource.msg('account.beautyblog','account',null)}" bctext2="${blog != null ? blog.custom.title : ''}"/>
+	<iselse/>
+		<isbreadcrumbs bcurl1="${URLUtils.https('Search-ShowContent','fdid','blog-' + cCode)}" bctext1="${pdict.CurrentHttpParameterMap.isParameterSubmitted('blogName') ? pdict.CurrentHttpParameterMap.blogName : Resource.msg('account.beautyblog','account',null)}" bctext2="${blog != null ? blog.custom.title : ''}"/>
+	</isif>
+	</iscomment>
+	<div class="article-content">
+	<iscomment>Render share button</iscomment>
+		<isif condition="${blog != null}">
+			<isif condition="${'body' in blog.custom && blog.custom.body != null}">
+				<div class="content articleContent" >
+					<span class="shareBtn">
+						<!-- AddThis Button BEGIN --> 
+						<script type="text/javascript" language="javascript">
+						   var addthis_pub = '${dw.system.Site.getCurrent().preferences.custom.AddThisShareKey}';
+						</script> 
+						  
+						<a href="http://www.addthis.com/bookmark.php" class="addthis" onmouseover="return addthis_open(this, '', '[URL]', '[TITLE]')" onmouseout="addthis_close()" onclick="return addthis_sendto()"> 
+						     <img src="http://s7.addthis.com/static/btn/lg-share-en.gif" width="125" height="16" border="0" alt="" /> 
+						</a> 
+						
+						<script type="text/javascript" language="javascript" src="http://s7.addthis.com/js/152/addthis_widget.js"></script> 
+						<!-- AddThis Button END -->
+					</span>
+					<isprint value="${blog.custom.body}" encoding="off"/>
+					
+					<!-- If we have custom body as well -->
+					<isif condition="${'custom_body_1' in blog.custom && blog.custom.custom_body_1 != null}"> 
+						<isprint value="${blog.custom.custom_body_1}" encoding="off"/>
+					</isif>
+					<isif condition="${'custom_body_2' in blog.custom && blog.custom.custom_body_2 != null}"> 
+						<isprint value="${blog.custom.custom_body_2}" encoding="off"/>
+					</isif>
+					<div class="autoplayvalue hide" id="autoplayvalue"><isprint value="${'sliderAutoPlay' in blog.custom ? blog.custom.sliderAutoPlay : 'false'}" encoding="off"/></div>
+					<div class="autoplayspeed hide" id="autoplayspeed"><isprint value="${'sliderAutoPlaySpeed' in sliderAutoPlay ? sliderAutoPlay.sliderAutoPlaySpeed : '2000'}" encoding="off"/></div>
+					
+					<div class="home-bottom">
+						<isslot id="blog-bottom" description="Bottom content below flash banner " context="global" />			
+					</div>
+					
+					<!-- CP-422 Switched comment section and Related article -->
+					<isif condition="${!empty(blog.custom.relatedArticles)}"> 
+						<div class="relatedPosts">
+						 	<isprint value="${blog.custom.relatedArticles}" encoding="off"/>
+						</div>
+					</isif>
+					 <isif condition="${displayComments}"> 
+						<div class="comments">
+							<h2>${Resource.msg('account.blogcomments','account',null)}</h2>
+							<isset name="aid" value="${pdict.CurrentHttpParameterMap.cid.value}" scope="page"/>
+							<isset name="title" value="${pdict.Content.custom.title != null ? pdict.Content.custom.title : ''}" scope="page"/>
+							<isset name="cid" value="${pdict.CurrentCustomer.profile != null ? pdict.CurrentCustomer.profile.customerNo : ''}" scope="page"/>
+							<iframe src="${dw.system.Site.getCurrent().preferences.custom.commentsArticleURL + '?aid=' + aid + '&title=' + title + '&cid=' + cid}" width="100%" height="350" frameborder="0"></iframe>
+						</div>
+					</isif>
+					
+				</div>
+			<iselse/>
+				${Resource.msg('global.nocontent','locale',null)}
+			</isif>
+		</isif>
+		
+		
+		
+		
+		<iscomment>Render a "back" link and the article title based on the page context.</iscomment>
+		<div class="back">
+			<isif condition="${empty(pdict.CurrentSession.custom.gotoURL)}">
+				<isset name="gotoURL" value="${URLUtils.https('Search-ShowContent','fdid','blog-' + cCode)}" scope="session"/>
+			</isif>
+			<isif condition="${pdict.CurrentHttpParameterMap.src.submitted && !empty(pdict.CurrentHttpParameterMap.src.value)}">
+				<isset name="gotoURL" value="${URLUtils.https('Search-Show','q',pdict.CurrentHttpParameterMap.src.value)}" scope="session"/>
+			</isif>
+			<isif condition="${displayArchive}">
+				<a class="buttonstyle" href="${pdict.CurrentSession.custom.gotoURL}">
+					${Resource.msg('foldercontenthits.backtobeautyblog','rendering',null)}
+				</a>
+			<iselse/>
+				<a class="buttonstyle primaryButtn" href="${pdict.CurrentSession.custom.gotoURL}">
+					${Resource.msg('foldercontenthits.backtobeautyblog','rendering',null)}
+				</a>
+			</isif>
+		</div>
+	</div>
+	<!-- CP- 422 Back to Top Flyout Added -->
+	<div class="main-backtotop-view-less">
+		<img id="back-to-top" src="${URLUtils.staticURL('/images/back-to-top-new.png')}" />
+	</div>
+
+</isdecorate>

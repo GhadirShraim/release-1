@@ -1,0 +1,18 @@
+<!--- TEMPLATENAME: customerserviceno.isml --->
+<isscript>
+		var phoneNumJSON = dw.system.Site.current.preferences.custom.ccPhoneNumbers;
+		var phoneNumJSONStr : String = phoneNumJSON.source;
+		var customerServiceNum = JSON.parse(phoneNumJSONStr);
+ </isscript>
+ <isset name="chainCode" value="${pdict.CurrentCustomer.authenticated ? pdict.CurrentCustomer.profile.custom.chainCode : '00'+dw.system.Site.current.preferences.custom.defaultChainCode}" scope="page"/>
+ <isset name="isPortalUser" value="${'isPortalUser' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+  
+  <isif condition="${isPortalUser}">
+ 	 <isset name="chainCode" value="${pdict.CurrentSession.custom.tempChainCode}" scope="page"/>
+ 	 <isif condition="${!empty(chainCode) && !empty(customerServiceNum)}">
+ 	 	<isprint value="${customerServiceNum[chainCode]}" />
+ 	 </isif>
+   <iselse>
+  		<isprint value="${customerServiceNum["" +"C"+chainCode+ ""]}" />
+  </isif>
+ 

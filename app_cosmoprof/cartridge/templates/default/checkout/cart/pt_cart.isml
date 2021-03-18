@@ -1,0 +1,75 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+
+	<isscript>var pageContext={title:'Cart', type:'Checkout', ns:'cart'};</isscript>
+	<isinclude template="util/modules"/>
+	
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="checkout/cart/pt_cart_UI"/>
+	
+	<iscomment>Add template-specific header information here.</iscomment>	
+
+</head>
+
+<body>
+	<isinclude template="gtm/bodytrackingcode" />
+	<iscomment> inclusion of static-header classname will remove absolute position for header </iscomment>
+	<div id="wrapper" class="pt_cart static-header">
+		
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+		
+		<div id="main" role="main" class="primary-focus clearfix">
+		
+			<iscomment>according to wireframes, mobile has a Breadcrumb that returns user to thier previous screen
+				
+				<isbreadcrumbs bcurl1="${URLUtils.url('Cart-Show')}" bctext1="${Resource.msg('pt_cart.breadcrumb','checkout',null)}"/>
+			</iscomment>
+			
+			<h1 class="cart-checkout-header">${Resource.msg('cart.header','checkout',null)}</h1>
+			<isif condition="${!empty(pdict.statusADS) && pdict.statusADS}" >
+				<div class="plcc-ads-respronse"><iscontentasset aid="echo-success-msg" encoding="off"/></div>
+			<iselseif condition="${!empty(pdict.statusADS) && !pdict.statusADS}" >
+				<div class="plcc-ads-respronse"><iscontentasset aid="echo-failure-msg" encoding="off"/></div>
+			</isif>
+			<div id="primary" class="primary-content">
+				<isreplace/>
+			</div>
+			
+			<div id="secondary" class="nav">
+				<isinclude template="checkout/cart/rightcolumn"/>
+			</div>
+			<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser) && pdict.CurrentCustomer.authenticated}">
+				<div id="cart-pi">
+					 <!-- Build URL and logic for Cart to trigger PI -->
+					 <isset name="PAGE" value="${'CART'}" scope="Page" />
+					 
+					<isinclude template="component/PIRecommendationLogic"/>
+					 
+					<div id="CART-PI-Recommendation" data-page="CART" data-query="${''}" data-piurl="${PIURl}" >
+						<!-- Append The Recommendation here -->
+					</div>
+					<div class="brand-message cart-page hide">
+						<em><isprint value="${Resource.msg('search.recommendation.brand.message','search',null)}" /></em>
+					</div>
+				</div>
+			</isif>	
+			<div class="cart-recommendation-container enishtine-recomndations">
+				<isslot id="cart-recommendations" description="Cart Recommendations" context="global" />
+			</div>
+		</div>
+	
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="checkout/cart/pt_cart_VARS"/>
+	
+	</div>
+
+</body>
+</html>

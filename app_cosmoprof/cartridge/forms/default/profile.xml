@@ -1,0 +1,316 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19" secure="true">
+	<group formid="customer">
+		<field formid="firstname" label="profile.firstname" type="string" mandatory="true" binding="firstName" max-length="50"/>
+		<field formid="lastname" label="profile.lastname" type="string" mandatory="true" binding="lastName" max-length="50"/>
+		<field formid="email" label="profile.email" type="string" mandatory="false" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50" value-error="profile.usernametaken"/>
+		<field formid="emailconfirm" label="Confirm Email" type="string" mandatory="false" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" max-length="50" value-error="profile.emailnomatch"/>	
+		<field formid="changeemail" label="profile.email" type="string" mandatory="false" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50"/>
+		<field formid="profession" label="profile.profession" type="string" mandatory="false" binding="custom.profession">
+			<options optionid-binding="key" value-binding="value" label-binding="key"/>
+		</field>
+		<field formid="accountemail" label="profile.email" type="string" mandatory="false" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50" value-error="profile.usernametaken"/>
+		<field formid="accountemailconfirm" label="Confirm Email" type="string" mandatory="false" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" max-length="50" value-error="profile.emailnomatch"/>
+		<field formid="addtionalemail"  type="string" mandatory="false" max-length="500" binding="custom.additionalEmail"/>
+		
+		<!-- Employee Types -->
+		<field formid="owner" label="profile.employeetype.owner" binding="custom.owner" type="boolean" mandatory="false"/>
+		<field formid="suiterenter" label="profile.employeetype.suiterenter" binding="custom.suiterenter" type="boolean" mandatory="false"/>
+		<field formid="chairrenter" label="profile.employeetype.chairrenter" binding="custom.chairrenter" type="boolean" mandatory="false"/>
+		<field formid="salonemployee" label="profile.employeetype.salonemployee" binding="custom.salonemployee" type="boolean" mandatory="false"/>
+		<field formid="student" label="profile.employeetype.student" binding="custom.student" type="boolean" mandatory="false"/>
+		
+		<!-- Professional Types -->
+		<field formid="cosmetologist" label="profile.professionaltype.cosmetologist" binding="custom.cosmetologist" type="boolean" mandatory="false"/>
+		<field formid="barber" label="profile.professionaltype.barber" binding="custom.barber" type="boolean" mandatory="false"/>
+		<field formid="nailtechnician" label="profile.professionaltype.nailtechnician" binding="custom.nailtechnician" type="boolean" mandatory="false"/>
+		<field formid="esthetician" label="profile.professionaltype.esthetician" binding="custom.esthetician" type="boolean" mandatory="false"/>
+		<field formid="massagetherapist" label="profile.professionaltype.massagetherapist" binding="custom.massagetherapist" type="boolean" mandatory="false"/>
+		
+		<field formid="phoneHome" label="profile.homephone" type="string" mandatory="false" binding="phoneHome" regexp="^(1-?)?(([2-9]\d{2})|[2-9]\d{2})-?[2-9]\d{2}-?\d{4}$" parse-error="profile.phoneerror" value-error="profile.phoneerror"/>
+		<field formid="phoneWork" label="profile.workphone" type="string" mandatory="false" binding="phoneBusiness" regexp="^(1-?)?(([2-9]\d{2})|[2-9]\d{2})-?[2-9]\d{2}-?\d{4}$" parse-error="profile.phoneerror" value-error="profile.phoneerror"/>
+		<field formid="phoneMobile" label="profile.mobilephone" type="string" mandatory="true" binding="phoneMobile" regexp="^(1-?)?(([2-9]\d{2})|[2-9]\d{2})-?[2-9]\d{2}-?\d{4}$" parse-error="profile.phoneerror" value-error="profile.phoneerror"/>
+		<field formid="birthdayClub" label="profile.birthdayclub" type="string" mandatory="false" format="MM/dd" binding="custom.birthdayClub" regexp="^\d{2}\/\d{2}$" parse-error="profile.bdaycluberror" value-error="profile.bdaycluberror"/>
+ 		
+		<field formid="username" label="label.username" description="forms.5_100characters" type="string" mandatory="true" binding="login" regexp="^[-\w\.@_ ]{5,100}$" parse-error="profile.usernameerror" value-error="profile.usernametaken"/>
+			
+		<field formid="birthday" label="profile.dob"  description="profile.dobexample" type="date" mandatory="false" format="MM/dd/yyyy" max="now" binding="birthday" max-length="10"/>		
+		<field formid="phone" label="profile.phone" type="string" description="profile.phoneexample" mandatory="false" binding="phoneHome" max-length="50"/>	
+		
+		<field formid="agreedprofessionalpolicy" label="profile.agreedprofessionalpolicy" mandatory="true" type="boolean"/>
+		<field formid="agreediversionpolicy" label="profile.agreediversionpolicy" mandatory="true" type="boolean"/>
+		
+		<field formid="emailOptIn" label="profile.textmessaging" type="boolean" binding="custom.emailOptIn" mandatory="false"/>
+		<field formid="preRegemailOptIn" label="profile.preregemailoptin" type="boolean" mandatory="false"/>
+		<field formid="mobileOptIn" label="profile.emailmessaging" type="boolean" binding="custom.mobileOptIn" mandatory="false"/>
+		<field formid="directMailOptIn" label="profile.directmail" type="boolean" binding="custom.directMailOptIn" mandatory="false"/>
+		
+		<field formid="puertorico" label="profile.puertorico" type="string" mandatory="false" binding="puertoRico" max-length="50"/>
+		<field formid="proclub" label="profile.proclub" type="string" mandatory="false" binding="proCLub" max-length="50"/>
+		<field formid="currentcustomercard" label="profile.currentcustomercard" type="string" mandatory="false" binding="proCLub" max-length="50"/>
+		<field formid="proclubmember" type="string">
+			<options>
+				<option optionid="Yes" label="global.yes" value="Yes"/>
+				<option optionid="No" label="global.no" value="No"/>
+			</options>
+		</field>
+		
+		
+		<action formid="editprofile" valid-form="true"/>
+	</group>	
+
+	<group formid="login">
+		<field formid="username" 
+			label="label.username" 
+			type="string" 
+			mandatory="true" 
+			binding="login" 
+			regexp="^[-\w\.@_ ]{5,100}$" 
+			parse-error="profile.usernameerror"
+			value-error="profile.usernametaken" />
+			   
+		<field formid="password" label="label.password" type="string" mandatory="true" min-length="8" max-length="255"
+			  parse-error="profile.emailparseerror" range-error="forms.8_255characters" />	
+		
+		<field formid="passwordconfirm" label="profile.passwordconfirm" type="string" mandatory="true" min-length="8" max-length="255"
+			   range-error="forms.8_255characters"	
+			   value-error="profile.passwordnomatch"/>
+		<field formid="changelogin" label="label.password" description="forms.8_255characters" type="string" mandatory="false" min-length="8" max-length="255"
+			   range-error="forms.8_255characters" value-error="forms.passwordmissing" missing-error="forms.passwordmissing"/>
+		
+		<field formid="answer" label="profile.accountanswer" type="string" mandatory="true" binding="passwordAnswer" max-length="50"/>
+		
+		<field formid="rememberme" label="profile.remember" type="boolean" mandatory="false" />
+
+		<action formid="editlogin" valid-form="true"/>
+	</group>	
+
+	<include formid="address" name="customeraddress"/>
+	
+	<field formid="phonetypeBusiness" label="profile.phone.type" type="string" binding="custom.phonetypeBusiness" mandatory="true">
+        <options>
+            <option optionid="" label="forms.selectphonetype" value=""/>
+            <option optionid="home" label="profile.phone.home" value="Home"/>
+            <option optionid="office" label="profile.phone.office" value="Office"/>
+            <option optionid="mobile" label="profile.phone.mobile" value="Mobile"/>
+        </options>
+    </field>
+    <field formid="phonetypeMobile" label="profile.phone.type" type="string" binding="custom.phonetypeMoblie" mandatory="true">
+        <options>
+            <option optionid="" label="forms.selectphonetype" value=""/>
+            <option optionid="home" label="profile.phone.home" value="Home"/>
+            <option optionid="office" label="profile.phone.office" value="Office"/>
+            <option optionid="mobile" label="profile.phone.mobile" value="Mobile"/>
+        </options>
+    </field>
+	
+	<group formid="addressbook">
+		<list formid="addresses">
+			<action formid="edit" valid-form="false"/>
+			<action formid="remove" valid-form="false"/>
+		</list>	
+		<action formid="add" valid-form="false"/>
+	</group>
+	
+	<group formid="associate">
+		<field formid="associateid" label="profile.associateid" type="string" mandatory="true" binding="associateid" max-length="20"/>
+		<field formid="associatestorenumber" label="profile.associatestorenumber" type="string" mandatory="true" binding="associatestorenumber" max-length="10"/>
+		<field formid="rememberme" label="login.rememberme" type="boolean" mandatory="false" />
+		<action formid="validate" valid-form="true"/>
+	</group>
+	
+	
+	<group formid="student">
+		<field formid="schoolname" label="profile.schoolname" type="string" mandatory="false" binding="schoolName" max-length="50"/>
+
+		<field formid="graduationdate" label="profile.graduationdate"  description="profile.birthdayexample" type="string" mandatory="false" format="MM/yyyy" max="now" binding="graduationDate" max-length="10"/>
+	</group>
+
+	<group formid="business">
+		<field formid="businessname" label="profile.businessname" type="string" mandatory="false" binding="businessnname" max-length="100"/>
+		<field formid="beautylicense" label="profile.beautylicense" type="string" mandatory="false" binding="beautylicense" max-length="100"/>
+		<field formid="beautylicensestateCA" label="forms.vsu.province" type="string" mandatory="false" missing-error="forms.address.state.missing" value-error="forms.address.field.invalid">
+			<options>
+				
+				<option optionid="" 	label="forms.select" 		value=""/>
+				
+				<!-- Canadian provinces and territories -->
+				
+				<option optionid="AB" 	label="state.ca.alberta" 				value="AB"/>
+				<option optionid="BC" 	label="state.ca.britishcolumbia" 		value="BC"/>
+				<option optionid="MB" 	label="state.ca.manitoba" 				value="MB"/>
+				<option optionid="NB" 	label="state.ca.newbrunswick" 			value="NB"/>
+				<option optionid="NL" 	label="state.ca.newfoundland" 			value="NL"/>
+				<option optionid="NT" 	label="state.ca.northwestterritories" 	value="NT"/>
+				<option optionid="NS" 	label="state.ca.novascotia" 			value="NS"/>
+				<option optionid="NU" 	label="state.ca.nunavut" 				value="NU"/>
+				<option optionid="ON" 	label="state.ca.ontario" 				value="ON"/>
+				<option optionid="PE" 	label="state.ca.princeedwardisland" 	value="PE"/>
+				<option optionid="QC" 	label="state.ca.quebec" 				value="QC"/>
+				<option optionid="SK" 	label="state.ca.saskatchewan" 			value="SK"/>
+				<option optionid="YT" 	label="state.ca.yukon" 					value="YT"/>
+				
+			</options>	
+		</field>
+		<field formid="beautylicensestateUS" label="forms.vsu.state" type="string" mandatory="false" missing-error="forms.address.state.missing" value-error="forms.address.field.invalid">
+			<options>
+				<option optionid="" 	label="forms.select" 		value=""/>
+				
+				<!-- regular US states -->
+				<option optionid="AL" 	label="state.us.alabama" 		value="AL"/>
+				<option optionid="AK" 	label="state.us.alaska" 		value="AK"/>
+				<!--  <option optionid="AS" 	label="state.us.americansamoa" 	value="AS"/> -->
+				<option optionid="AZ" 	label="state.us.arizona" 		value="AZ"/>
+				<option optionid="AR" 	label="state.us.arkansas" 		value="AR"/>
+				<option optionid="CA" 	label="state.us.california" 	value="CA"/>
+				<option optionid="CO" 	label="state.us.colorado" 		value="CO"/>
+				<option optionid="CT" 	label="state.us.connecticut" 	value="CT"/>
+				<option optionid="DE" 	label="state.us.delaware" 		value="DE"/>
+				<option optionid="DC" 	label="state.us.dc" 			value="DC"/>
+				<option optionid="FM" 	label="state.us.FM" 			value="FM"/>
+				<option optionid="FL" 	label="state.us.florida" 		value="FL"/>
+				<option optionid="GA" 	label="state.us.georgia" 		value="GA"/>
+				<option optionid="GU" 	label="state.us.guam" 			value="GU"/>
+				<option optionid="HI" 	label="state.us.hawaii" 		value="HI"/>
+				<option optionid="ID" 	label="state.us.idaho" 			value="ID"/>
+				<option optionid="IL"	label="state.us.illinois" 		value="IL"/>
+				<option optionid="IN"	label="state.us.indiana" 		value="IN"/>
+				<option optionid="IA"	label="state.us.iowa" 			value="IA"/>
+				<option optionid="KS"	label="state.us.kansas" 		value="KS"/>
+				<option optionid="KY"	label="state.us.kentucky" 		value="KY"/>
+				<option optionid="LA"	label="state.us.louisiana" 		value="LA"/>
+				<option optionid="ME"	label="state.us.maine" 			value="ME"/>
+				<option optionid="ME"	label="state.us.MarshallIslands" value="MH"/>
+				<option optionid="MD"	label="state.us.maryland" 		value="MD"/>
+				<option optionid="MA"	label="state.us.massachusetts"	value="MA"/>
+				<option optionid="MI"	label="state.us.michigan" 		value="MI"/>
+				<option optionid="MN"	label="state.us.minnesota" 		value="MN"/>
+				<option optionid="MS"	label="state.us.mississippi" 	value="MS"/>
+				<option optionid="MO"	label="state.us.missouri" 		value="MO"/>
+				<option optionid="MT"	label="state.us.montana" 		value="MT"/>
+				<option optionid="NE"	label="state.us.nebraska" 		value="NE"/>
+				<option optionid="NV"	label="state.us.nevada" 		value="NV"/>
+				<option optionid="NH"	label="state.us.newhampshire" 	value="NH"/>
+				<option optionid="NJ"	label="state.us.newjersey" 		value="NJ"/>
+				<option optionid="NM"	label="state.us.newmexico" 		value="NM"/>
+				<option optionid="NY"	label="state.us.newyork" 		value="NY"/>
+				<option optionid="NC"	label="state.us.northcarolina" 	value="NC"/>
+				<option optionid="ND"	label="state.us.northdakota" 	value="ND"/>
+				<option optionid="MP"	label="state.us.northernmarianaislands" value="MP"/>
+				<option optionid="OH"	label="state.us.ohio" 			value="OH"/>
+				<option optionid="OK"	label="state.us.oklahoma" 		value="OK"/>
+				<option optionid="OR"	label="state.us.oregon" 		value="OR"/>
+				<option optionid="PW"	label="state.us.palau" 			value="PW"/>
+				<option optionid="PA"	label="state.us.pennsylvania" 	value="PA"/>
+				<option optionid="PR"	label="state.us.puertorico" 	value="PR"/>
+				<option optionid="RI"	label="state.us.rhodeisland" 	value="RI"/>
+				<option optionid="SC"	label="state.us.southcarolina" 	value="SC"/>
+				<option optionid="SD"	label="state.us.southdakota" 	value="SD"/>
+				<option optionid="TN" 	label="state.us.tennessee" 		value="TN"/>
+				<option optionid="TX" 	label="state.us.texas" 			value="TX"/>
+				<option optionid="UT" 	label="state.us.utah" 			value="UT"/>
+				<option optionid="VT" 	label="state.us.vermont" 		value="VT"/>
+				<!--  <option optionid="VI" 	label="state.us.virginislands"	value="VI"/> -->
+				<option optionid="VA" 	label="state.us.virginia" 		value="VA"/>
+				<option optionid="WA" 	label="state.us.washington" 	value="WA"/>
+				<option optionid="WV" 	label="state.us.westvirginia" 	value="WV"/>
+				<option optionid="WI" 	label="state.us.wisconsin" 		value="WI"/>
+				<option optionid="WY" 	label="state.us.wyoming" 		value="WY"/>
+	
+			</options>	
+		</field>
+		<field formid="businesslicense" label="profile.businesslicense" type="string" mandatory="false" binding="businesslicense" max-length="100"/>
+		<field formid="businessyears" label="profile.businessyears" type="string" mandatory="false" binding="businessyears" max-length="3"/>
+		<field formid="licenseexpiration" label="profile.licenseexpiration"  description="profile.dobexample" type="string" mandatory="false" parse-error="profile.bdayparseerror" format="MM/dd/yyyy" max="now" binding="licenseexpiration" max-length="10"/>
+		<field formid="businesstype" label="profile.businesstype" type="string" mandatory="false" binding="businesstype">
+			<options optionid-binding="custom.businessTypeName" value-binding="custom.Value" label-binding="custom.businessTypeName"/>
+		</field>
+	</group>
+	
+	<!-- Employee Types -->
+	<group formid="employeetype">
+		<field formid="owner" label="profile.employeetype.owner" binding="custom.owner" type="boolean" mandatory="false"/>
+		<field formid="suiterenter" label="profile.employeetype.suiterenter" binding="custom.suiterenter" type="boolean" mandatory="false"/>
+		<field formid="chairrenter" label="profile.employeetype.chairrenter" binding="custom.chairrenter" type="boolean" mandatory="false"/>
+		<field formid="salonemployee" label="profile.employeetype.salonemployee" binding="custom.salonemployee" type="boolean" mandatory="false"/>
+		<field formid="student" label="profile.employeetype.student" binding="custom.student" type="boolean" mandatory="false"/>
+	</group>
+		
+		
+	<!-- Professional Types -->
+	<group formid="professiontype">
+		<field formid="cosmetologist" label="profile.professionaltype.cosmetologist" binding="custom.cosmetologist" type="boolean" mandatory="false"/>
+		<field formid="barber" label="profile.professionaltype.barber" binding="custom.barber" type="boolean" mandatory="false"/>
+		<field formid="nailtechnician" label="profile.professionaltype.nailtechnician" binding="custom.nailtechnician" type="boolean" mandatory="false"/>
+		<field formid="esthetician" label="profile.professionaltype.esthetician" binding="custom.esthetician" type="boolean" mandatory="false"/>
+		<field formid="massagetherapist" label="profile.professionaltype.massagetherapist" binding="custom.massagetherapist" type="boolean" mandatory="false"/>
+	</group>
+		
+		
+	<group formid="vsu">
+		<field formid="birthdayoffers" label="profile.birthdayoffers" type="string" regexp="^(0?[1-9]|1[0-2]){1}\/(1[0-9]|2[0-9]|3[0-1]|0?[1-9]){1}$" parse-error="profile.bdayparseerror" mandatory="false" format="MM/dd" binding="birthday" max-length="5"/>
+		<field formid="textmessage" label="profile.vsu.textmessaging" type="boolean" mandatory="false" binding="mobileOptIn"/>
+		<field formid="emailmessage" label="profile.vsu.mailmessaging" type="boolean" mandatory="false" binding="emailOptIn"/>
+		<field formid="readterms" label="profile.vsu.readterms" type="boolean" mandatory="false" binding="ppa"/>
+		<field formid="readcontract" label="profile.vsu.readcontract" type="boolean" mandatory="false" binding="morrocanOil"/>
+		<field formid="replacementcard" type="string">
+			<options>
+				<option optionid="Yes" label="profile.vsu.yes" value="Yes"/>
+				<option optionid="No" label="profile.vsu.no" value="No"/>
+			</options>
+		</field>
+		<field formid="cardNumber" label="profile.vsu.entercard" type="string" min-length="12" max-length="12" regexp="^\d{12}$" mandatory="false" binding="custom.cardNumber" />
+		<field formid="cardNumberconfirm" label="profile.vsu.reentercard" type="string" min-length="12" max-length="12" regexp="^\d{12}$" mandatory="false" binding="custom.cardNumber" />
+		<field formid="imageFileName" label="profile.vsu.imageFileName" type="string" mandatory="false" binding="imageFileName"/>
+	</group>
+		
+		
+		
+	<group formid="cosmoProfession">
+		<field formid="professionType" type="string">
+			<options>
+				<option optionid="SA" label="profile.professionTypeSalon" value="SA"/>
+				<option optionid="LI" label="profile.professionTypelicensed" value="LI"/>
+				<option optionid="BO" label="profile.professionTypeBoth" value="BO"/>
+				<option optionid="BA" label="profile.professionTypeBarber" value="BA"/>
+			</options>
+		</field>
+	</group>
+	
+	<group formid="preferedCommunication">
+		<field formid="communicationType" type="string">
+			<options>
+				<option optionid="E" label="profile.communicationsemail" value="E"/>
+				<option optionid="P" label="profile.communicationsphone" value="M"/>
+			</options>
+		</field>
+	</group>
+	
+	<field formid="salonphone" label="salon.Telephone" type="string" mandatory="true" binding="phoneMobile" regexp="^(1-?)?(([2-9]\d{2})|[2-9]\d{2})-?[2-9]\d{2}-?\d{4}$" parse-error="profile.phoneerror" value-error="profile.phoneerror"/>
+	<field formid="salonaddress1" label="salon.streetaddress1" type="string" mandatory="true" binding="address2" max-length="50" 
+		parse-error="forms.address.poboxaccount"/>
+	<field formid="salonaddress2" label="salon.streetaddress2" type="string" mandatory="false" binding="address2" max-length="50" 
+		parse-error="forms.address.poboxaccount"/>
+	<field formid="color" label="salon.color" binding="custom.color" type="boolean" mandatory="false"/>
+	<field formid="cutting" label="salon.cutting" binding="custom.cutting" type="boolean" mandatory="false"/>
+	<field formid="mani" label="salon.mani" binding="custom.mani" type="boolean" mandatory="false"/>
+	<field formid="waxing" label="salon.waxing" binding="custom.waxing" type="boolean" mandatory="false"/>
+	<field formid="massage" label="salon.massage" binding="custom.massage" type="boolean" mandatory="false"/>
+	<field formid="spa" label="salon.spa" binding="custom.spa" type="boolean" mandatory="false"/>
+	
+	<field formid="salonowner" label="salon.salonowner" binding="custom.salonowner" type="boolean" mandatory="false"/>
+	<field formid="Independent" label="salon.independent" binding="custom.Independent" type="boolean" mandatory="false"/>
+	<field formid="barber" label="salon.barber" binding="custom.salon_barber" type="boolean" mandatory="false"/>
+	<field formid="other"  binding="custom.other" type="string" mandatory="false"/>
+	<field formid="saloncomment"  label="salon.comment" binding="custom.saloncomment" type="string" mandatory="false" max-length="400"/>
+	<field formid="salonemail" label="salon.email" type="string" mandatory="true" regexp="^[\w.%+-]+@[\w.-]+\.[\w]{2,6}$" parse-error="profile.emailparseerror" binding="email" max-length="50" value-error="profile.usernametaken"/>
+		
+	<action formid="cc" valid-form="false"/>
+	<action formid="cancel" valid-form="false"/>
+	<action formid="confirm" valid-form="true"/>
+	<action formid="edit" valid-form="true"/>
+	<action formid="register" valid-form="true"/>
+	<action formid="save" valid-form="true"/>
+	<action formid="previous" valid-form="false"/>
+	<action formid="validate" valid-form="true"/>
+</form>

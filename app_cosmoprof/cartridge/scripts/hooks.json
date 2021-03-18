@@ -1,0 +1,13 @@
+{
+	"hooks" : [
+	
+		{
+            "name": "dw.ocapi.shop.customers.password_reset.afterPOST",
+            "script": "./hooks/PasswordResetAfterPost.js"
+        },
+        {
+            "name": "dw.ocapi.shop.auth.afterPOST",
+            "script": "./hooks/AuthAfterPost.js"
+        }
+	]
+}

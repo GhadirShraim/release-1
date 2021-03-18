@@ -1,0 +1,99 @@
+<isdecorate template="search/pt_productsearchresult_content">
+	<isscript>
+		var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+		var compareEnabled = false;
+		if (!empty(pdict.CurrentHttpParameterMap.cgid.value)) {
+			compareEnabled = ProductUtils.isCompareEnabled(pdict.CurrentHttpParameterMap.cgid.value);
+		} 
+	</isscript>
+	
+	<iscomment>
+		Use the decorator template based on the requested output. If
+		a partial page was requested an empty decorator is used.
+		The default decorator for the product hits page is
+		search/pt_productsearchresult.
+	</iscomment>
+	
+	<iscache type="relative" minute="30" varyby="price_promotion"/>
+	
+	<isinclude template="util/modules"/>
+	
+	<iscomment>
+		Configured as default template for the product search results.
+		Displays a global slot with static html and the product search
+		result grid.
+	</iscomment>
+	
+	<iscomment>create reporting event</iscomment>
+	<isinclude template="util/reporting/ReportSearch.isml"/>
+	
+	<iscomment>suggest similar search phrase below the breadcrumb</iscomment>
+	<isif condition="${!empty(pdict.ProductSearchResult) && !empty(pdict.ProductSearchResult.getSuggestedSearchPhrase())}">
+		<p class="did-you-mean">
+			${Resource.msg('search.nohits.didyoumeanex','search',null)}
+			<a title="${pdict.ProductSearchResult.suggestedSearchPhrase}" href="<isprint value="${URLUtils.http('Search-Show','q',pdict.ProductSearchResult.suggestedSearchPhrase)}"/>"><isprint value="${pdict.ProductSearchResult.suggestedSearchPhrase}"/></a>
+		</p>
+	</isif>
+
+	<isif condition="${!empty(pdict.ProductSearchResult) && !pdict.ProductSearchResult.refinedSearch && !empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">
+		
+		<div class="search-result-bookmarks">
+			${Resource.msg('topcontenthits.yoursearch','search',null)}
+			<a href="${'#results-products'}" class="<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">first</isif>">${Resource.msg('search.producthits.006','search',null)}</a>
+			<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}"> 
+				<a href="${'#results-content'}">${Resource.msg('topcontenthits.goto','search',null)}</a>
+			</isif>
+		</div>
+		
+		<h1 class="content-header" id="results-products">${Resource.msgf('search.producthitscount','search',null,pdict.ProductSearchResult.count)}</h1>
+		
+	</isif>
+	
+	<isscript>
+		var selectedString = 'selected="selected"';
+	</isscript>
+
+	<isif condition="${!(pdict.ProductPagingModel == null) && !pdict.ProductPagingModel.empty}">
+		            
+		<isif condition="${!empty(pdict.ProductSearchResult) && !empty(pdict.ProductSearchResult.category)}">
+			<div id="filters" class="refinements" style="display:none">
+				<isinclude template="search/components/productsearchrefinebar"/>
+			</div>
+		</isif>
+		
+		<div class="search-result-content">
+		
+			<isif condition="${!empty(pdict.ProductSearchResult.category)}">
+					<isinclude template="rendering/category/categorytopcontent"/>
+			</isif>
+
+			<div class="imageSize">
+				<div class="results-hit">
+					<a href="" class="toggle-big"></a>
+					<a href="" class="toggle-small active">
+						<i class="square-tl"></i>
+						<i class="square-tr"></i>
+						<i class="square-bl"></i>
+						<i class="square-br"></i>
+					</a>
+				</div>
+			</div>
+			<isproductgrid pagingmodel="${pdict.ProductPagingModel}" category="${pdict.ProductSearchResult.category}"/>
+		</div>
+		
+	<iselse/>
+
+		<iscomment>display no results</iscomment>
+		<div class="no-results">
+			${Resource.msg('productresultarea.noresults','search',null)}
+		</div>
+
+	</isif>
+
+	<iscomment>Render promotional content at the bottom of search results as global slot</iscomment>
+	<div class="search-promo"><isslot id="search-promo" description="Promotional Content at the bottom of Search Results" context="global"/></div>
+	
+	<div class="backtotop-container">
+		<a class="backtotop"><i>Back To Top</i></a>
+	</div>
+</isdecorate>

@@ -1,0 +1,20 @@
+/**
+*	@input Product : dw.catalog.Product
+*   @output perpetualFlag : Boolean
+*
+*/
+
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var prod = args.Product;
+	var isProdValid = ProductUtils.getAvailability(prod, false);
+	var allowstatus = true;
+    if (isProdValid.status ===  'NOT_AVAILABLE') {
+    	allowstatus = false;
+	}
+    args.perpetualFlag = allowstatus; 
+   	return PIPELET_NEXT;
+   
+}

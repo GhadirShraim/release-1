@@ -1,0 +1,115 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+
+<div class="requestConsultant ">
+	<div>
+		<isslot id="Result_consultant" description="Banner for the virtual account signup congrats page" context="global" />	
+	</div>
+	
+<form method="post" action="${URLUtils.httpsContinue()}" name="salonConsultantForm" id="salonConsultantForm" >	
+<div class="passwordrequired error">${Resource.msg('form.salonrequiredfield', 'forms', null)}</div>
+	<div class="Names form-row">
+		<div class="col clear-fix">
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.firstname}" type="input" maxlength="20"/> 
+		</div>
+		<div class="col">	
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.lastname}" type="input" maxlength="20"/>
+		</div>	
+	</div>
+	<div class="form-row">	
+		<isinputfield formfield="${pdict.CurrentForms.profile.business.businessname}" type="input" rowclass="business-name" maxlength="50"/>
+	</div>
+	
+	<div class="form-row">	
+		<isinputfield formfield="${pdict.CurrentForms.profile.salonaddress1}" type="input" xhtmlclass="pobox" rowclass="address1 noerror" maxlength="50"/>
+	</div>
+	
+	<div class="form-row">	
+		<isinputfield formfield="${pdict.CurrentForms.profile.salonaddress2}" type="input"  rowclass="address2" maxlength="20"/>
+	</div>
+	
+	
+	
+	<div class="address form-row">
+		<div class="city">	
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.city}" type="input" rowclass="select-city noerror" maxlength="30"/>
+		</div>
+		<div class="hide">
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.country}" attribute1="${addDisabled}" value1="${addDisabled}" type="select" />
+		</div>
+		<div class="state">	
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.states.shortstate}" type="select" rowclass="select-state noerror"/>
+		</div>
+		<div class="zipcode">	
+			<isinputfield formfield="${pdict.CurrentForms.profile.address.zip}" type="input" xhtmlclass="zip" rowclass="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA' ? 'select-zip noerror' : 'select-zip-CA noerror'}" />
+		</div>	
+	</div>
+	<div class='form-row'>
+		<div class="col clear-fix">	
+			<isinputfield formfield="${pdict.CurrentForms.profile.salonphone}" type="input" xhtmlclass="phone" rowclass="select-phone work-phone noerror"/>
+		</div>
+		<div class="col">
+			<isinputfield formfield="${pdict.CurrentForms.profile.salonemail}" type="input" xhtmlclass="email email1" rowclass="email-row"/>
+		</div>	
+	</div>
+	<div class="form-row">
+		<isinputfield formfield="${pdict.CurrentForms.profile.customer.currentcustomercard}" type="input"  attribute1="placeholder"/>
+	</div>
+	
+	<div class="services form-row">
+		<isprint value="${Resource.msg('salon.serviceoffer', 'forms', null)}"/>${Resource.msg('salon.offerstext', 'forms', null)}
+		<ul>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.color}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.cutting}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.mani}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.waxing}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.massage}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.spa}" type="checkbox" rowclass="employee-type-row"/></li>
+		</ul>
+	</div>
+	<div class="yourRole form-row"> 
+		<isprint value="${Resource.msg('salon.yourrole', 'forms', null)}"/>${Resource.msg('salon.offerstext', 'forms', null)}
+		<ul>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.salonowner}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.Independent}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li> <isinputfield formfield="${pdict.CurrentForms.profile.barber}" type="checkbox" rowclass="employee-type-row"/></li>
+			<li class='otherType '> <input type='checkbox' class='otherbutton'/>${Resource.msg('global.otherbutton','locale',null)}</li>
+			<li class="otherTextBox"> <isinputfield formfield="${pdict.CurrentForms.profile.other}" type="input" /></li>
+		</ul>
+	</div>
+	
+	<div>
+		<isinputfield formfield="${pdict.CurrentForms.profile.saloncomment}" type="textarea" />
+	</div>
+	
+	<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+	
+	<isif condition="${pdict.CaptchaErrorCode}"> 
+		<div class="captchaerror error">${Resource.msg('virtualsignup.googlerecaptcha','account',null)}</div>
+	</isif>
+	<script>
+		function recaptchaCallback() {
+			if($(".captchaerror").length > 0) {
+				$(".captchaerror").remove();
+			}
+		};
+	</script>
+	<isif condition="${'recatchaSiteKey' in dw.system.Site.getCurrent().preferences.custom}"> 
+		<div class="g-recaptcha" data-callback="recaptchaCallback" data-sitekey="${dw.system.Site.getCurrent().preferences.custom.recatchaSiteKey}"></div> 
+	</isif>
+	
+	<div class="form-row form-row-button ">
+		<button class="primaryButtn" name="${pdict.CurrentForms.profile.save.htmlName}" >${Resource.msg('global.submit','locale',null)}</button>
+	</div>
+</form>
+</div>
+<isscript>
+		importScript("util/ViewHelpers.ds");
+		var stateForm = pdict.CurrentForms.profile.address.states;
+		var countryField = pdict.CurrentForms.profile.address.country; 
+		var countries = ViewHelpers.getCountriesAndRegions(countryField, stateForm, "forms");
+		
+		var json = JSON.stringify(countries);		
+</isscript>
+<script>if (window.app) {app.countries = <isprint value="${json}" encoding="off"/>;}</script>
+</isdecorate>

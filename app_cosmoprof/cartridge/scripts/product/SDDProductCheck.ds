@@ -1,0 +1,75 @@
+/**
+* Script file for use in the Script pipelet node.
+*   @input Basket : dw.order.LineItemCtnr
+*   @output SDDInvalidBasket : Boolean
+*
+*/
+
+function execute( args : PipelineDictionary ) : Number
+{
+	
+   var pliItr : dw.util.Iterator = args.Basket.allProductLineItems.iterator();
+   var ShipNodeValue = '';
+   var sddInvalidBasket = false;
+   
+     //if Basket contains more then one SDD eligible products and if they are not updated with Same Shipnodes then navigate to Cart Page with error msg
+     while (pliItr.hasNext()) {
+        var pli : dw.order.ProductLineItem = pliItr.next();
+	 	var SDDProductFlag = 'reservationID' in pli.custom && pli.custom.reservationID ? true : false;
+	 	var SDDOpted = 'sddOpted' in pli.custom && pli.custom.sddOpted ? true : false;
+
+	 	if (SDDProductFlag && ShipNodeValue == '' && !pli.bundledProductLineItem) {
+	 		ShipNodeValue = pli.custom.ShipNode;
+	 	} else if (SDDProductFlag && ShipNodeValue != '' && !pli.bundledProductLineItem) {
+	 		if ((pli.custom.ShipNode != ShipNodeValue) || empty(pli.custom.sddOpted) || empty(pli.custom.reservationID) || empty(pli.custom.deliveryMethod) || empty(pli.custom.ShipNode) || empty(pli.custom.isSDDEligible)) {
+				//Checking for SDD,DC inventory available product , Only SDD inventory Available product
+				if (!pli.product.availabilityModel.inventoryRecord.perpetual) {
+					pli.custom.sddOpted = true;
+					pli.custom.deliveryMethod = 'SDD';
+					pli.custom.isSDDEligible = true;
+		            pli.custom.maxSDDQty=null;					
+				} else {
+		            pli.custom.sddOpted = null;
+		            pli.custom.ShipNode = null;
+		            pli.custom.reservationID = null;
+		            pli.custom.deliveryMethod = 'DC';
+		            pli.custom.maxSDDQty=null;
+				}
+				sddInvalidBasket = true;
+				break;
+	 		}
+	 	}
+      }
+
+    //Check for Each  SDD item not updated with its service response attributes then navigate to cart Page with error msg  
+	if (!sddInvalidBasket) {
+	     var plis : dw.util.Iterator = args.Basket.allProductLineItems.iterator();
+	
+	     while (plis.hasNext()) {
+	        var pli : dw.order.ProductLineItem = plis.next();
+	 	    var SDDOpted = 'sddOpted' in pli.custom && pli.custom.sddOpted ? true : false;
+
+		 	if ((SDDOpted || pli.custom.deliveryMethod == 'SDD' || pli.custom.isSDDEligible == true) && !pli.bundledProductLineItem && (empty(pli.custom.reservationID) || empty(pli.custom.ShipNode))) {
+
+    			//Checking for SDD,DC inventory available product , Only SDD inventory Available product 	
+		 		if (!pli.product.availabilityModel.inventoryRecord.perpetual) {
+					pli.custom.sddOpted = true;
+					pli.custom.deliveryMethod = 'SDD';
+					pli.custom.isSDDEligible = true;
+		            pli.custom.maxSDDQty=null;
+		 		} else {
+		            pli.custom.sddOpted = null;
+		            pli.custom.ShipNode = null;
+		            pli.custom.reservationID = null;
+		            pli.custom.deliveryMethod = 'DC';	 		
+		            pli.custom.isSDDEligible =  false;
+		            pli.custom.maxSDDQty=null;
+		 		}
+		            sddInvalidBasket = true;
+		 	}
+	     }
+	}
+	
+   args.SDDInvalidBasket = sddInvalidBasket;	
+   return PIPELET_NEXT;
+}

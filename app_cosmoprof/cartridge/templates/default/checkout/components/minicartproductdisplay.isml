@@ -1,0 +1,79 @@
+<iscomment>product line items (only rendered if we haven't add a gift certificate to the basket)</iscomment>	
+	<iscomment>To display a maximum of 3 products on the minicart flyout</iscomment>
+		<div class="mini-cart-product">
+		
+				<div class="mini-cart-image">				
+					<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+				</div>
+				
+				<div class="minicart-rightwrap">
+					
+					<isif condition="${!empty(productLineItem.product.brand)}">
+						<div class="product-brand" itemprop="name"><isprint value="${productLineItem.product.brand}" /></div>
+					 </isif>
+					 <isif condition="${('sddOpted' in productLineItem.custom && !empty(productLineItem.custom.sddOpted) && productLineItem.custom.sddOpted == true) || (empty(productLineItem.custom.deliveryMethod) && 'SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true)}">
+						<div class="SDDminicart-icon"></div>
+					</isif>
+					<div class="mini-cart-name">
+						<isset name="itemUrl" value="${empty(productLineItem.categoryID) ? URLUtils.http('Product-Show','pid', productLineItem.productID) : URLUtils.http('Product-Show','pid', productLineItem.productID, 'cgid', productLineItem.categoryID)}" scope="page"/>
+											
+						<a href="${itemUrl}"><isprint value="${productLineItem.productName}"/></a>
+					</div>
+	
+					<div class="mini-cart-attributes">
+						<isdisplayvariationvalues product="${productLineItem.product}"/>
+		
+						<iscomment>
+							The following code will render the size for products that are not variants nor variation masters. 
+							Reference: JIRA Ticket CPS-478
+						</iscomment>
+						<isif condition="${!empty(productLineItem.product) && !productLineItem.product.isVariant() && !productLineItem.product.isMaster() && 'size' in productLineItem.product.custom && !empty(productLineItem.product.custom.size)}">
+							<div class="attribute">
+								<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+								<span class="value"><isprint value="${productLineItem.product.custom.size}"/></span>
+							</div>
+						</isif>
+						<div class="wrap-sku-price">
+							<div class="sku attribute">
+								${Resource.msg('global.sku','locale',null)}<isprint value="${productLineItem.product.ID.substring(productLineItem.product.ID.lastIndexOf('-')+1)}"/>
+							</div>
+							<div class="mini-cart-pricing">
+							    <isif condition="${productLineItem.bonusProductLineItem}">
+								    ${Resource.msg('global.bonus','locale',null)}
+							    <iselse>
+							    	<isset name="productTotal" value="${productLineItem.adjustedPrice}" scope="page"/>
+							    	<isif condition="${!empty(productLineItem) && productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+										<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+											<isset name="productTotal" value="${productTotal.add(optionLI.adjustedPrice)}" scope="page"/>
+										</isloop>
+									</isif>
+								    <span class="mini-cart-price">${Resource.msg('global.totalprice','locale',null)} <isprint value="${productTotal}"/></span>
+							    </isif>
+							</div>
+						</div>
+					</div>
+					<iscomment> redesign
+						<isdisplayproductavailability p_productli="${productLineItem}" p_displayinstock="${false}" />
+					</iscomment>
+					<div class="updateremove-minicart">
+					 	<span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+					    <isif condition="${productLineItem.bonusProductLineItem}">
+					    	<isprint value="${productLineItem.quantity.value.toFixed()}" />
+					    <iselse>
+					    	<input type="text" maxlength="3" value="${productLineItem.quantity.value.toFixed()}" class="input-text update-minicart-qty" />
+						    <a class="update-minilineitem attribute" data-pli="${productLineItem.productID}">
+								<isprint value="${Resource.msg('global.update','locale',null)}" /> 
+							</a>
+						</isif>
+						<iscomment>
+					   		<span class="value"><isprint value="${productLineItem.quantity}"/></span>
+					     </iscomment>
+						<a class="remove-minilineitem attribute" data-pli="${productLineItem.productID}">
+							<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+						</a>
+					</div>
+				</div><!-- End of minicart-rightwrap -->
+			</div>
+	
+	<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+	

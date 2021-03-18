@@ -1,0 +1,105 @@
+<iscache type="relative" hour="24" varyby="price_promotion"  />
+<iscomment>
+	Render the color swatch secion for a product search hit. The swatches depend on the products the search hit actually represents.
+	Doesn't necessarily equal all variants of a product master, since only a sub set of variants could be represented by the search
+	hit (a variant group). We show color swatches only for variant groups represented by a product search hit.
+</iscomment>
+ 
+ 
+<isset name="Product" value="${pdict.Product}" scope="page" />
+	<isscript>
+		var selectableColors : dw.util.Collection = new dw.util.ArrayList();
+		var varAttrColor : dw.catalog.ProductVariationAttribute = null;
+
+		if( Product.master )
+		{
+			var varModel  = Product.variant ? Product.masterProduct.variationModel : Product.variationModel;
+			var varAttrColor = varModel.getProductVariationAttribute("color");
+
+			if( !empty(varAttrColor) )
+			{
+				var allColors : dw.util.Collection = varModel.getAllValues( varAttrColor );
+				
+				// filter out colors with not orderable variants
+				for each( var color in allColors )
+				{
+					if( varModel.hasOrderableVariants( varAttrColor, color ) )
+					{
+						selectableColors.add( color );
+					}
+				}
+				//selectableColors = Product.variationModel.getFilteredValues( varAttrColor );
+			}
+		}
+
+		var firstProduct : dw.catalog.Product = pdict.FirstProduct;
+		var selectedColor: dw.catalog.ProductVariationAttributeValue = null;
+		if( firstProduct && firstProduct.variant && varAttrColor != null )
+		{
+			selectedColor = firstProduct.variationModel.getSelectedValue( varAttrColor );
+		}
+	</isscript>
+ 
+<isif condition="${!empty(selectableColors) && selectableColors.size() > 1 && !empty(varAttrColor)}">
+
+	<div class="product-swatches">
+
+		<iscomment>render a link to the palette and hide the actual palette if there are more than five colors contained</iscomment>
+		<isif condition="${selectableColors.size() > 5}">
+			<div class="product-swatches-all">${Resource.msg('productresultarea.viewallcolors','search',null)} (<isprint value="${selectableColors.size()}"/>)</div>
+		</isif>
+
+		<iscomment>render the palette, the first swatch is always preselected</iscomment>
+		<ul class="swatch-list<isif condition="${selectableColors.size() > 5}"> swatch-toggle</isif>">	
+			<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || selectableColors.size() <= 5}"> 
+			<isloop items="${selectableColors}" var="colorValue" status="varloop">
+			
+				<iscomment>Determine the swatch and the thumbnail for this color</iscomment>
+				<isset name="colorSwatch" value="${colorValue.getImage('swatch')}" scope="page"/>
+				<isset name="colorThumbnail" value="${colorValue.getImage('large')}" scope="page"/>
+
+				<iscomment>If images couldn't be determined, display a "no image" thumbnail</iscomment>
+				<isif condition="${!empty(colorSwatch)}">
+					<isset name="swatchUrl" value="${colorSwatch.getURL()}" scope="page"/>
+					<isset name="swatchAlt" value="${colorSwatch.alt}" scope="page"/>
+					<isset name="swatchTitle" value="${colorSwatch.title}" scope="page"/>
+				<iselse>
+					<isset name="swatchUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+					<isset name="swatchAlt" value="${colorValue.displayValue}" scope="page"/>
+					<isset name="swatchTitle" value="${colorValue.displayValue}" scope="page"/>
+				</isif>
+				<isif condition="${!empty(colorThumbnail)}">
+					<isset name="thumbnailUrl" value="${colorThumbnail.getURL()}" scope="page"/>
+					<isset name="thumbnailAlt" value="${colorThumbnail.alt}" scope="page"/>
+					<isset name="thumbnailTitle" value="${colorThumbnail.title}" scope="page"/>
+				<iselse>
+					<isset name="thumbnailUrl" value="${URLUtils.staticURL('/images/noimagesmall.png')}" scope="page"/>
+					<isset name="thumbnailAlt" value="${colorValue.displayValue}" scope="page"/>
+					<isset name="thumbnailTitle" value="${colorValue.displayValue}" scope="page"/>
+				</isif>
+				
+				<isif condition="${!empty(selectedColor)}">
+					<isset name="preselectCurrentSwatch" value="${colorValue.value == selectedColor.value}" scope="page"/>
+				<iselse>
+					<isset name="preselectCurrentSwatch" value="${varloop.first}" scope="page"/>
+				</isif>
+				<iscomment>build the proper URL and append the search query parameters</iscomment>
+			    <isset name="swatchproductUrl" value="${Product.variationModel.url('Product-Show', varAttrColor, colorValue.value)}" scope="page"/>
+			    <isif condition="${!empty(pdict.ProductSearchResult)}">
+				    <isset name="swatchproductUrl" value="${pdict.ProductSearchResult.url( swatchproductUrl )}" scope="page"/>
+			    </isif>
+
+				<iscomment>render a single swatch, the url to the proper product detail page is contained in the href of the swatch link</iscomment>
+				<li>
+					<a href="${swatchproductUrl}" class="swatch ${(preselectCurrentSwatch) ? 'selected' : ''}" title="<isprint value="${colorValue.displayValue}"/>">
+						<img src="${swatchUrl}" alt="${swatchAlt}" title="${swatchTitle}" data-thumb='{"src":"${thumbnailUrl}","alt":"${thumbnailAlt}","title":"${thumbnailTitle}"}'/>
+					</a>
+				</li>
+
+			</isloop>
+			</isif>
+		</ul>
+		
+	</div>
+			
+</isif>

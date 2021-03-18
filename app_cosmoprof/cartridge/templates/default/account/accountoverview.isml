@@ -1,0 +1,74 @@
+<isdecorate template="account/pt_account" />
+<isinclude template="util/modules" />
+
+<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+
+<div class="cp_MyaccMain">
+<h1 class=" title h1"><isprint value="${Resource.msg('account.header','account',null)}" /></h1>
+
+<div class="h3">
+ <span><isprint value="${Resource.msg('account.welcome','account',null)}" /></span>
+ <isprint value="${pdict.CurrentCustomer.profile.firstName}" />
+ <isprint value="${pdict.CurrentCustomer.profile.lastName}" />
+ <iscomment>Comment as a part of Redesign
+ 	<span class="account-logout">(<a title="Logout" class="logout-btn" href="${URLUtils.https('Login-Logout')}">${Resource.msg('global.logout','locale',null)}</a>)</span>
+ </iscomment>
+</div>
+
+	<div class="navgroup">
+		<div class="Column">
+		<div>
+			<div class="icon"><img src="${URLUtils.staticURL('/images/accSetting.png')}" /></div>
+			<div class="navtitle"><isprint value="${Resource.msg('account.accountsettings','account',null)}" /></div>
+			<div class="btn">
+				<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}"
+				title="${Resource.msg('account.manageaccount','account',null)}"
+				class=" primaryButtn">
+				<isprint value="${Resource.msg('account.manageaccount','account',null)}" /> </a>
+			</div>
+		</div>	
+		</div>
+		
+		<div class="Column">	
+		<div>
+			<div class="icon"><img src="${URLUtils.staticURL('/images/orderHstry.png')}" /></div>
+			<div class="navtitle"><isprint value="${Resource.msg('orders.purchasehistory','account',null)}" /></div>
+			<div class="btn">
+				<a href="${URLUtils.url('Order-History')}"
+				title="${Resource.msg('account.viewpreviouspurchase','account',null)}"
+				class="primaryButtn">
+				<isprint value="${Resource.msg('account.viewpreviouspurchase','account',null)}" /> </a>
+			</div> 
+		</div>	
+		</div>
+		
+		<div class="Column">
+	 	<div>
+	 		<div class="icon"><img src="${URLUtils.staticURL('/images/quickOrder.png')}" /></div>
+		 	<div class="navtitle"><isprint value="${Resource.msg('account.quickorder','account',null)}" /></div>
+		 	<div class="btn">
+				<a href="${URLUtils.https('Account-QuickOrder')}"
+				title="${Resource.msg('account.placequickorder','account',null)}"
+				class="primaryButtn"><isprint value="${Resource.msg('account.placequickorder','account',null)}" /></a>
+			</div>
+		</div>
+		</div>
+			
+		<div class="Column">
+		<div>
+			<div class="icon"><img src="${URLUtils.staticURL('/images/mylist.png')}" /></div>
+			<div class="navtitle"><isprint value="${Resource.msg('account.mylist','account',null)}" /></div>
+			<div class="btn">
+				<a href="${URLUtils.url('GiftRegistry-Start')}"
+				title="${Resource.msg('account.viewmylist','account',null)}"
+				class="primaryButtn">
+				<isprint value="${Resource.msg('account.viewmylist','account',null)}" /> </a>
+			</div>
+		</div>	
+		</div>	 
+	</div>
+</div>
+<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+<isinclude template="account/user/mobilemyaccount" /> </isif>
+
+</isdecorate>

@@ -1,0 +1,10 @@
+<isinclude template="util/modules"/>
+	
+<isscript>
+	var paymentListURL = dw.web.URLUtils.https('PaymentInstruments-List');
+	pdict.isFromCybersourceRedirect = "done";
+</isscript>
+
+<script type="text/javascript">
+	top.location.href = "${paymentListURL}";
+</script>

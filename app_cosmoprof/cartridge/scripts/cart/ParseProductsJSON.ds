@@ -1,0 +1,35 @@
+/**
+ * ParseProductsJSON.ds
+ *
+ * This script reads JSON POST data and outputs an array of products
+ *
+ * @output Products : dw.util.ArrayList 
+ *
+ */
+importPackage( dw.system );
+importPackage( dw.util );
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	var httpParameterMap : HttpParameterMap = pdict.CurrentHttpParameterMap;
+	
+	try
+	{
+		var rb = httpParameterMap.getRequestBodyAsString();
+		var data = JSON.parse(httpParameterMap.getRequestBodyAsString());
+		var products : ArrayList = new ArrayList();
+			
+		for( var i = 0; i < data.products.length; i++)
+		{
+			products.addAt(0, data.products[i]);
+		}
+		pdict.Products = products;
+		
+	}
+	catch (e)
+	{
+		Logger.error(e);			
+	}
+   	
+   	return PIPELET_NEXT;
+}

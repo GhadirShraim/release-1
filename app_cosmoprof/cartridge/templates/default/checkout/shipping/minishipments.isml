@@ -1,0 +1,34 @@
+<iscomment>
+	This template renders a summary of all shipments of the basket which is
+	used below the order summary at the right hand side in the checkout
+	process.
+</iscomment>
+
+<isset name="activeAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID)}" scope="page" />
+	
+<iscomment>the url to edit shipping addresses depends on the checkout scenario</iscomment>
+<isset name="editUrl" value="${URLUtils.abs('LoginBarrier-SelectShippingAddress')}" scope="page"/>
+
+<div class="mini-shipment order-component-block">
+	<h3 class="section-header">
+		<a href="${editUrl}"  class="dialogify section-header-note" data-dlg-action='{"isCart":true}'>${Resource.msg('global.edit','locale',null)}</a>
+		${Resource.msg('minishipments.shippingaddress','checkout',null)}
+	</h3>
+
+	<div class="details">
+			<isif condition="${'addressLabel' in activeAddress.custom && !empty(activeAddress.custom.addressLabel)}">
+			    <div><isprint value="${activeAddress.custom.addressLabel}"/></div>
+			</isif>
+			<isif condition="${'attentionTo' in activeAddress.custom && !empty(activeAddress.custom.attentionTo)}">
+				<div><isprint value="${Resource.msgf('global.attnto', 'locale', null, activeAddress.custom.attentionTo)}"/></div>
+			</isif>
+			<div><isprint value="${activeAddress.firstName}"/> <isprint value="${activeAddress.lastName}"/></div>
+			<div><isprint value="${activeAddress.address1}"/></div>
+			<isif condition="${!empty(activeAddress.address2)}">
+				<div><isprint value="${activeAddress.address2}"/></div>
+			</isif>
+			<div><isprint value="${activeAddress.city}"/>, <isprint value="${activeAddress.stateCode}"/> <isprint value="${activeAddress.postalCode}"/></div>
+			<div><isprint value="${activeAddress.countryCode}"/></div>
+	</div>
+
+</div>

@@ -1,0 +1,6 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+<div class="vsu-congrats">
+	<iscontentasset aid="vsu-reprint-request-success"/>
+</div>
+</isdecorate>

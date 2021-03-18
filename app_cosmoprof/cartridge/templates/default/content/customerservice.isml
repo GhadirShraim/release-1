@@ -1,0 +1,7 @@
+<isdecorate template="content/pt_customerservice">
+<isinclude template="util/modules"/>
+	<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('cc')}">
+		<isset name="assetName" value="${pdict.CurrentHttpParameterMap.cc + '-cs-landing'}" scope="page"/>
+		<iscontentasset aid="${assetName}"/>
+	</isif>
+</isdecorate>

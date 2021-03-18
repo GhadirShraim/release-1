@@ -1,0 +1,109 @@
+/**
+ * CreateCartStateString.ds
+ *
+ * This script writes the product IDs, quantities and prices of the line items in the cart to a string and appends the adjusted shipping total and cart totals to the end of the string.
+ * This string is used by the Cybersource cartridge to determine if the cart has been updated since tax was last calculated. 
+ * If the cart was updated or if tax has not been previously been calculated on the session then a tax call will be made to cybersource.
+ * This logic is in place to prevent un-needed tax calls to avoid unnessary service charges by cybersource. 
+ *
+ * @input Basket : dw.order.LineItemCtnr;
+ * @output IsCartUpdated : Boolean;
+ */
+ importPackage( dw.customer );
+ importPackage( dw.order );
+ importPackage( dw.system );
+ importPackage( dw.util );
+
+ 
+function execute( pdict : PipelineDictionary ) : Number
+{
+	// We will call this logic on COBilling, COSummary 
+	var basket : LineItemCtnr = pdict.Basket;
+	var cartStateString = "";
+	var isCartUpdated = false;
+	
+	try {
+		
+		// Check for Token Expiration
+		 if ( 'payPalTokenExpire' in basket.custom && !empty(basket.custom.payPalTokenExpire) && basket.custom.payPalTokenExpire != "" ) {
+		 	
+		 	var cal : Calendar = new Calendar();
+		 	//Get the Value fronm the saved Expiration and comapre with the current time
+		 	var expiredCal = new Calendar(new Date(basket.custom.payPalTokenExpire));
+		 	
+		 	//Compare the expired Calander with current
+		 	if (!empty(expiredCal) && cal.compareTo(expiredCal) > 0) {
+		 		//Clear the token
+		 		isCartUpdated = true;
+				clearPayPalToken(pdict.Basket);
+				pdict.IsCartUpdated = isCartUpdated;
+				return PIPELET_NEXT;
+		 	}
+		 }
+		
+		
+		
+		var productLineItems : Iterator = basket.getAllProductLineItems().iterator();
+		while(productLineItems.hasNext())
+		{
+			var productLineItem : ProductLineItem = productLineItems.next();
+			cartStateString += productLineItem.quantityValue +";"+ productLineItem.adjustedPrice + "|";
+		}	
+		
+		// Append shipping totals and basket totals to string (adjustedMerchandizeTotalPrice includes order level price adjustments). Basket Net total checked as catch all for both taxation policies not including taxe.
+		
+		if (!empty(basket.defaultShipment.shippingAddress)){
+			cartStateString += basket.adjustedShippingTotalPrice.valueOrNull + "|" + basket.adjustedMerchandizeTotalPrice.valueOrNull + "|" + basket.totalNetPrice.valueOrNull + "|" + basket.defaultShipment.shippingAddress.stateCode + "|" + basket.defaultShipment.shippingAddress.city.toLowerCase() + "|" + basket.defaultShipment.shippingAddress.countryCode + "|" + basket.defaultShipment.shippingAddress.postalCode + "|";
+		} 
+		
+		
+		// Now if Basket, cartState is empty, means Basket in not tracked yet, put the cartStateString into It. else need to check if the saved cartStateString with the current.
+		if ('cartState' in pdict.Basket.custom && !empty(pdict.Basket.custom.cartState) && pdict.Basket.custom.cartState != "") {
+			//Validate Cart if anything updated.
+			if (pdict.Basket.custom.cartState != cartStateString) {
+				
+				isCartUpdated = true;
+				//Clear the token
+				clearPayPalToken(pdict.Basket);
+			}
+			
+			//Finally Update the Cart State with new Cart State
+			pdict.Basket.custom.cartState = cartStateString;
+			
+		} else {
+			pdict.Basket.custom.cartState = cartStateString;
+		}
+		
+		pdict.IsCartUpdated = isCartUpdated;
+		
+	
+	} catch (ex){
+		var a = ex;
+		Logger.error("[CheckCartState.ds] has encountered an error: {0}",ex);
+		return PIPELET_ERROR;
+	}
+	
+    return PIPELET_NEXT;
+}
+
+function clearPayPalToken(basket : Basket) {
+	
+	//Remove PayPal token from the basket and Payment Instrument if exist.
+	var paymentInstrumnets : Collection = basket.getPaymentInstruments();
+	
+	if (!empty(paymentInstrumnets) && paymentInstrumnets.size() > 0 ) {
+		var paymentItr : Iterator = paymentInstrumnets.iterator();
+		
+		while(paymentItr.hasNext()) {
+			let paymentInstrument = paymentItr.next();
+			paymentInstrument.custom.paypalPayerID = "";
+			paymentInstrument.custom.paypalEmail = "";
+			paymentInstrument.custom.paypalToken = "";
+		}
+	}
+	
+	//Clear Basket as well.				
+	basket.custom.paypalTempExpressCheckoutPayerID = "";
+	basket.custom.paypalTempExpressCheckoutToken = "";
+
+}

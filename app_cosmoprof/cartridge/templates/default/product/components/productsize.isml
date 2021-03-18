@@ -1,0 +1,41 @@
+<iscontent type="text/html" charset="UTF-8" compact="true"/>
+
+<iscomment>
+	This template is used to render a single size swatch for a Product that is not a variation master nor variant. 
+	The size for the product is pulled from the product's custom size attribute.
+	
+	REFERENCE: JIRA ticket CPS-478
+</iscomment>
+
+<isinclude template="util/modules"/>
+
+<isif condition="${!empty(pdict.Product) && pdict.Product.isProduct() && 'size' in pdict.Product.custom && !empty(pdict.Product.custom.size)}">
+
+<isset name="Product" value="${pdict.Product}" scope="page"/>
+<isset name="productSize" value="${Product.custom.size}" scope="page"/>
+<div class="simple-product-size">Size: <isprint value="${productSize}"/></div>
+<iscomment>
+	<select class="size-variation-select"  name="productsize" >
+		<option value="${productSize}" selected="selected"><isprint value="${productSize}"/></option>
+	</select>
+
+	<div class="product-size-swatch">
+		<li class="attribute">
+			<span class="label"><isprint value="${Resource.msg('productsize.sizelabel', 'product', null)}"/></span>
+			<div class="value">
+				<ul class="swatches size">
+					<li class="selected unselectable">
+						<a title="${productSize}" class="swatchanchor" href="${URLUtils.http('Product-Show','pid', Product.ID)}">
+							<isprint value="${productSize}"/>
+						</a>
+					</li>
+					<li class="selected-value">
+						<b><isprint value="${Resource.msg('productsize.selected', 'product', null)}" encoding="off"/></b>
+						<isprint value="${productSize}"/>
+					</li>
+				</ul>
+			</div>
+		</li>
+	</div>
+ </iscomment>
+</isif>

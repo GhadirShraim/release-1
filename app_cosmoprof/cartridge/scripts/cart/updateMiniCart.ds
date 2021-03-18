@@ -1,0 +1,67 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input Basket : dw.order.Basket 
+*   @input Customer : dw.customer.Customer
+*   @input Quantity : Number
+*   @input Pli : String
+*   @output isSDDRequired : String
+*   @output basketLimitError : Boolean
+*
+*/
+var Basket = require('dw/order').Basket;
+var CustomerAddress = require('dw/customer').CustomerAddress;
+var Logger = require('dw/system').Logger;
+var ProductLineItem = require('dw/order').ProductLineItem;
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+    try 
+	{
+		var basket : Basket = args.Basket;
+		args.isSDDRequired = 'false';
+		var basketMaxQty = dw.system.Site.getCurrent().getCustomPreferenceValue("basketQtyLimit");
+			
+		if ( !empty(args.Customer) ) 
+		{
+			for each ( let pli : ProductLineItem in basket.productLineItems ) 
+			{
+				if ( !empty(pli) && !empty(args.Pli) && pli.productID == args.Pli )
+				{	
+					// If Quantity is 0, remove it from the Basket.
+					if (empty(args.Quantity) || args.Quantity == 0) {
+						basket.removeProductLineItem(pli);
+					} else {
+						if (((basket.getProductQuantityTotal() - pli.quantity ) + args.Quantity ) <= basketMaxQty) {
+						pli.setQuantityValue(args.Quantity);
+						if(empty(pli.custom.maxSDDQty) || !empty(pli.custom.maxSDDQty) && Number(pli.custom.maxSDDQty) < pli.quantityValue) {
+							args.isSDDRequired = 'true';
+						}
+						}
+					}
+					args.basketLimitError = ((basket.getProductQuantityTotal() - pli.quantity ) + args.Quantity ) <= basketMaxQty ? false : true ; 
+					break;
+				} 
+			}
+		}
+	} 
+	catch ( ex ) 
+	{
+		Logger.error("[UpdateminiCart] There was an error getting the updating Lineitems: {0}",ex);
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

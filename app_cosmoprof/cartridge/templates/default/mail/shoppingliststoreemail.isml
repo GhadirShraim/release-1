@@ -1,0 +1,277 @@
+<iscontent type="text/html " charset="UTF-8"/>
+<isinclude template="util/modules"/>
+<isset name="portalData" value="${dw.object.CustomObjectMgr.getCustomObject('PortalData', '500' )}" scope="page"/>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+	
+	<iscomment>
+		The "to" tag contains the email address of the recipient, the "from" tag the email address of the sender. 
+		Each tag is to be specified max. once. Multiple email address can be separated by "," (see RFC2822).
+	</iscomment>
+	
+	<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,700i,900" rel="stylesheet">
+	<style>
+	
+		body, html {margin: 0;padding: 0;background-color: #ffffff;}
+		div, p, a, li, td {-webkit-text-size-adjust: none;-ms-text-size-adjust: none;}
+		td img {display: block;border: 0;}
+		table td {border-collapse: collapse;}
+		td, tr, th, div, a {font-family: 'Lato';color: #000;	font-size: 14px;}
+		p {font-size: 14px;font-family: 'Lato';line-height: 18px;color: #000;margin: 0;padding-bottom: 5px;}
+		thead {border-bottom: 1px solid #000;}th {text-align: left;}
+		tbody td, thead th {padding-left: 0;	padding-right: 0;}
+		td, tr ,th ,div , a{ font-family: 'Lato'; color: #000; font-size:14px;}
+		p{font-size: 14px; font-family: 'Lato'; line-height: 18px; color: #000; margin: 0; padding-bottom: 5px;}
+		thead{border-bottom: 1px solid #000;}
+		th{text-align: left;} 
+		tbody td, thead th{padding-left:0; padding-right:0;}
+		.items-table thead th{ padding-bottom: 5px;}
+		.items-table tbody td{padding: 10px 0;}
+		.items-table th.last, .items-table td.last{float: right;}
+		.top-details-section td{float: left;}
+		.top-details-section td:first-child{width: 200px;}
+		.heading{font-size:14px; font-weight: 700; color: #000; padding-bottom: 15px;}
+		@media only screen and (max-width: 767px) {
+		.heading{padding: 15px 0;}
+		.fullwidth {width: 100% !important;height: auto !important;display: table;}
+			.only-desktop-tablet{display: none;}
+			.show-mobile-table {
+				display: block !important;
+				width: auto !important;
+				height:auto !important;
+				overflow: hidden !important;
+				visibility: visible !important;
+				border:none !important;
+				font-size: inherit !important;
+				max-height: inherit !important; 
+				margin: 0 !important;
+				padding: 0 !important;
+				max-height: inherit !important;
+				float: none !important;
+
+
+			}
+		}
+	</style>
+	</head>
+	
+	<body>
+		<isset name="EmailData" value="${pdict.EmailData}" scope="Page" />
+		<table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff">
+	  <tbody>
+	  <tr>
+	   	 <td align="center" valign="top"><table width="800" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" class="fullwidth">
+	        <tbody>
+	        <tr>
+	          <td align="left" valign="top">
+		          <table border="0" cellspacing="0" cellpadding="0" style="width:100%;">
+		              <tbody>
+			              <tr class="top-details-section" style="width:100%;">
+			                <td style="font-family: 'Lato'; width:30%; padding-top:40px;">From :</td>
+			                <td style="font-family: 'Lato'; width:70%; padding-top:40px;"><isprint value="${EmailData.from}" /></td>
+			              </tr>
+			              <tr class="top-details-section">
+			                <td style="font-family: 'Lato'; width:30%; padding-top:5px;">Date :</td>
+			                <td style="font-family: 'Lato'; width:70%; padding-top:5px;"><isprint value="${EmailData.date}" /></td>
+			              </tr>
+			              <tr class="top-details-section">
+			                <td style="font-family: 'Lato'; width:30%; padding-top:5px;">Time :</td>
+			                <td style="font-family: 'Lato'; width:70%; padding-top:5px;"><isprint value="${EmailData.time}" /></td>
+			              </tr>
+			              <tr class="top-details-section">
+			                <td style="font-family: 'Lato'; width:30%; padding-top:5px;">To :</td>
+			                <td style="font-family: 'Lato'; width:70%; padding-top:5px;"><isprint value="${EmailData.to}" /></td>
+			              </tr>
+	            	   </tbody>
+          	 		</table>
+            	</td>
+	        </tr>
+	        <tr>
+	        <iscomment>CP-805
+	          <td align="center" valign="top" style="padding-top:100px;">
+	          	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	              <tbody>
+	                <tr>
+	                  <td style="font-family: 'Lato';">Subject</td>
+	                  <td style="font-weight: 700;font-family: 'Lato';"><isprint value="${Resource.msg('store.shoppinglist.email.subject','storepickup',null)}" /></td>
+	                </tr>
+	              </tbody>
+	            </table>
+	           </td>
+	        </iscomment>
+	        </tr>
+	        <tr>
+	          <td style=" padding:40px 0 20px 0; display: block;font-family: 'Lato';">
+	          	<isprint value="${dw.content.ContentMgr.getContent('shoppinglist-email-intro-msg').custom.body}"/> 
+	          </td>
+	        </tr>
+	        <tr>
+	          <td align="center" valign="top">
+	          	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+	              <tbody>
+		              <tr>
+		                <td align="left" valign="top" width="50%" class="fullwidth"><div class="heading" style="font-family: 'Lato';">Customer Information:</div>
+		                  <p style="font-family: 'Lato';">
+		                    <isprint value="${EmailData.cust.firstname}" /> <isprint value="${EmailData.cust.lastname}" />
+		                  </p>
+		                  <isif condition="${!empty(EmailData.cust.accountNo) && !empty(EmailData.cust.cardNo)}">
+		                  	 <p style="font-family: 'Lato';">
+		                   	 	<isprint value="${Resource.msg('store.shoppinglist.email.customerAcctNo','storepickup',null)}" /> <isprint value="${EmailData.cust.accountNo}" />
+		                  	 </p>
+		                  	  <p style="font-family: 'Lato';">
+		                   	 	<isprint value="${Resource.msg('store.shoppinglist.email.customerCardNo','storepickup',null)}" /> <isprint value="${EmailData.cust.cardNo}" />
+		                  	 </p>	
+		                  <iselseif condition="${!empty(EmailData.cust.accountNo)}" >
+		                  		 <p style="font-family: 'Lato';">
+		                   	 		<isprint value="${Resource.msg('store.shoppinglist.email.customerAcctNo','storepickup',null)}" /> <isprint value="${EmailData.cust.accountNo}" />
+		                  		 </p>
+		                   <iselseif condition="${!empty(EmailData.cust.cardNo)}" >
+		                   		 <p style="font-family: 'Lato';">
+		                   	 		<isprint value="${Resource.msg('store.shoppinglist.email.customerCardNo','storepickup',null)}" /> <isprint value="${EmailData.cust.cardNo}" />
+		                  	 	</p>
+		                  </isif>
+		                 
+		                  <p style="font-family: 'Lato';">
+		                    Phone: <isprint value="${EmailData.cust.phoneNo}" />
+		                  </p>
+		                  <p style="font-family: 'Lato';">
+		                    Email: <isprint value="${EmailData.cust.email}" />
+		                  </p></td>
+		                <td align="left" valign="top" width="50%" style="text-align:left;font-family: 'Lato';" class="fullwidth"><div class="heading" style="font-family: 'Lato';">Receiving Store:</div>
+		                  <p style="font-family: 'Lato';">
+		                    <isprint value="${EmailData.store.fid}"></p>
+		                  <p style="font-family: 'Lato';">
+		                    <isprint value="${EmailData.store.address1}">
+		                    <isprint value="${EmailData.store.address2}"></p>
+		                  <p style="font-family: 'Lato';">
+		                    <isprint value="${EmailData.store.city}">
+		                    <isprint value="${EmailData.store.region}">
+		                    <isprint value="${EmailData.store.postalCode}"></p>
+		                  <p style="font-family: 'Lato';"> 
+		                  	<isprint value="${EmailData.store.phone}"></p>  
+		                </td>
+		              </tr>
+	            	</tbody>
+	            	</table>
+	            </td>
+	        </tr>
+	        <tr>
+	          <td align="center" valign="top">
+	          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+	              <tbody>
+	              <tr>
+	                <td align="center" valign="top" width="50%" style="text-align:left; font-family:'Lato';" class="fullwidth"><p style="font-family: 'Lato';">Tax Flag:
+	                    <isprint value="${EmailData.taxFlag}"></p>
+	                  <p style="font-family: 'Lato';">List Subtotal: $
+	                    <isprint value="${EmailData.listTotalPrice}"></p>
+	                  <p style="font-family: 'Lato';"># of items:
+	                    <isprint value="${EmailData.itemCount}"></p></td>
+	                <td align="center" valign="top" width="50%" style="text-align:left;font-family: 'Lato';" class="fullwidth"><a class="heading" href="${EmailData.store.direction}" style="font-family: 'Lato';">Directions</a></td>
+	              </tr>
+	            </tbody>
+	            </table>
+	            </td>
+	        </tr>
+	        <tr>
+	          <td style="text-align: center; margin:0; padding:60px 0 10px 0; font-size: 16px;font-family: 'Lato';">Items on the list</td>
+	        </tr>
+	        <tr>
+	          <td align="center" valign="top">
+	          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+	              <tbody>
+	                <tr id="show-desktop-table" class="only-desktop-tablet">
+	                  <td align="left" valign="top" width="50%" class="fullwidth"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+	                      <tbody><tr>
+	                        <td align="center" valign="top">
+	                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+	                        	<tbody>
+	                            <tr  class="product-info-head">
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">SKU</td>
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">Brand</td>
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">Product Name</td>
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">Size</td>
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">QTY</td>
+									<td align="left" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">Price</td>
+									<td align="right" valign="top" style="border-bottom:1px solid #111010;font-family: 'Lato'; padding-bottom:5px;">Total</td>
+	                            </tr>
+	                            
+	                            <isloop items="${EmailData.productList.productItems}" var="pi" >
+						 		<isset name="pid" value="${pi.product.ID.substring(pi.product.ID.lastIndexOf('-')+1)}" scope="Page" />
+						 		<isset name="priceLookup" value="${JSON.parse(EmailData.priceLookUp)}" scope="Page" />
+						 		<isset name="price" value="${!empty(EmailData.priceLookUp[pid]["price"]) ? EmailData.priceLookUp[pid]["price"].toString().replace(',','') : ''}" scope="Page" />
+	                            <tr class="product-info">
+									<td align="left" valign="top" style="font-family: 'Lato';"><isprint value="${pid}" /></td>
+									<td align="left" valign="top" style="font-family: 'Lato';"><isprint value="${pi.product.brand}" /></td>
+									<td align="left" valign="top" style="font-family: 'Lato';"><isprint value="${pi.product.name}" /></td>
+									<td align="left" valign="top" style="font-family: 'Lato';"><isprint value="${!empty(pi.product.custom.size) ? pi.product.custom.size.replace(RegExp(/[_]/g), '') : ''}" /></td>
+									<td align="left" valign="top" style="font-family: 'Lato';"><isprint value="${pi.quantity.value.toFixed()}" /></td>
+									<td align="left" valign="top" style="font-family: 'Lato';">$<isprint value="${price}" /></td>
+									 <isset name="totalPrice" value="${(new Number(price))*pi.quantity.value.toFixed()}" scope="Page" />
+									<td align="right" valign="top" style="font-family: 'Lato';">$<isprint value="${totalPrice}" /></td>
+	                            </tr>
+	                            </isloop>
+	                          </tbody>
+	                          </table>
+	                       </td>
+	                      </tr>
+	                    </tbody></table>
+	                 </td>
+	                </tr>
+	               <!--[if !mso]><!-- -->
+					<tr class="show-mobile-table" style="display:none; height:0; line-height:0; max-height:0px; overflow:hidden; float:none; visibility:hidden; border:none; font-size:0; max-height:0; mso-hide: all">
+	                  <td align="left" valign="top" width="50%" class="fullwidth"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+	                      <tbody><tr>
+	                        <td align="center" valign="top" style="padding:10px 0;"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+	                            <tbody><tr>
+									</tr></tbody></table><table width="100%" border="0" cellspacing="0" cellpadding="0">
+									<tbody>
+									<isloop items="${EmailData.productList.productItems}" var="pi" >
+							 		<isset name="pid" value="${pi.product.ID.substring(pi.product.ID.lastIndexOf('-')+1)}" scope="Page" />
+							 		<isset name="priceLookup" value="${JSON.parse(EmailData.priceLookUp)}" scope="Page" />
+							 		<isset name="price" value="${!empty(EmailData.priceLookUp[pid]["price"]) ? EmailData.priceLookUp[pid]["price"].toString().replace(',','') : ''}" scope="Page" />
+									<tr>
+										<td align="left" valign="top" style="width: 20%; float: left; font-family: 'Lato'; line-height:24px; padding-top:5px; padding-bottom: 5px;"><isprint value="${pid}" /></td>
+										<td align="left" valign="top" style="width: 30%; float: left; font-family: 'Lato'; line-height:24px; padding-top:5px; padding-bottom: 5px;"><isprint value="${pi.product.brand}" /></td>
+										<td align="left" valign="top" style="width: 30%; float: left; font-family: 'Lato'; line-height:24px; padding-top:5px; padding-bottom: 5px;"><isprint value="${pi.product.name}" /></td>
+										<td align="right" valign="top" style="width: 20%; float: right; font-family: 'Lato'; line-height:24px; padding-top:5px; padding-bottom: 5px;"><isprint value="${!empty(pi.product.custom.size) ? pi.product.custom.size : ''}" /></td>
+									</tr>
+									<tr>
+										<td align="left" valign="top" style="width: 20%; float: left; font-family: 'Lato'; line-height:28px; padding-bottom:15px;">$<isprint value="${price}" /></td>
+										<td align="left" valign="top" style="width: 20%; float: left;  font-family: 'Lato'; line-height:28px; padding-bottom:15px;"><isprint value="${pi.quantity.value.toFixed()}" /></td>
+										<isset name="totalPrice" value="${(new Number(price))*pi.quantity.value.toFixed()}" scope="Page" />
+										<td align="left" valign="top" style="width: 20%;float: left;  font-family: 'Lato'; line-height:28px; padding-bottom:15px;">$<isprint value="${totalPrice}" /></td>
+									</tr>
+									</isloop>
+									</tbody></table>
+	                            </td></tr>                      
+	                          </tbody></table>
+                         </td>
+                      </tr>
+                      <!--<![endif]-->
+                      <tr>
+				         <td align="center" valign="top" style="padding:20px 0 0;" class="fullwidth">
+					         <table width="100%" border="0" cellpadding="0" cellspacing="0">
+					             <tbody>
+					              	<tr>
+					                	<td style="font-family: 'Lato'; font-weight: 700;  word-break: break-all;"><isif condition="${!empty(pdict.CustomerNote)}">Customer Note : - <isprint value="${pdict.CustomerNote}" />
+					                    	 </isif><isprint value="${dw.content.ContentMgr.getContent('shoppinglist-email-promo-msg').custom.body}">
+					                  </td>
+					              	</tr>
+					            	</tbody>
+					            </table>
+				            </td>
+       			 		</tr>
+	                    </tbody>
+	                    </table>
+	                 </td>
+	                </tr>
+	              </tbody>
+	            </table>
+	        	</td>
+	        </tr>
+	      </tbody>
+      </table>
+	
+	</body>
+</html>

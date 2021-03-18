@@ -1,0 +1,185 @@
+<isinclude template="util/modules"/>
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+
+	<div class="product-set-image bundle-product-image">
+	<isimagesizes />
+		<isif condition="${!empty(pdict.Product.getImages('large')[0])}">
+			<isset name="smImg" value="${pdict.Product.getImages('large')[0].getAbsImageURL(imageConfig.pdpBundleThumbnail != null ? imageConfig.pdpBundleThumbnail : imageConfig)}" scope="page"/>
+			<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+			<img class="product-thumbnails" src="${smImg}" alt="${imageAlt}" title="${imageAlt}" width="100px" />
+		<iselse>
+			<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+			<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+			<img class="product-thumbnails" src="${imageUrl}" alt="${imageAlt}" title="${imageAlt}" width="100px" />
+		</iselse>
+		</isif>
+	</div>
+	
+	<div class="product-set-details bundle-product-details">
+		<iscomment>redesign
+		<div class="product-brand" itemprop="name"><isprint value="${pdict.Product.brand}"/></div>
+		 </iscomment>
+ 		<iscomment>redsign
+			<div class="product-description">
+				<isif condition="${pdict.Product.longDescription}"><span class="label-bundle">${Resource.msg('product.description','product',null)}</span></isif>	
+				<isprint value="${pdict.Product.longDescription ? pdict.Product.longDescription : ''}" encoding="off"/></span>
+			</div>
+		</iscomment>
+		<div class="vendor-code">
+			<span class="brand"><isprint value="${pdict.Product.brand}"/>
+		</div>
+		
+		<div class="bundle-product-name-attr-qty">
+			<div class="product-name">
+				<a class="item-name" href="${URLUtils.url('Product-Show','pid', pdict.Product.ID)}" title="${pdict.Product.name}">
+					<isprint value="${pdict.Product.name}"/>
+				</a>
+			</div>
+			<div class="bundle-product-number-upc">
+				<div class="product-number">
+					${Resource.msg('product.itemno','product',null)} <isprint value="${ pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1) }"/>
+				</div>
+				<isif condition="${!empty(pdict.Product.UPC)}">
+					<div class="product-number upc">
+						${Resource.msg('product.upc','product',null)} <span itemprop="productID"><isprint value="${pdict.Product.UPC}"/></span>
+					</div>
+				</isif>
+			</div>
+			<div class="product-attr-qty-section">
+				<div class="attribute">
+					<isif condition="${pdict.Product.isVariant() || (pdict.Product.isMaster() && !pdict.Product.getVariants().empty)}">	
+						<isinclude template="product/components/variationsbundle"/>
+					<iselse/>
+						<isif condition="${!empty(pdict.Product) && pdict.Product.isProduct() && 'size' in pdict.Product.custom && !empty(pdict.Product.custom.size)}">
+							<li class="attribute-bundle">
+								<div class="swatches size">
+									<h3 class="swatch-size">&nbsp;<isprint value="${Resource.msg('productsize.sizelabel', 'product', null)}"/>&#58;</h3>
+									<span class="selected-value-bundle"><isprint value="${pdict.Product.custom.size}"/>&nbsp;</span>
+								</div>
+							</li>
+						</isif>
+					</isif>			
+				</div>
+				
+				<isif condition="${pdict.isBundle}">
+					<div class="bundle-quantity product-quantity">
+						<span class="label-bundle">${Resource.msg('global.qty2','locale',null)} </span>
+						<span class="value-bundle">&nbsp;<isprint value="${pdict.ProductSet.getBundledProductQuantity(pdict.Product)}" /></span>
+					</div>
+				<iselse>
+					<span class="label">${Resource.msg('global.quantity','locale',null)}: </span>
+					<span class="value"><isprint value="${pdict.ProductSet.getBundledProductQuantity(pdict.Product)}" /></span>
+				</isif>
+			</div>	
+			<div class="clear"></div>
+			
+			
+		</div>
+		<div class="bundle-product-desc-section">
+			<isprint value="${pdict.Product.longDescription}" encoding="off" />
+		</div>
+		
+		
+		<isif condition="${pdict.Product.hasOwnProperty('UPC') && !empty(pdict.Product.UPC) && pdict.Product.UPC.length > 0}">
+			<div class="product-upc">
+				${Resource.msg('product.upcno','product',null)} <span itemprop="productID"><isprint value="${ pdict.Product.UPC}"/></span>
+			</div>
+		</isif>	
+	
+		<isscript>
+			var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+			
+			var av = ProductUtils.getAvailability(pdict.Product, false);
+		</isscript>
+		
+		<isif condition="${!pdict.isBundle}">
+			<div class="availability">
+				<span class="label">${Resource.msg('global.availability','locale',null)}:&nbsp;</span>
+				<isif condition="${av.inStock}">
+					<span class="in-stock-msg">${StringUtils.format(Resource.msg('global.instock','locale',null))}</span>			
+				<iselse/>
+					<span class="not-available-msg">${Resource.msg('global.allnotavailable','locale',null)}</span>
+				</isif>	
+			</div>
+		</isif>
+
+		
+		
+		
+		
+		
+		<isif condition="${pdict.isSet}">
+			<isif condition="${pdict.Product.isVariant() || (pdict.Product.isMaster() && !pdict.Product.getVariants().empty)}">	
+				<isinclude template="product/components/variationsproductset"/>
+			<iselse/>
+				<isinclude template="product/components/productsize"/>
+			</isif>
+		</isif>
+		
+		<isset name="pam" value="${pdict.Product.getAttributeModel()}" scope="page"/>
+		<isset name="group" value="${pam.getAttributeGroup('mainAttributes')}" scope="page"/>
+		
+		<isinclude template="product/components/group"/>			
+
+		<isinclude template="product/components/options"/>
+		
+		<isif condition="${pdict.isSet}">
+			<isinclude template="product/components/promotions"/>
+		</isif>
+	</div>	
+	<isif condition="${pdict.isSet}">
+		<isscript>
+			// ensure a unique form name and make the name reuseable, because the call to
+			// dynamicHtmlName always creates a different name
+			var uniqueFormID : String = pdict.CurrentForms.product.addtocart.dynamicHtmlName;
+		</isscript>
+		<div class="block-add-to-cart add-sub-product">
+			<isset name="purchaseLimitdisabledAttr" value="${''}" scope="page"/>
+			<form action="${URLUtils.url('Cart-AddProduct')}" method="post" id="${uniqueFormID}">
+				<input type="hidden" name="availability" value="${pdict.Product.availabilityModel.availabilityStatus}"/>
+				<input type="hidden" name="pid" id="pid" value="${pdict.Product.ID}" />
+				<isscript>
+					if (pdict.CurrentCustomer.authenticated ) {
+						var brandLevelRestrictionCheck = ProductUtils.restrictcheckForLargePurchase(pdict.Product);
+					}
+				</isscript>
+				<isif condition="${!empty(brandLevelRestrictionCheck) && brandLevelRestrictionCheck == true}">
+					<isset name="purchaseLimitdisabledAttr" value="${'disabled="disabled"'}" scope="page"/>
+				</isif>	
+				<div class="inventory">
+					<div class="quantity">
+					    <label for="${uniqueFormID}-quantity">${Resource.msg('global.qty','locale',null)}</label>
+						<input type="text" name="Quantity" id="${uniqueFormID}-quantity" maxlength="3" class="input-text" value="${Number(empty(pdict.CurrentHttpParameterMap.Quantity.stringValue) ? 1 : pdict.CurrentHttpParameterMap.Quantity.stringValue).toFixed()}" size="2" maxlength="6" />
+					</div>
+				</div>
+				
+				<iscomment>Login price view handling remote include</iscomment>
+				<isif condition="${isQuickView}">
+					<isset name="isQuickView" value="${true}" scope="page"/>
+				<iselse/>
+					<isset name="isQuickView" value="${false}" scope="page"/>
+				</isif>
+				<isinclude url="${URLUtils.url('Product-SetBundlePricingLoginView','view','productsetdetailloginprice','productid', pdict.Product.ID, 'isQuickView', isQuickView)}"/>
+
+				<isset name="disabledText" value="${av != null && av.inStock ? '' : ' disabled="disabled"'}" scope="page"/>
+				<isscript>
+					var buttonTitleLogin = av != null && av.inStock ? Resource.msg('global.addtocart','locale',null) : Resource.msg('global.addtocartSignup','locale','LOGIN/REGISTER/SIGNUP');
+				</isscript>
+				<!--  Code For Store Pickup Button -->
+				<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+					<button id="add-to-instorepickup" class="instorepickup-btn" type="button" title="<isprint value="${Resource.msg('product.instorepickup','product',null)}" />" class="button-fancy-large add-tostore-pickup add-to-cart-disabled" ><isprint value="${Resource.msg('product.instorepickup','product',null)}" /></button>
+					<span class="inventory-label"><isprint value="${Resource.msg('global.inventory','locale',null)}"/></span>
+		    	</isif>
+		    	<isif condition="${!pdict.CurrentCustomer.authenticated}">
+					<button type="submit" value="${Resource.msg('global.addtocart','locale',null)}" data-brandlimit="${brandLevelRestrictionCheck}" class="button-fancy-medium sub-product-item add-to-cart-login ${!empty(purchaseLimitdisabledAttr) && purchaseLimitdisabledAttr.length > 0 ? 'add-to-cart-disabled' : ''}"<isprint value="${purchaseLimitdisabledAttr}"  encoding="off" />>
+						${buttonTitleLogin}
+					</button>
+				<iselse>
+				<button type="submit" value="${Resource.msg('global.addtocart','locale',null)}" data-brandlimit="${brandLevelRestrictionCheck}" class="button-fancy-medium sub-product-item add-to-cart ${!empty(purchaseLimitdisabledAttr) && purchaseLimitdisabledAttr.length > 0 ? 'add-to-cart-disabled' : ''}"<isprint value="${purchaseLimitdisabledAttr}"  encoding="off" /> <isprint value="${disabledText}" encoding="off"/>>
+					${Resource.msg('global.addtocart','locale',null)}
+				</button>
+		    	</isif>
+			</form>
+		</div>
+	</isif>

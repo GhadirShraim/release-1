@@ -1,0 +1,163 @@
+<iscomment>This includes global utilities into the pages</iscomment>
+<isinclude template="util/modules"/>
+<iscomment>
+	This creates reporting data for the cart. The application assumes that
+	the minicartcontent template will be embeeded into every page, so that the information about
+	an open cart can be report as soon as it is available or changed.
+	Additionally this page must not be cached to allow the correct reporting any time.
+
+	This include also takes care of reporting source codes.
+</iscomment>
+<isinclude template="util/reporting/ReportBasket.isml"/>
+
+<iscomment>Do not render the cart label or dropdown if the current user isn't logged in</iscomment>
+
+	<iscomment> the mini cart total which is always visible</iscomment>
+		<div class="mini-cart-total">
+			<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated) && (pdict.Basket != null) && (pdict.Basket.productLineItems.size() + pdict.Basket.giftCertificateLineItems.size() > 0 )}">
+				<isscript>
+					// calculate the total number of items in the cart by adding quantities together
+					// do not count bonus line items
+					var cartQty : Number = 0;
+					
+					for each(let pli in pdict.Basket.productLineItems) 
+					{ 
+						cartQty += pli.quantity; 
+					}
+					
+					// add the gift certificates to cart quantity
+					cartQty += pdict.Basket.giftCertificateLineItems.size();
+				</isscript>
+				<isif condition="${cartQty > 1}">
+					<isset name="item_word" value="${Resource.msg('minicart.items','checkout',null)}" scope="page"/>
+				<iselse>
+					<isset name="item_word" value="${Resource.msg('minicart.item','checkout',null)}" scope="page"/>
+				</isif>
+				<a href="${URLUtils.https('Cart-Show')}" title="${Resource.msg('minicart.viewcart','checkout',null)}" class="mini-cart-link">
+					<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+						<span class="mini-cart-label">${Resource.msg('minicart.label','checkout',null)}</span>
+						<span class="mini-cart-total-label"><isprint value="${cartQty}" formatter="##" /></span>
+					</isif>
+				</a>
+			<iselse>
+				<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+					<span class="mini-cart-label">${Resource.msg('minicart.label','checkout',null)}</span><span class="mini-cart-empty">${Resource.msg('minicart.emptycart','checkout',null)}</span>
+				</isif>
+			</isif>
+		</div>
+	<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated)}">
+		<iscomment> the dynamically shown view of the last added item </iscomment>
+		<isif condition="${!empty(pdict.Basket) && (pdict.Basket.productLineItems.size() > 0 || pdict.Basket.giftCertificateLineItems.size() > 0)}">
+			
+			<div class="mini-cart-content cartp">
+			
+				<isscript>
+				 var storedBasket : dw.order.Basket = dw.order.BasketMgr.getStoredBasket();
+				 var currentBasket : dw.order.Basket = dw.order.BasketMgr.getCurrentOrNewBasket();
+			   </isscript>
+				   
+				<isif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype && !empty(pdict.CurrentCustomer.profile.custom.profilestatustype.value) && pdict.CurrentCustomer.profile.custom.profilestatustype.value !=null && pdict.CurrentCustomer.profile.custom.profilestatustype.value != 'accepted'}">
+						<isif condition="${(pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending') && (pdict.CurrentCustomer.profile.custom.onetimepass && pdict.CurrentCustomer.profile.custom.onetimepass == true) && (!empty(currentBasket) && currentBasket.totalGrossPrice.value <= dw.system.Site.getCurrent().getCustomPreferenceValue('orderlimit').toFixed(2))}">
+							<isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+						<iselseif condition="${(pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending') && (pdict.CurrentCustomer.profile.custom.onetimepass && pdict.CurrentCustomer.profile.custom.onetimepass == true) && (!empty(currentBasket) && currentBasket.totalGrossPrice.value > dw.system.Site.getCurrent().getCustomPreferenceValue('orderlimit').toFixed(2))}">	
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						<iselseif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending' && pdict.CurrentCustomer.profile.custom.onetimepass == false}">
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						<iselseif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'denied' || }">
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						</isif>
+					   <iselseif condition="${empty(pdict.CurrentCustomer.profile.custom.profilestatustype)}" >
+						   <isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+					   <iselse/>
+						   <isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+				</isif>
+		 		<div class="minicat-checkout-closeicon">	 
+		 			 <div class="minicart-checkoutlink">
+					<iscomment> CP-615  No need for the second button "View Cart"
+						<a class="mini-cart-link-cart button button-fancy-medium" href="${URLUtils.https('Cart-Show')}" title="${Resource.msg('minicart.viewcart','checkout',null)}">${Resource.msg('minicart.viewcart','checkout',null)}</a>
+					</iscomment>
+							<isif condition="${enableCheckoutOnMiniCart}">
+								<a class="mini-cart-link-checkout button button-fancy-medium black-button" href="${URLUtils.https('Cart-Show')}" title="${Resource.msg('minicart.directcheckout','checkout',null)}">${Resource.msg('minicart.directcheckout','checkout',null)}</a>
+							<iselse>
+								<a class="mini-cart-link-checkout disable-cart-button-minicart button"  disabled="disabled" title="${Resource.msg('minicart.directcheckout','checkout',null)}">${Resource.msg('minicart.directcheckout','checkout',null)}</a>
+							 </isif>
+					 </div>
+					
+						 <div class="minicart-close-icon">
+						 </div>
+					  
+				</div>
+				<div class="mini-cart-header">
+					${Resource.msg('minicart.addedtomycart','checkout',null)}
+					<span class="mini-cart-close">Close</span>
+				</div>
+				
+					
+				<div class="mini-cart-products custom-scroll">
+					<div class="basketLimitErrorMsg">
+						<span><isprint value="${pdict.ErrorMsg}" /></span>
+					</div>
+					<input type="hidden" name="basketMaxQtyReached" value="${pdict.basketLimitError ? dw.system.Site.getCurrent().getCustomPreferenceValue('basketLimitErrorMsg') : ""}"/>
+					<isminilineitems p_lineitemctnr="${pdict.Basket}" p_showreverse="${true}" p_productlineitem="${pdict.ProductLineItem}" p_giftcertlineitem="${pdict.GiftCertificateLineItem}"/>
+				</div>
+				
+				<iscomment>Display more number of products in cart as a count.  Removed CP-1006
+					<isif condition="${pdict.Basket.productLineItems.size()>3}" >
+						<div class="minicart-viewmore-items">
+							<isif condition="${pdict.Basket.productLineItems.size() == 4}"> 
+								<isprint value="${Resource.msgf('minicart.morelineitem','checkout',null,(pdict.Basket.productLineItems.size()-3).toFixed(0))}" />
+							<iselse>
+								<isprint value="${Resource.msgf('minicart.morelineitems','checkout',null,(pdict.Basket.productLineItems.size()-3).toFixed(0))}" />
+							</isif>
+							
+						</div>
+					</isif>
+				</iscomment>
+				
+				<div class="mini-cart-totals">
+					<div class="mini-cart-subtotals">
+						<span class="label">${Resource.msg('ordersummary.minicartsubtotal','components',null)}</span>
+						<span class="value"><isprint value="${pdict.Basket.getAdjustedMerchandizeTotalPrice(false).add(LineItemCtnr.giftCertificateTotalPrice)}"/></span>
+					</div>
+					
+	 
+					<iscomment> redesign
+						<div class="mini-cart-slot">
+							<isslot id="minicart-banner" description="This is the banner within the minicart, directly above the View Cart/Checkout link." context="global" />
+						</div>
+					 </iscomment>
+					 <iscomment> CP-445 for move top 
+						<isscript>
+							 var storedBasket : dw.order.Basket = dw.order.BasketMgr.getStoredBasket();
+							 var currentBasket : dw.order.Basket = dw.order.BasketMgr.getCurrentOrNewBasket();
+					  </isscript>
+					  
+					 <isif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype && !empty(pdict.CurrentCustomer.profile.custom.profilestatustype.value) && pdict.CurrentCustomer.profile.custom.profilestatustype.value !=null && pdict.CurrentCustomer.profile.custom.profilestatustype.value != 'accepted'}">
+						<isif condition="${(pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending') && (pdict.CurrentCustomer.profile.custom.onetimepass && pdict.CurrentCustomer.profile.custom.onetimepass == true) && (!empty(currentBasket) && currentBasket.totalGrossPrice.value <= dw.system.Site.getCurrent().getCustomPreferenceValue('orderlimit').toFixed(2))}">
+							<isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+						<iselseif condition="${(pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending') && (pdict.CurrentCustomer.profile.custom.onetimepass && pdict.CurrentCustomer.profile.custom.onetimepass == true) && (!empty(currentBasket) && currentBasket.totalGrossPrice.value > dw.system.Site.getCurrent().getCustomPreferenceValue('orderlimit').toFixed(2))}">	
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						<iselseif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'pending' && pdict.CurrentCustomer.profile.custom.onetimepass == false}">
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						<iselseif condition="${pdict.CurrentCustomer.profile.custom.profilestatustype && pdict.CurrentCustomer.profile.custom.profilestatustype.value == 'denied' || }">
+							<isset name="enableCheckoutOnMiniCart" value="${false}" scope="page" />
+						</isif>
+					 <iselseif condition="${empty(pdict.CurrentCustomer.profile.custom.profilestatustype)}" >
+						<isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+					 <iselse/>
+						<isset name="enableCheckoutOnMiniCart" value="${true}" scope="page" />
+					 </isif>
+					 
+						<a class="mini-cart-link-cart button button-fancy-medium" href="${URLUtils.https('Cart-Show')}" title="${Resource.msg('minicart.viewcart','checkout',null)}">${Resource.msg('minicart.viewcart','checkout',null)}</a>
+						<isif condition="${enableCheckoutOnMiniCart}">
+							<a class="mini-cart-link-checkout button button-fancy-medium black-button" href="${URLUtils.https('COCustomer-Start')}" title="${Resource.msg('minicart.directcheckout','checkout',null)}">${Resource.msg('minicart.directcheckout','checkout',null)}</a>
+						<iselse>
+							<a class="mini-cart-link-checkout disable-cart-button-minicart button"  disabled="disabled" title="${Resource.msg('minicart.directcheckout','checkout',null)}">${Resource.msg('minicart.directcheckout','checkout',null)}</a>
+						 </isif>
+	 				</iscomment>
+				</div>
+			</div>
+			
+		</isif>
+	</isif>
+	<isbonusdiscountlineitem p_alert_text="${Resource.msg('product.bonusproductalert','product',null)}" p_discount_line_item="${pdict.BonusDiscountLineItem}"/>

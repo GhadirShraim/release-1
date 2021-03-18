@@ -1,0 +1,149 @@
+<isdecorate template="shoppinglist/pt_shoppinglist">
+<isinclude template="util/modules"/>
+<isset name="giftregistry_activetab" value="${0}" scope="pdict" />
+	<h1 class="content-header list-name">
+		<isprint value="${Resource.msg('store.pickup.storelist','account',null)}" />
+	</h1>
+	<iscomment>CP-1036 
+		<div class="back-to-previous">
+			<a href="${URLUtils.url('GiftRegistry-Start')}"><isprint value="${Resource.msg('store.shoppinglist.back.myshoppinglist','account',null)}" /></a>
+		</div>
+	 </iscomment>
+	<div class="shoppinglist-msg">
+		<iscontentasset aid="shoppingList-Header-instructions" />
+	</div>
+	
+<form action="${URLUtils.httpsContinue()}" method="post" name="${pdict.CurrentForms.giftregistry.htmlName}" class="shopping-list-form">
+	<div class="edit-print-list">
+		<div class="edit-and-instructions">
+			<span class="find-products"><a href="${URLUtils.https('Search-Show','cgid','shop-by-brand')}"><isprint value="${Resource.msg('store.shoppinglist.startshopping','account',null)}" /></a></span> 
+			<isif condition="${pdict.ProductList.productItems.size() > 0}">
+				<span id="clear-shopping-list" class="clearlist-btn"><a href="${URLUtils.https('ShoppingList-ClearList')}" class="removeAllItemConfirmation"><isprint value="${Resource.msg('store.shoppinglist.clearlist','account',null)}" /></a></span> 
+				<iscomment> <span id="shoppinglist-instruction"><a><isprint value="${Resource.msg('store.shoppinglist.instruction','account',null)}" /></a></span></iscomment>
+					<div class="shopping-list-action">
+						<fieldset>	
+							<div class="item-option option-update">
+								<button name="${pdict.CurrentForms.giftregistry.update.htmlName}" value="${Resource.msg('global.updatecart','locale',null)}" class="update-all-button" type="submit" >${Resource.msg('global.updatecart','locale',null)}</button>
+								<input type="hidden" name="itemid" value="${item.ID}"/>
+							</div>
+							<div class="send-to-store">
+								<button name="${pdict.CurrentForms.giftregistry.sendtostore.htmlName}" value="${Resource.msg('global.sendtostore','locale',null)}" class="send-to-store hide" type="submit" >${Resource.msg('global.sendtostore','locale',null)}</button>
+							</div>
+						</fieldset>
+					</div>
+			</isif>
+		</div>
+		<div class="print-page"><span><isprint value="${Resource.msg('store.shoppinglist.print','account',null)}" /></span></div>
+	</div>	
+	<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.previousSentStore)}">
+		<isset name="LastSendStore" value="${JSON.parse(pdict.CurrentCustomer.profile.custom.previousSentStore)}" scope="Page" />
+		<isset name="lastSentDate" value="${pdict.CurrentCustomer.profile.custom.lastStoreSentDate}" scope="Page" />
+		<isif condition="${!empty(lastSentDate)}">
+			<div class="last-send-store">
+				<isprint value="${Resource.msgf('shoppinglist.store.lastsenton','storepickup',null, lastSentDate,LastSendStore.fid)}" /> <isprint value="${LastSendStore.address1}" /> <isprint value="${LastSendStore.address2}" />, <isprint value="${LastSendStore.city}" /> <isprint value="${LastSendStore.region}" /> <isprint value="${LastSendStore.postalcode}" />
+			</div>
+		 </isif>
+	 </isif>
+	<div class="mylist-registry">
+		<input type="hidden" name="productListID" value="${pdict.ProductList.ID}" />
+		<input type="hidden" name="selectedItemID" value="" />
+		<isif condition="${empty(pdict.ProductList.getItems())}">
+			<p><isprint value="${Resource.msg('giftregistry.giftregnoitems','account',null)}" /></p>
+			<a href="${URLUtils.httpHome()}" title="${Resource.msg('global.storename','locale',null)}" class="add-items" ><isprint value="${Resource.msg('giftregistry.emptyadd','account',null)}" /></a>
+		<iselse>
+			<isif condition="${pdict.Status != null && pdict.Status.isError()}">
+				<span class="form-error">
+					<isprint value="${Resource.msgf('giftregistry.' + pdict.Status.code,'giftregistry',null, pdict.Status.parameters)}"/>
+				</span>
+			</isif>
+			<div class="item-list gift-reg">
+				<isset name="inventorychecklist" value="${new dw.util.ArrayList()}" scope="Page" />	
+					<isloop items="${pdict.CurrentForms.giftregistry.event.listitems}" var="item" status="loopstate">
+						<isset name="prod" value="${item.object}" scope="page"/>
+						<!-- Start Display Item in Product -->
+						<div class="Mylist <isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">						
+							<!-- Item Image -->
+							<div class="item-image">
+								<isdisplayproductimage p_productli="${prod}" p_size="large" />
+							</div>
+							<!-- Item Info -->
+							<div class="item-info">
+								<div class="item-details">
+									<span class="product-id-hidden" data-pid="${prod.productID.substring(prod.productID.lastIndexOf('-')+1)}"></span>
+									<isdisplayliproduct p_productli="${prod}" p_mylistview="true"/>
+								</div>
+								<div class="item-dashboard">
+									<isscript>
+										var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+										
+										var av = ProductUtils.getAvailability(prod.product, false);
+										inventorychecklist.add(av.inStock);
+									</isscript>
+									
+									<isset name="av" value="${JSON.stringify(av)}" scope="request"/>
+									<div class="item-option option-add-to-cart">								
+										<fieldset>	
+											<label for="Quantity">
+												<div class="qtySec">
+													<span class="label"><isprint value="${Resource.msg('global.qty2','locale',null)}" /></span>
+													<input name= "${item.quantity.htmlName}"class="input-text pli-quantity" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1" name="Quantity" maxlength="4" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" value="${prod.quantity.value.toFixed(0)}"/>
+												</div>
+											</label>
+										</fieldset>
+									</div>								
+								</div>
+								<div class="itemActions">						
+									<span class="removeLink">
+										<isif condition="${pdict.CurrentCustomer == pdict.ProductList.owner}">
+											<fieldset>	
+												<div class="item-option option-update">
+													<button name="${item.removelineitems.htmlName}" value="${Resource.msg('global.remove','locale',null)}" class="button-text delete-item" type="submit" src="${URLUtils.staticURL('/images/interface/icon_remove.gif')}" >${Resource.msg('global.remove','locale',null)}</button>
+													<input type="hidden" name="itemid" value="${item.ID}"/>
+												</div>
+											</fieldset>
+											
+										</isif>
+									</span>
+								</div>						
+							</div>
+						</div>
+					</isloop>
+					<!-- Add Action for Update Item and Send to Store -->
+					<div class="shopping-list-action bottom">
+						<fieldset>
+							<div class="clearlist-outer">
+								<isif condition="${pdict.ProductList.productItems.size() > 0}">
+									<span  id="clear-shopping-list" class="clearlist-btn"><a href="${URLUtils.https('ShoppingList-ClearList')}" class="removeAllItemConfirmation"><isprint value="${Resource.msg('store.shoppinglist.clearlist','account',null)}" /></a></span> 
+								</isif>	
+							</div>
+							<div class="item-option option-update">
+								<button name="${pdict.CurrentForms.giftregistry.update.htmlName}" value="${Resource.msg('global.updatecart','locale',null)}" class="update-all-button" type="submit" >${Resource.msg('global.updatecart','locale',null)}</button>
+								<input type="hidden" name="itemid" value="${item.ID}"/>
+							</div>
+							<div class="send-to-store">
+								<button name="${pdict.CurrentForms.giftregistry.sendtostore.htmlName}" value="${Resource.msg('global.sendtostore','locale',null)}" class="send-to-store hide" type="submit" >${Resource.msg('global.sendtostore','locale',null)}</button>
+							</div>
+						</fieldset>
+					</div>
+					<div class="hide">
+						<!-- Store Price of Product in key value pair so that we can persist this to mail -->
+						<isinputfield formfield="${pdict.CurrentForms.giftregistry.store.productprice}" type="input" xhtmlclass="hide" />
+				   </div>
+			 </div>
+	  </isif>
+	<div class="shopping-list-instruction hide">
+		<iscontentasset aid="storeshoppingList-instruction" />
+		<div class="close-btn-bottom"><span>Close</span></div>
+	</div>
+	<div class="delete-item-confirmation hide" id="clearConfirmation">
+		<div class="confirmation-msg">
+			Are sure you want to clear the shopping list ?
+		</div>
+		<div class="confirm-btns clearfix">
+			<a href="javascript:void(0);" class="primaryButtn yes allowRemoveAllItem"><isprint value="${Resource.msg('global.confirm','locale',null)}" /></a>
+			<a href="javascript:void(0);" class="secondarybtn no cancelRemoveAllItem"><isprint value="${Resource.msg('global.cancel','locale',null)}" /></a>
+ 		</div>
+	</div>
+  </div>
+</form>
+</isdecorate>

@@ -1,0 +1,24 @@
+importPackage( dw.system );
+
+var PageUtils : Object = {};
+
+PageUtils.getPageTitle = function() {
+	var isNonLoginPortal = 'isNonLoginPortalUser' in session.custom && !empty(session.custom.isNonLoginPortalUser) ? true : false;
+	var cCode;
+	if ('isPortalUser' in session.custom && session.custom.isPortalUser && customer.authenticated) {
+		cCode = customer.profile.custom.chainCode;
+	} else if('tempChainCode' in session.custom && !empty(session.custom.tempChainCode)) {
+		cCode = session.custom.tempChainCode.replace('C00', '');
+	} else {
+		cCode = dw.system.Site.getCurrent().preferences.custom.defaultChainCode;
+	}
+	var rootFolder;
+	if(!empty(cCode)) {
+		var rootFolder = dw.content.ContentMgr.getFolder(dw.content.ContentMgr.getSiteLibrary(), cCode);
+	}
+	
+	return !empty(rootFolder) ? rootFolder : dw.content.ContentMgr.getSiteLibrary().root;
+};
+	
+
+exports.PageUtils = PageUtils;

@@ -1,0 +1,43 @@
+<iscomment>
+	Renders product detail page both quickview and normal view.
+	If the product is a product set or bundle, then it also includes subproduct template to 
+	render sub product details.
+</iscomment>
+
+<isscript>
+
+	//two attirbutes needed to pass along the selected color to the pdp/quickview
+	var colorAttributeID = 'dwvar_'+pdict.Product.ID+'_color';
+	var productColorValue = '';
+	
+	//helper variables 
+	var requestQueryStringArray = (!empty(pdict.CurrentRequest.getHttpHeaders().get("x-is-query_string"))) ? pdict.CurrentRequest.getHttpHeaders().get("x-is-query_string").split('&') : '';
+	var x = 0;
+	var PMapValue = '';
+	var productlist = !empty(pdict.CurrentHttpParameterMap.q) && pdict.CurrentHttpParameterMap.q.value != null ?  pdict.CurrentHttpParameterMap.q.value : !empty(pdict.CurrentHttpParameterMap.ylike) && pdict.CurrentHttpParameterMap.ylike.value != null ?  pdict.CurrentHttpParameterMap.ylike.value : 'productcategory';
+	for(x = 0; x<requestQueryStringArray.length ;x++){
+	
+		PMapValue = requestQueryStringArray[x];
+		
+		if(PMapValue.indexOf('color') != -1){
+			productColorValue = PMapValue.split('=')[1];
+		}
+	}
+
+</isscript>
+
+<isset name="DecoratorTemplate" value="product/pt_productdetails" scope="page"/>
+<iscomment>pwr = power review write</iscomment>
+<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || pdict.CurrentHttpParameterMap.pwr.stringValue == 'true' || pdict.CurrentHttpParameterMap.source.stringValue == 'search' || pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist' }">
+	<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+</isif>
+
+<isdecorate template="${DecoratorTemplate}">
+		<isset name="cgid" value="${ pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid') ?  pdict.CurrentHttpParameterMap.cgid.value : null }" scope="PAGE" />
+
+	<isif condition="${!empty(productColorValue)}">
+		<isinclude url="${URLUtils.url('Product-Detail', 'pid', pdict.Product.ID,'productlist',productlist, 'source', pdict.CurrentHttpParameterMap.source.stringValue, 'uuid', pdict.CurrentHttpParameterMap.uuid.stringValue, 'Quantity',pdict.CurrentHttpParameterMap.Quantity.stringValue, colorAttributeID, productColorValue, 'cgid', cgid)}"/>
+	<iselse>
+		<isinclude url="${URLUtils.url('Product-Detail', 'pid', pdict.Product.ID,'productlist',productlist, 'source', pdict.CurrentHttpParameterMap.source.stringValue, 'uuid', pdict.CurrentHttpParameterMap.uuid.stringValue, 'Quantity',pdict.CurrentHttpParameterMap.Quantity.stringValue, 'cgid', cgid)}"/>
+	</isif>
+</isdecorate>

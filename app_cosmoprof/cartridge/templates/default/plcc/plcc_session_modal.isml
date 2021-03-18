@@ -1,0 +1,5 @@
+
+<input type="hidden" name="is-PLCC-first-time-qualified" value="${session.custom.isPlccFirst}" />
+<input type="hidden" name="plcc-modal-config" data-session-life-time=${dw.system.Site.getCurrent().getCustomPreferenceValue('plccSessionLifeTime')} data-modal-show-time=${dw.system.Site.getCurrent().getCustomPreferenceValue('plccSessionExpireShowTime')} />
+
+	<iscontentasset aid="plcc-session-modal" encoding="off"/>

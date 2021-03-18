@@ -1,0 +1,71 @@
+<isinclude template="util/modules"/>
+<iscache status="off">
+<isset name="loginLinkWithParams" value="${URLUtils.https('LoginBarrier-LoginRedirect', 'isquickview', 'true', 'pid', pdict.Product.ID)}" scope="page" />
+<isset name="loginLink" value="${URLUtils.https('LoginBarrier-LoginRedirect')}" scope="page" />
+<isset name="RegisterLink" value="${URLUtils.https('Account-AccountRegester')}" scope="page" />
+<isset name="SignupLink" value="${URLUtils.https('VirtualSignup-Start')}" scope="page" />
+
+<isif condition="${pdict.view == 'productviewA'}">
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isset name="GridValue" value="${false}" scope="page" />
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+        <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>	
+	</isif>
+<iselseif condition="${pdict.view == 'productViewA1'}" >
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isset name="GridValue" value="${false}" scope="page" />
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+		<isif condition="${pdict.isQuickView}">
+            <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLinkWithParams , RegisterLink , SignupLink)}" encoding="off"/>
+		<iselse>
+            <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>
+		</isif>
+	</isif>
+</iselseif>
+<iselseif condition="${pdict.view == 'productViewB'}" >
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isset name="GridValue" value="${false}" scope="page" />
+		<isinclude template="product/components/pricing"/>
+		<div class="clearfix"></div>
+	<iselse>
+		<isif condition="${pdict.isQuickView}">
+            <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLinkWithParams , RegisterLink , SignupLink)}" encoding="off"/>		
+		<iselse> 
+            <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>
+		</isif>
+	</isif>
+</iselseif>
+<iselseif condition="${pdict.view == 'productViewC'}" >
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isset name="GridValue" value="${false}" scope="page" />
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+		<isif condition="${pdict.isQuickView}">
+			<div class="login-reg-sign">
+            	<isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLinkWithParams , RegisterLink , SignupLink)}" encoding="off"/>
+            </div>
+		<iselse>
+            <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>
+		</isif>
+	</isif>
+</iselseif>
+<iselseif condition="${pdict.view == 'recommendationsview'}" >
+	<isif condition="${pdict.CurrentCustomer.authenticated}"> 	
+		<isset name="GridValue" value="${false}" scope="page" />
+		<div class="product-pricing">
+			<isinclude template="product/components/pricing.isml"/>
+		</div>
+	<iselse>
+        <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>
+	</isif>
+</iselseif>
+<iselse/>
+	<isif condition="${pdict.CurrentCustomer.authenticated}">
+		<isset name="GridValue" value="${false}" scope="page" />
+		<isinclude template="product/components/pricing"/>
+	<iselse>
+        <isprint value="${Resource.msgf('login.toviewpricePDP','account',null , loginLink , RegisterLink , SignupLink)}" encoding="off"/>	
+	</isif>
+</isif>

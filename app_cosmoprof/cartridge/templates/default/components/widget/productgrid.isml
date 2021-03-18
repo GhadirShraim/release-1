@@ -1,0 +1,12 @@
+<isinclude template="util/modules"/>
+<div class="product-block product-block">	
+	<ul class="search-result-items tiles-container">
+		<isloop items="${pdict.products}" var="product" begin="0" end="${parseInt(pdict.bSize) - 1}">
+			<isobject object="${product}" view="recommendation">
+				<li class="grid-tile">
+					<isproducttile product="${product}" showswatches="${false}" showpricing="${true}" showpromotion="${false}" showrating="${true}"/>
+				</li>
+			</isobject>
+		</isloop>
+	</ul>
+</div><!-- END: productgrid -->

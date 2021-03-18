@@ -1,0 +1,44 @@
+<!--- TEMPLATENAME: setlayout.isml --->
+<iscache type="relative" hour="0" />
+<iscomment>Mobile/Responsive</iscomment>
+
+<isif condition="${dw.system.Site.getCurrent().getCustomPreferenceValue('disableResponsiveDesign')}">
+
+	<!--  responsive NOT enabled -->
+	
+<iselse>	
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
+		
+		<isset name="siteUrl" value="${URLUtils.url('Home-FullSite')}" scope="page"/>
+		
+		<link rel="stylesheet" href="${URLUtils.staticURL('/css/style-responsive-mobile.css')}" />
+		<iscomment>CP-649  Moved to footer_UI.isml 
+			<script src="${URLUtils.staticURL('/js/responsive.js')}"></script>
+		 </iscomment>
+<iscomment> 
+		<script type="text/javascript">
+			if (window.jQuery) {
+				jQuery(document).ready(function(){
+					if(screen.width < 768){
+						jQuery('#footer').append('<br><a href="${URLUtils.url('Home-Show')}" class="full-site-link">View Full Site</a>');
+						jQuery('.full-site-link')
+							.attr('href', '<isprint value="${siteUrl}" encoding="off"/>');
+					}
+				});
+			}
+		</script>
+	
+		<isset name="siteUrl" value="${URLUtils.url('Home-MobileSite')}" scope="page"/>
+		<script type="text/javascript">
+			if (window.jQuery) {
+				jQuery(document).ready(function(){
+					if(screen.width < 768){
+						jQuery('#footer').append('<br><a href="${URLUtils.url('Home-Show')}" class="mobile-site-link">View Mobile Site</a>');
+						jQuery('.mobile-site-link')
+						.attr('href', '<isprint value="${siteUrl}" encoding="off"/>');
+					}
+				});
+			}
+		</script>
+</iscomment>
+</isif>	

@@ -1,0 +1,221 @@
+/**
+* Address Product PAV Check
+*
+* Description- 	The purpose of this script is to take a customer's address ID, an entered product SKU and their customer number and run an inventory and PAV check 
+*				to see if the customer can purchase a product based on their exclusions and address. The script outputs 6 different variables for rendering the result
+*
+*	@input addr : String
+*	@input pid : String
+*	@input custNum : String
+*	@input prodPrefix : String
+*	@input Locale : String
+*   @input isNewPAVRules: String
+*
+*   @output pass : Boolean
+*   @output zipExclude : Boolean
+*   @output custExclude : Boolean
+*   @output portalExclude : Boolean
+*	@output inventory : Boolean
+*	@output voc : Boolean
+*	@output notes : String
+*	@output BinaryVals : dw.util.HashMap
+*
+*/
+importPackage( dw.system );
+
+var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+var CosmoProfUtils = require('app_cosmoprof/cartridge/scripts/util/CosmoProfUtils').CosmoProfUtils;
+var PDSUtils = require("bc_pdsutils/cartridge/scripts/PDSUtils").PDSUtils;
+var prodMgr = require('dw/catalog').ProductMgr;
+var custMgr = require('dw/customer').CustomerMgr;
+var stringUtils = require('dw/util').StringUtils;
+var Logger = require('dw/system').Logger;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	try
+	{
+		var addr = pdict.addr,
+			pid = pdict.pid,
+			custNo = pdict.custNum,
+			note = '',
+			locale = dw.system.Site.getCurrent().getCustomPreferenceValue('sitePrefix'),
+			pidVal = pdict.pid;
+		//verify input parameters have values
+		if(addr == null || pid == null || custNo == null)
+		{
+			return PIPELET_ERROR;
+		}
+		
+		//remove whitespace from the string otherwise the getproduct method will fail
+		stringUtils.trim(pid);
+		
+		if(pid.indexOf(locale) == -1){
+			pidVal = locale + "-" + pid;
+		}
+		//grab the product using the product ID 
+		var prod = prodMgr.getProduct(pidVal);
+		
+		//make sure product is found
+		if(prod == null)
+		{
+			note = "Product does not exist, please try again";
+			pdict.notes = note;
+			return PIPELET_ERROR;
+		}
+		//verify the product isn't a master other the PAV check will fail
+		else if(prod.master)
+		{
+			note = "Product is a master, the check needs a variation";
+			pdict.notes = note;
+			return PIPELET_ERROR;
+		}
+		
+		//Retrieve all customer parameters that are used in the PAV check
+		//i.e. chain code,zip code and warehouse code
+		var custProfile = custMgr.getProfile(custNo);
+		var customerNumber = custProfile.custom.accountNumber;
+		var conCode = custProfile.custom.consolidationCode;
+		var selectedAddr = custProfile.getAddressBook().getAddress(addr);
+		var zipCode = selectedAddr.postalCode;
+		var wCode = selectedAddr.custom.warehouseCode;
+		
+		
+		//create the override object for the getAvailability() function
+		var overrideObj = {
+			"profile" : custMgr.getProfile(custNo),
+			"addressID" : addr
+		};
+		
+		
+		var isNewPAVRules = "false";
+		
+		if(!empty(pdict.isNewPAVRules))
+		{
+			isNewPAVRules=pdict.isNewPAVRules;
+		}
+		else
+		{
+			isNewPAVRules="false";
+		}
+		
+		//call the availability check which runs an inventory and PAV check (if necessary)
+		var availability = ProductUtils.getAvailability(prod, true, overrideObj,isNewPAVRules);
+		
+		var site = dw.system.Site.getCurrent();
+		var stringToSearch,
+			customerExclusionVal = "",
+			consolidationExclusionVal = "",
+			zipExclusionVal = "",
+			replacementStringPrefVal = "",
+			replacementZipExclusionVal = "",
+			replacementCustomerExclusionVal = "",
+			vocExclusionVal = "",
+			includeRecordVal = "";
+		
+		//****Consolidation EXCLUDES****
+		if(!empty(conCode)){
+			var consolidationCode = (new Number(conCode)).toString(16);
+			while(consolidationCode.length < 3){
+				consolidationCode = "0"+consolidationCode;
+			}
+			consolidationExclusionVal = stringUtils.format("P{0}",consolidationCode);
+		}
+		
+		//Check for ****ZIPCODE EXCLUDES****
+		//Sample US exclude site pref id: USA_excl_txt_0
+		//Sample CA exclude site pref id: CAN_excl_txt_A0
+		if(!empty(zipCode)){
+			var zipCodeInput = zipCode.replace(/[^a-zA-Z\d:]/g,""),
+				zipSearchString = zipCodeInput.substr(1),
+				zipStartCharacter = null;
+			if(locale != "USA"){
+				zipStartCharacter = zipCodeInput.substring(0,2);
+				//use the entire zipcode after the first 2 characters
+				zipSearchString = zipCodeInput.substr(2);
+			}else{
+				zipStartCharacter = zipCodeInput.charAt(0);
+				//make it a length of 4, to avoid issues with zipcodes like 12345-0987
+				zipSearchString = zipCodeInput.substr(1,4);
+			}
+			
+			var exclusionCountryCode = (locale != null ? locale : "USA");
+			var zipSitePrefID = stringUtils.format("{0}_excl_txt_{1}",exclusionCountryCode,zipStartCharacter);
+			
+			stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData",zipSitePrefID);
+			
+			if(stringToSearch != null){
+				stringToSearch = stringToSearch.custom.binarySearchString
+				zipExclusionVal = PDSUtils.binarySearch(stringToSearch,zipSearchString,4,8);
+			}
+		}
+		
+		if(!empty(selectedAddr)){
+			var countryCode = selectedAddr.countryCode.value,
+				state = selectedAddr.stateCode;
+				
+			vocExclusionVal = stringUtils.format("V{0}{1}", countryCode.toLowerCase(), state.toLowerCase());
+		}
+		
+		//****CUSTOMER EXCLUDES****
+		//CXE_excl_txt
+		if(!empty(customerNumber)){
+			while(customerNumber.length < 7){
+				customerNumber = "0"+customerNumber;
+			}
+			stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData","CXE_excl_txt").custom.binarySearchString;
+			customerExclusionVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,11);
+			
+			//****CUSTOMER INCLUDES****
+			//0325004I001
+			//CXI_txt - 0016836I001
+			stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData","CXI_txt").custom.binarySearchString;
+			includeRecordVal = PDSUtils.binarySearch(stringToSearch,customerNumber,7,11);
+			
+			//*****REPLACEMENTS FOR INCLUDES*****
+			//Replacements_I001 - P016P103
+			if(!empty(includeRecordVal)){
+				replacementStringPrefVal = stringUtils.format("Replacements_{0}",includeRecordVal);
+			
+				stringToSearch = dw.object.CustomObjectMgr.getCustomObject("PAVData",replacementStringPrefVal).custom.binarySearchString;
+				
+				replacementZipExclusionVal = PDSUtils.binarySearch(stringToSearch,zipExclusionVal,4,8);
+				
+				replacementCustomerExclusionVal = PDSUtils.binarySearch(stringToSearch,customerExclusionVal,4,8);
+			}
+		}
+		
+		var binaryVals = new dw.util.HashMap();
+		binaryVals.consolidationExclusionVal = consolidationExclusionVal;
+		binaryVals.zipExclusionVal = zipExclusionVal;
+		binaryVals.customerExclusionVal = customerExclusionVal;
+		binaryVals.includeRecordVal = includeRecordVal;
+		binaryVals.replacementZipExclusionVal = replacementZipExclusionVal;
+		binaryVals.replacementCustomerExclusionVal = replacementCustomerExclusionVal;
+		binaryVals.replacementCustomerExclusionVal = replacementCustomerExclusionVal;
+		binaryVals.vocExclusionVal = vocExclusionVal;
+		
+		pdict.BinaryVals = binaryVals;
+		
+		//output the exlusion results, if the item passed the check and if the product has inventory for the particular customer
+		if(availability !== false){
+			pdict.zipExclude = availability.failedZip;
+			pdict.portalExclude = availability.failedPortal;
+			pdict.custExclude = availability.failedCustomer;
+			pdict.voc = availability.failedVOC;
+			pdict.pass = availability.available;
+			pdict.inventory = availability.isInStock;
+		}else{
+			pdict.notes = "Error with the product and/or customer data passed. Please check the validity of the data";
+		}
+	}
+	catch(e)
+	{
+		var note = "An error has occured, please try again";
+		pdict.notes = note;
+		Logger.error('AddressProductPAVCheck has failed with the following error: ' + e);
+		return PIPELET_ERROR;
+	}
+
+	return PIPELET_NEXT;
+}

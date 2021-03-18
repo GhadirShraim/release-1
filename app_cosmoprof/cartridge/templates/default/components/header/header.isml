@@ -1,0 +1,117 @@
+<iscache type="relative" hour="24" varyby="price_promotion"/>
+<isinclude template="util/modules"/>
+<isset name="showHeaderCustInfo" value="${!pdict.CurrentSession.custom.isPortalUser || pdict.CurrentCustomer.authenticated || (pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated) || (pdict.CurrentCustomer.registered && !pdict.CurrentCustomer.authenticated)}" scope="page" />
+
+<isscript>
+//CP-1007 New portal for non login content
+	var portalChainCode;
+	var httpHost = pdict.CurrentRequest.httpHost;
+	var hostJSON = dw.system.Site.current.preferences.custom.hostnameMapping;
+	var hostJSONStr = JSON.parse(hostJSON);
+	portalChainCode = hostJSONStr[httpHost];
+	var nonLoginPortal = new dw.util.ArrayList(dw.system.Site.current.preferences.custom.nonLoginPortal);
+	var isNonLoginPortal = nonLoginPortal.contains(portalChainCode);
+</isscript>
+ 
+<isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+	<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="page"/>
+<iselseif condition="${'tempChainCode' in pdict.CurrentSession.custom}">
+	<isset name="cCode" value="${pdict.CurrentSession.custom.tempChainCode}" scope="page"/>
+<iselse/>
+	<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+</isif>
+
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+
+<isif condition="${'fromCanada' in pdict.CurrentSession.custom}">
+	<input type="hidden" value="${true}" id="canada-dialog-session-var"/>
+</isif>
+
+
+<div id="helpHopup" class="no-display">
+	<div class="help">
+		<isslot id="helphopup" description="Help Hopup Dropdown" context="global"/>
+	</div>
+	<div class="contactus">
+		<a href="${URLUtils.url('CustomerService-ContactUs')}">${Resource.msg('contactUs.helplink','locale',null)}</a><br/>
+	</div>
+</div>
+
+<div id="fadefullpage"></div>
+
+<div id="header" role="banner">
+		<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}"> 
+			<!-- Don't Show Head Login section -->
+		<iselse>
+			<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('isHome') && pdict.CurrentHttpParameterMap.isHome == 'true'}">
+				<div class="header-login-form hide-mobile">
+					<isinclude url="${URLUtils.url('Home-HomeLogin')}"/>
+				</div>
+				<isslot id="homepage-header-banner" description="Homepage Header Promotional Banner" context="global" />
+			</isif>
+		</isif>		
+	
+
+	
+	<header>
+		<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal && dw.system.Site.current.preferences.custom.portalToHideLeftNavigation}"> 
+			<!-- Don't Show Head Login section -->
+		<iselse>
+			<div class="left-Header">
+				<!--  branding logo -->
+				<div class="primary-logo hide-mobile">	
+					<a href="${URLUtils.httpHome()}">
+						<isslot id="headerImageSlot" description="Header Logo" context="global"/>
+					</a>
+				</div>
+				<isinclude url="${URLUtils.url('Home-IncludeHeaderMenu')}"/>		
+				<a href="#main" class="visually-hidden">Skip to content</a>
+				
+				<div class="primary-logo hide-desktop ${pdict.CurrentSession.custom.isPortalUser ? 'portal-logo' : ''}">	
+					<a href="${URLUtils.httpHome()}">
+						<isslot id="headerImageSlot" description="Header Logo" context="global"/>
+					</a>
+				</div>
+			
+			    <iscomment>SLOT CONFIGURATION:  SLOT/ID: header-banner</iscomment>	
+				<isslot id="header-banner" description="Banner for Header" context="global"/>
+				
+				<iscomment>SLOT CONFIGURATION:  SLOT/ID: header-canada</iscomment>
+				<isslot id="header-canada" description="Banner for Header Canada Based on Geo IP" context="global"/>
+				<div class=" hide-desktop mobile-right">				
+					<div class="mobile-search">	
+						<div class="header-searchicon">
+							<span class="searchnormal">
+								<img src="${URLUtils.staticURL('/images/header/mobile_search.png')}" alt="" />
+							</span>
+							<span class="searchactive">
+								<img src="${URLUtils.staticURL('/images/header/mobile_close.png')}" alt="" />
+							</span>
+						</div>					
+					</div>
+		 	  </div>		
+			</div>
+		</isif>	
+		<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}"> 
+			<!-- Don't Show Head Login section, But adding the content slot to configure the Top Navigation for Non Login Portal -->
+			<isslot id="nonLoginTopNav" context="global" description="Non Login Portal Top Navigation" />
+			
+		<iselse>
+			<div class="right-nav">
+				<iscomment>INCLUDE: Mini-cart, do not cache</iscomment>
+				<isif condition="${showHeaderCustInfo && empty(pdict.CurrentSession.custom.isPortalUser)}">	
+					<div class="header-search">		
+						<isinclude template="search/simplesearch"/>
+					</div>
+				</isif>
+				<isinclude url="${URLUtils.url('Home-IncludeHeaderCustomerInfo')}"/>
+			</div>
+		</isif>	
+		<!-- Remote Call for Email Signup. -->
+		<isinclude url="${URLUtils.url('EmailSignup-Include')}"/>
+		
+	</header>
+
+	<iscomment>INCLUDE: Customer login information, login, etc. (contains personal information, do not cache)</iscomment>	
+</div><!-- /header -->
+

@@ -1,0 +1,72 @@
+<iscontent type="text/html " charset="UTF-8"/>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<iscomment>The "subject" tag contains the mail subject and can contain dynamic information, like the order number.</iscomment>
+<subject><isprint value="${Resource.msg('order.orderconfirmation-email.001','order',null)}" encoding="off"/> <isprint value="${pdict.Order.orderNo}"/></subject>
+
+<iscomment>
+	The "to" tag contains the email address of the recipient, the "from" tag the email address of the sender. 
+	Each tag is to be specified max. once. Multiple email address can be separated by "," (see RFC2822).
+</iscomment>
+
+<head>
+	<isinclude template="util/modules"/>
+	<link href='http://fonts.googleapis.com/css?family=Lato:400,700' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+	<table width="100%" cellpadding="0" cellspacing="0">
+		<tr>
+			<td align="left" style="${Resource.msg('email.backgroundcell','email',null)}">
+				<center>
+					<table  style="${Resource.msg('email.containertable','email',null)}">
+						<tr>
+							<td style="${Resource.msg('email.tablecelllesspadding','email',null)}">
+								<isif condition="${pdict.Order.customer.profile.custom.chainCode}">
+									<iscomment> using the regular iscontentasset will NOT pull in the content asset in an email </iscomment>
+									<isprint value="${dw.content.ContentMgr.getContent('portal_' + pdict.Order.customer.profile.custom.chainCode.substring(2) + '_logo').custom.body}"/>
+								<iselse/>
+									<isprint value="${dw.content.ContentMgr.getContent('portal_cosmo').custom.body}"/>
+								</isif>
+							</td>
+							
+						</tr>
+						<tr>
+							<td style="${Resource.msg('email.tablecelllesspadding','email',null)}">
+								<isif condition="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress().firstName != null && !empty(pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress().firstName)}"> 
+									<isprint value="${Resource.msg('order.orderconfirmation-email.dear','order',null)}" encoding="off"/> <isprint value="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress().firstName}"/>,
+								<iselse/>
+									<iscomment>Don't display</iscomment>
+								</isif>
+							</td>
+							
+						</tr>
+						<tr>
+							<td colspan="2" style="${Resource.msg('email.tablecelllesspadding','email',null)}">
+								${Resource.msg('confirmation.thankyou1','checkout',null)} 	
+								<isif condition="${pdict.portalName != null}">
+									<isprint value="${pdict.portalName}" encoding="off"/>.
+								<iselse/>
+									<isprint value="${dw.system.Site.getCurrent().name}" encoding="off"/>.
+								</isif>
+								
+								${Resource.msg('confirmation.thankyou2','checkout',null )}<br><br>
+							</td>
+						</tr>
+	
+						<tr>
+							<td style="${Resource.msg('email.tablecelllesspadding','email',null)}" colspan="2">
+								<isemailorderdetails order="${pdict.Order}"/>
+							</td>
+						</tr>
+						<tr>
+							<td style="${Resource.msg('email.tablecelllesspadding','email',null)}">
+								<isprint value="${dw.content.ContentMgr.getContent('portal_' + pdict.Order.customer.profile.custom.chainCode.substring(2) + '_footer').custom.body}"/>
+							</td>
+						</tr>
+					</table>						
+				</center>
+			</td>
+		</tr>
+	</table>	
+</body>
+</html>

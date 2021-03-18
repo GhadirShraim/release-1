@@ -1,0 +1,431 @@
+<iscomment>
+    Renders mini lineitems for order summary and mini cart.
+
+    Parameters:
+    p_showreverse     	: boolean to render the line items in reverse order
+    p_lineitemctnr     	: the line item container to render (this could be either an order or a basket as they are both line item containers)
+    p_productlineitem	: in case of mini cart this is the product lineitem just got added/changed so it should be expanded and at the top of the list
+    p_giftcertlineitem	: in case of mini cart this is the gift certificate line item just got added/changed so it should be expanded and at the top of the list
+
+</iscomment>
+
+<iscomment>Create page varibale representing the line item container</iscomment>
+<isset name="LineItemCtnr" value="${pdict.p_lineitemctnr}" scope="page"/>
+
+<isif condition="${LineItemCtnr != null}">
+	<isscript>
+		var pliList : dw.util.Collection = new dw.util.ArrayList(LineItemCtnr.productLineItems);
+		if( pdict.p_showreverse )
+		{
+			// order of items is reverse in case of mini cart display
+			pliList.reverse();
+
+			// remove the bonus item from the mini cart display
+			var tempList : dw.util.ArrayList = new dw.util.ArrayList();
+			
+			// add the recently touched/added product line item at the top of the list
+			if( pdict.p_productlineitem )
+			{
+				tempList.add( pdict.p_productlineitem );
+			}
+			
+			for( var ind in pliList )
+			{
+				var li = pliList[ind];
+				
+				// skip recently touched/added item, its already added before the loop
+				if( empty(pdict.p_productlineitem) || (pdict.p_productlineitem && li.position != pdict.p_productlineitem.position))
+				{
+					tempList.add( li );
+				}
+			}
+			pliList = tempList;
+		}
+	</isscript>
+
+	<iscomment>the item count is incremented after each display of a line item</iscomment>
+	<isset name="itemCount" value="${1}" scope="page"/>
+
+	<iscomment>render a newly added gift certificate line item at the top</iscomment>
+	<isif condition="${pdict.p_giftcertlineitem != null}">
+		
+			<div class="mini-cart-image">				
+				<img src="${URLUtils.staticURL('/images/gift_cert.gif')}" alt="<isprint value="${pdict.p_giftcertlineitem.lineItemText}"/>" />
+			</div>	
+			<div class="minicart-rightwrap">
+				<div class="mini-cart-product">
+					<div class="mini-cart-name">
+						<span><isprint value="${pdict.p_giftcertlineitem.lineItemText}"/></span>
+					</div>
+		
+					<div class="mini-cart-pricing">
+						${Resource.msg('global.qty','locale',null)}: 1
+						<isprint value="${pdict.p_giftcertlineitem.price}"/>
+					</div>
+				</div>
+			</div><!-- End of minicart-rightwrap -->
+		
+		<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+		
+	</isif>
+
+	<iscomment>product line items (only rendered if we haven't add a gift certificate to the basket)</iscomment>
+	<isset name="sddEnabled" value="${false}" scope="page" />
+	<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+		<isset name="sddEnabled" value="${true}" scope="page" />
+	</isif>	
+	
+	<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+		<isloop items="${pliList}" var="productLineItem" status="loopstate">
+			<isif condition="${sddEnabled == true && productLineItem.custom.deliveryMethod == 'SDD'}">
+				<iscomment>To display a maximum of 3 products on the minicart flyout</iscomment>
+				<div class="mini-cart-product">
+				
+						<div class="mini-cart-image">				
+							<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+						</div>
+						
+						<div class="minicart-rightwrap">
+							
+							<isif condition="${!empty(productLineItem.product.brand)}">
+								<div class="product-brand" itemprop="name"><isprint value="${productLineItem.product.brand}" /></div>
+							 </isif>
+							 
+							 <div class="SDDminicart-icon"></div>
+							 
+							<div class="mini-cart-name">
+								<isset name="itemUrl" value="${empty(productLineItem.categoryID) ? URLUtils.http('Product-Show','pid', productLineItem.productID) : URLUtils.http('Product-Show','pid', productLineItem.productID, 'cgid', productLineItem.categoryID)}" scope="page"/>
+													
+								<a href="${itemUrl}"><isprint value="${productLineItem.productName}"/></a>
+							</div>
+			
+							<div class="mini-cart-attributes">
+								<isdisplayvariationvalues product="${productLineItem.product}"/>
+				
+								<iscomment>
+									The following code will render the size for products that are not variants nor variation masters. 
+									Reference: JIRA Ticket CPS-478
+								</iscomment>
+								<isif condition="${!empty(productLineItem.product) && !productLineItem.product.isVariant() && !productLineItem.product.isMaster() && 'size' in productLineItem.product.custom && !empty(productLineItem.product.custom.size)}">
+									<div class="attribute">
+										<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+										<span class="value"><isprint value="${productLineItem.product.custom.size}"/></span>
+									</div>
+								</isif>
+								<div class="wrap-sku-price">
+									<div class="sku attribute">
+										${Resource.msg('global.sku','locale',null)}<isprint value="${productLineItem.product.ID.substring(productLineItem.product.ID.lastIndexOf('-')+1)}"/>
+									</div>
+									<div class="mini-cart-pricing">
+									    <isif condition="${productLineItem.bonusProductLineItem}">
+										    ${Resource.msg('global.bonus','locale',null)}
+									    <iselse>
+									    	<isset name="productTotal" value="${productLineItem.adjustedPrice}" scope="page"/>
+									    	<isif condition="${!empty(productLineItem) && productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+												<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+													<isset name="productTotal" value="${productTotal.add(optionLI.adjustedPrice)}" scope="page"/>
+												</isloop>
+											</isif>
+										    <span class="mini-cart-price">${Resource.msg('global.totalprice','locale',null)} <isprint value="${productTotal}"/></span>
+									    </isif>
+									</div>
+								</div>
+							</div>
+							<iscomment> redesign
+								<isdisplayproductavailability p_productli="${productLineItem}" p_displayinstock="${false}" />
+							</iscomment>
+							<div class="updateremove-minicart">
+							 	<span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+							    <isif condition="${productLineItem.bonusProductLineItem}">
+							    	<isprint value="${productLineItem.quantity.value.toFixed()}" />
+							    <iselse>
+							    	<input type="text" maxlength="4" value="${productLineItem.quantity.value.toFixed()}" class="input-text update-minicart-qty" />
+								    <a class="update-minilineitem attribute" data-pli="${productLineItem.productID}">
+										<isprint value="${Resource.msg('global.update','locale',null)}" /> 
+									</a>
+								</isif>
+								<iscomment>
+							   		<span class="value"><isprint value="${productLineItem.quantity}"/></span>
+							     </iscomment>
+								<a class="remove-minilineitem attribute" data-pli="${productLineItem.productID}">
+									<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+								</a>
+							</div>
+						</div><!-- End of minicart-rightwrap -->
+					</div>
+			
+			<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+			</isif>
+		</isloop>
+	
+	<iscomment>product line items (only rendered if we haven't add a gift certificate to the basket)</iscomment>
+	<isloop items="${pliList}" var="productLineItem" status="loopstate">
+		<isif condition="${productLineItem.custom.deliveryMethod != 'SDD' && 'SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true}">
+			<iscomment>To display a maximum of 3 products on the minicart flyout</iscomment>
+			<div class="mini-cart-product">
+			
+					<div class="mini-cart-image">				
+						<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+					</div>
+					
+					<div class="minicart-rightwrap">
+						
+						<isif condition="${!empty(productLineItem.product.brand)}">
+							<div class="product-brand" itemprop="name"><isprint value="${productLineItem.product.brand}" /></div>
+						 </isif>
+						 
+						 <div class="SDDminicart-icon"></div>
+						 
+						<div class="mini-cart-name">
+							<isset name="itemUrl" value="${empty(productLineItem.categoryID) ? URLUtils.http('Product-Show','pid', productLineItem.productID) : URLUtils.http('Product-Show','pid', productLineItem.productID, 'cgid', productLineItem.categoryID)}" scope="page"/>
+												
+							<a href="${itemUrl}"><isprint value="${productLineItem.productName}"/></a>
+						</div>
+		
+						<div class="mini-cart-attributes">
+							<isdisplayvariationvalues product="${productLineItem.product}"/>
+			
+							<iscomment>
+								The following code will render the size for products that are not variants nor variation masters. 
+								Reference: JIRA Ticket CPS-478
+							</iscomment>
+							<isif condition="${!empty(productLineItem.product) && !productLineItem.product.isVariant() && !productLineItem.product.isMaster() && 'size' in productLineItem.product.custom && !empty(productLineItem.product.custom.size)}">
+								<div class="attribute">
+									<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+									<span class="value"><isprint value="${productLineItem.product.custom.size}"/></span>
+								</div>
+							</isif>
+							<div class="wrap-sku-price">
+								<div class="sku attribute">
+									${Resource.msg('global.sku','locale',null)}<isprint value="${productLineItem.product.ID.substring(productLineItem.product.ID.lastIndexOf('-')+1)}"/>
+								</div>
+								<div class="mini-cart-pricing">
+								    <isif condition="${productLineItem.bonusProductLineItem}">
+									    ${Resource.msg('global.bonus','locale',null)}
+								    <iselse>
+								    	<isset name="productTotal" value="${productLineItem.adjustedPrice}" scope="page"/>
+								    	<isif condition="${!empty(productLineItem) && productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+											<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+												<isset name="productTotal" value="${productTotal.add(optionLI.adjustedPrice)}" scope="page"/>
+											</isloop>
+										</isif>
+									    <span class="mini-cart-price">${Resource.msg('global.totalprice','locale',null)} <isprint value="${productTotal}"/></span>
+								    </isif>
+								</div>
+							</div>
+						</div>
+						<iscomment> redesign
+							<isdisplayproductavailability p_productli="${productLineItem}" p_displayinstock="${false}" />
+						</iscomment>
+						<div class="updateremove-minicart">
+						 	<span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+						    <isif condition="${productLineItem.bonusProductLineItem}">
+						    	<isprint value="${productLineItem.quantity.value.toFixed()}" />
+						    <iselse>
+						    	<input type="text" maxlength="4" value="${productLineItem.quantity.value.toFixed()}" class="input-text update-minicart-qty" />
+							    <a class="update-minilineitem attribute" data-pli="${productLineItem.productID}">
+									<isprint value="${Resource.msg('global.update','locale',null)}" /> 
+								</a>
+							</isif>
+							<iscomment>
+						   		<span class="value"><isprint value="${productLineItem.quantity}"/></span>
+						     </iscomment>
+							<a class="remove-minilineitem attribute" data-pli="${productLineItem.productID}">
+								<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+							</a>
+						</div>
+					</div><!-- End of minicart-rightwrap -->
+				</div>
+		
+		<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+		</isif>
+	</isloop>	
+	
+	<iscomment>product line items (only rendered if we haven't add a gift certificate to the basket)</iscomment>
+	<isloop items="${pliList}" var="productLineItem" status="loopstate">
+		<isif condition="${productLineItem.custom.deliveryMethod != 'SDD' && !('SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true)}">
+			<iscomment>To display a maximum of 3 products on the minicart flyout</iscomment>
+			<div class="mini-cart-product">
+
+					<div class="mini-cart-image">				
+						<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+					</div>
+					
+					<div class="minicart-rightwrap">
+						
+						<isif condition="${!empty(productLineItem.product.brand)}">
+							<div class="product-brand" itemprop="name"><isprint value="${productLineItem.product.brand}" /></div>
+						 </isif>
+						<div class="mini-cart-name">
+							<isset name="itemUrl" value="${empty(productLineItem.categoryID) ? URLUtils.http('Product-Show','pid', productLineItem.productID) : URLUtils.http('Product-Show','pid', productLineItem.productID, 'cgid', productLineItem.categoryID)}" scope="page"/>
+												
+							<a href="${itemUrl}"><isprint value="${productLineItem.productName}"/></a>
+						</div>
+		
+						<div class="mini-cart-attributes">
+							<isdisplayvariationvalues product="${productLineItem.product}"/>
+			
+							<iscomment>
+								The following code will render the size for products that are not variants nor variation masters. 
+								Reference: JIRA Ticket CPS-478
+							</iscomment>
+							<isif condition="${!empty(productLineItem.product) && !productLineItem.product.isVariant() && !productLineItem.product.isMaster() && 'size' in productLineItem.product.custom && !empty(productLineItem.product.custom.size)}">
+								<div class="attribute">
+									<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+									<span class="value"><isprint value="${productLineItem.product.custom.size}"/></span>
+								</div>
+							</isif>
+							<div class="wrap-sku-price">
+								<div class="sku attribute">
+									${Resource.msg('global.sku','locale',null)}<isprint value="${productLineItem.product.ID.substring(productLineItem.product.ID.lastIndexOf('-')+1)}"/>
+								</div>
+								<div class="mini-cart-pricing">
+								    <isif condition="${productLineItem.bonusProductLineItem}">
+									    ${Resource.msg('global.bonus','locale',null)}
+								    <iselse>
+								    	<isset name="productTotal" value="${productLineItem.adjustedPrice}" scope="page"/>
+								    	<isif condition="${!empty(productLineItem) && productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+											<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+												<isset name="productTotal" value="${productTotal.add(optionLI.adjustedPrice)}" scope="page"/>
+											</isloop>
+										</isif>
+									    <span class="mini-cart-price">${Resource.msg('global.totalprice','locale',null)} <isprint value="${productTotal}"/></span>
+								    </isif>
+								</div>
+							</div>
+						</div>
+						<iscomment> redesign
+							<isdisplayproductavailability p_productli="${productLineItem}" p_displayinstock="${false}" />
+						</iscomment>
+						<div class="updateremove-minicart">
+						 	<span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+						    <isif condition="${productLineItem.bonusProductLineItem}">
+						    	<isprint value="${productLineItem.quantity.value.toFixed()}" />
+						    <iselse>
+						    	<input type="text" maxlength="4" value="${productLineItem.quantity.value.toFixed()}" class="input-text update-minicart-qty" />
+							    <a class="update-minilineitem attribute" data-pli="${productLineItem.productID}">
+									<isprint value="${Resource.msg('global.update','locale',null)}" /> 
+								</a>
+							</isif>
+							<iscomment>
+						   		<span class="value"><isprint value="${productLineItem.quantity}"/></span>
+						     </iscomment>
+							<a class="remove-minilineitem attribute" data-pli="${productLineItem.productID}">
+								<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+							</a>
+						</div>
+					</div><!-- End of minicart-rightwrap -->
+				</div>
+		
+		<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+		</isif>
+	</isloop>
+	<iselse/>
+		<iscomment>product line items (only rendered if we haven't add a gift certificate to the basket)</iscomment>
+		<isloop items="${pliList}" var="productLineItem" status="loopstate">
+			<iscomment>To display a maximum of 3 products on the minicart flyout</iscomment>
+				<div class="mini-cart-product">
+				
+						<div class="mini-cart-image">				
+							<isdisplayproductimage p_productli="${productLineItem}" p_size="large" />
+						</div>
+						
+						<div class="minicart-rightwrap">
+							<isif condition="${!empty(productLineItem.product.brand)}">
+								<div class="product-brand" itemprop="name"><isprint value="${productLineItem.product.brand}" /></div>
+							 </isif>
+							<div class="mini-cart-name">
+								<isset name="itemUrl" value="${empty(productLineItem.categoryID) ? URLUtils.http('Product-Show','pid', productLineItem.productID) : URLUtils.http('Product-Show','pid', productLineItem.productID, 'cgid', productLineItem.categoryID)}" scope="page"/>
+													
+								<a href="${itemUrl}"><isprint value="${productLineItem.productName}"/></a>
+							</div>
+			
+							<div class="mini-cart-attributes">
+								<isdisplayvariationvalues product="${productLineItem.product}"/>
+				
+								<iscomment>
+									The following code will render the size for products that are not variants nor variation masters. 
+									Reference: JIRA Ticket CPS-478
+								</iscomment>
+								<isif condition="${!empty(productLineItem.product) && !productLineItem.product.isVariant() && !productLineItem.product.isMaster() && 'size' in productLineItem.product.custom && !empty(productLineItem.product.custom.size)}">
+									<div class="attribute">
+										<span class="label"><isprint value="${Resource.msg('productsize.size', 'product', null)}"/></span>
+										<span class="value"><isprint value="${productLineItem.product.custom.size}"/></span>
+									</div>
+								</isif>
+								<div class="wrap-sku-price">
+									<div class="sku attribute">
+										${Resource.msg('global.sku','locale',null)}<isprint value="${productLineItem.product.ID.substring(productLineItem.product.ID.lastIndexOf('-')+1)}"/>
+									</div>
+									<div class="mini-cart-pricing">
+									    <isif condition="${productLineItem.bonusProductLineItem}">
+										    ${Resource.msg('global.bonus','locale',null)}
+									    <iselse>
+									    	<isset name="productTotal" value="${productLineItem.adjustedPrice}" scope="page"/>
+									    	<isif condition="${!empty(productLineItem) && productLineItem.hasOwnProperty('optionProductLineItems') && productLineItem.optionProductLineItems.size() > 0}">
+												<isloop items="${productLineItem.optionProductLineItems}" var="optionLI">
+													<isset name="productTotal" value="${productTotal.add(optionLI.adjustedPrice)}" scope="page"/>
+												</isloop>
+											</isif>
+										    <span class="mini-cart-price">${Resource.msg('global.totalprice','locale',null)} <isprint value="${productTotal}"/></span>
+									    </isif>
+									</div>
+								</div>
+							</div>
+							<iscomment> redesign
+								<isdisplayproductavailability p_productli="${productLineItem}" p_displayinstock="${false}" />
+							</iscomment>
+							<div class="updateremove-minicart">
+							 	<span class="label">${Resource.msg('global.qty2','locale',null)}</span>
+							    <isif condition="${productLineItem.bonusProductLineItem}">
+							    	<isprint value="${productLineItem.quantity.value.toFixed()}" />
+							    <iselse>
+							    	<input type="text" maxlength="4" value="${productLineItem.quantity.value.toFixed()}" class="input-text update-minicart-qty" />
+								    <a class="update-minilineitem attribute" data-pli="${productLineItem.productID}">
+										<isprint value="${Resource.msg('global.update','locale',null)}" /> 
+									</a>
+								</isif>
+								<iscomment>
+							   		<span class="value"><isprint value="${productLineItem.quantity}"/></span>
+							     </iscomment>
+								<a class="remove-minilineitem attribute" data-pli="${productLineItem.productID}">
+									<isprint value="${Resource.msg('global.remove','locale',null)}" /> 
+								</a>
+							</div>
+						</div><!-- End of minicart-rightwrap -->
+					</div>
+			
+			<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+			
+		</isloop>
+	</isif>
+	<iscomment>gift certificate line items (only rendered if we haven't add a product to the basket)</iscomment>
+		<isloop items="${LineItemCtnr.giftCertificateLineItems}" var="gcLI" status="loopstate">
+			<iscomment>
+				Omit showing the gift certificate that was just added (in case we render the minicart).
+				This gift certificate has already been rendered at the top before the product line items.
+			</iscomment>
+			<isif condition="${!(pdict.p_giftcertlineitem != null && pdict.p_giftcertlineitem.UUID.equals(gcLI.UUID))}">
+				
+				<div class="mini-cart-product <isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">33333333
+					
+					<div class="mini-cart-image">
+						<img src="${URLUtils.staticURL('/images/gift_cert.gif')}" alt="<isprint value="${gcLI.lineItemText}"/>" />
+					</div>
+		
+					<div class="mini-cart-name">
+						<isprint value="${gcLI.lineItemText}"/>
+					</div><!-- END: name -->
+		
+					<div class="mini-cart-pricing">
+						<span class="label">${Resource.msg('global.qty','locale',null)}: 1</span>
+						<span class="value"><isprint value="${gcLI.price}"/></span>
+					</div>
+					
+				</div>
+				<isset name="itemCount" value="${itemCount+1}" scope="page"/>
+			</isif>
+		</isloop>	
+
+
+</isif>

@@ -1,0 +1,148 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input Customer : dw.customer.Customer
+*-   @output ExampleOut : Number
+*
+*/
+importPackage( dw.system );
+importPackage( dw.util );
+importPackage( dw.customer );
+importPackage( dw.order );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+	
+		//Get All the Customer Gropu of this customer and find if if belong to the brand purchase limited groups, then set those brands in Session.
+		var customerGrpItr : Iterator =  args.Customer.customerGroups.iterator();
+		var limitedBrandsArr : ArrayList = new ArrayList();
+		
+		while (customerGrpItr.hasNext()) {
+			var customerGrp = customerGrpItr.next();
+			
+			if ('brandPurchaseLimit' in customerGrp.custom && !empty(customerGrp.custom.brandPurchaseLimit)) {
+				var limitedBrands = customerGrp.custom.brandPurchaseLimit;
+				for(var i=0; i<limitedBrands.length; i++) {
+					var splitStr = limitedBrands[i].split('|');
+					var obj = new Object();
+					obj[splitStr[0]] = splitStr[1];
+					limitedBrandsArr.add(obj);
+				}
+			}
+		}
+		
+		if(!empty(limitedBrandsArr) && limitedBrandsArr.length > 0) {
+			var objArr : Array = [];
+			for each(var obj in limitedBrandsArr) {
+				objArr.push(obj);
+			}
+			var limitedBrandStr = JSON.stringify(objArr);
+			session.privacy.limitedBrands = limitedBrandStr;
+			
+			//Also Clean the Old Record
+			if (!empty(args.Customer.profile) && 'brandPurchaseLimitExp' in args.Customer.profile.custom && !empty(args.Customer.profile.custom.brandPurchaseLimitExp)) {
+				var brandPurchaseExp = args.Customer.profile.custom.brandPurchaseLimitExp;
+				var date : Date = new Date();
+				var expcal : Calendar = new Calendar(new Date(brandPurchaseExp));
+				//Get the First Date of this month
+				var firstDateCal : Calendar = new Calendar(new Date(date.getFullYear(), date.getMonth(), 1));
+				//var firstDateCal : Calendar = new Calendar(new Date("10/01/2018"));
+				if (firstDateCal.compareTo(expcal) > 0) {
+					//Clear Both Record.
+					args.Customer.profile.custom.brandPurchaseControlRecord = "";
+					args.Customer.profile.custom.brandPurchaseLimitExp = "";
+				}
+			}
+			
+		}
+		
+		//Removed the Cancelled Order Tracking.
+		//Get the Existing Record From Profile and Store into Map
+		var existingRecord = args.Customer.profile.custom.brandPurchaseControlRecord;
+		var recordMap : HashMap = new HashMap();
+		if( !empty(existingRecord) ) {
+			var existingRecParse = JSON.parse(existingRecord);
+			for (var rec in existingRecParse) {
+				var reckey = Object.keys(existingRecParse[rec])[0];
+				var priceVal = existingRecParse[rec][reckey];
+				recordMap.put(reckey, Number(priceVal));
+			}
+			
+			//Get all cancelled Order and Update the Recorded Data
+			var date : Date = new Date();
+			var firstDateCal = new Calendar(new Date(date.getFullYear(), date.getMonth(), 1));
+			var lastDateCal = new Calendar(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+			
+			var fromdate : String = StringUtils.formatCalendar(firstDateCal, "yyyy-MM-dd");
+			var todate : String = 	StringUtils.formatCalendar(lastDateCal, "yyyy-MM-dd");
+			
+			var expdate = StringUtils.formatCalendar(lastDateCal, "MM/dd/yyyy");
+		
+			// intialize vars
+			var customerNo : String = args.Customer.profile.customerNo;
+			
+			// create order query string to fetch the orders which are NOT part of the service orders list
+			var orderQuery = "customerNo={0} AND status={1} AND creationDate >= {2} AND creationDate <= {3} AND custom.cancelledOrderTracked={4}";
+				
+			// get the list of orders excluding received from the service
+			var orderIt : SeekableIterator = dw.order.OrderMgr.queryOrders(orderQuery, "creationDate desc", customerNo, dw.order.Order.ORDER_STATUS_CANCELLED, fromdate, todate, false);
+			if (orderIt.count > 0) {
+				while(orderIt.hasNext()) {
+					var ord : Order = orderIt.next();
+					var plis : Iterator = ord.allProductLineItems.iterator();
+					
+					while(plis.hasNext()) {
+						var pli : ProductLineItem =  plis.next();
+						if (!empty(pli.product.brand) && recordMap.containsKey(pli.product.brand)) {
+							//Get the Adjusted Price and Set into Map
+							var adjustedPrice = pli.adjustedPrice.value;
+							var deductedPrice = 0;
+							//Add the existing Pricing to this price
+							deductedPrice = new Number(recordMap.get(pli.product.brand)) - adjustedPrice;
+							recordMap.put(pli.product.brand, deductedPrice);
+						}
+					}
+					//Mark this cancelled order tracked.
+					ord.custom.cancelledOrderTracked = true;
+				}//Cancelled Order Tracking
+				
+				//Update the Recordeded data
+				//Convert Map Into JSON and Store into Profile
+				var keySetItr : Iterator = recordMap.keySet().iterator();
+				var objArr : Array = [];
+				
+				while( keySetItr.hasNext() ) {
+					var key = keySetItr.next();
+					var obj = new Object();
+					obj[key] = recordMap.get(key).toFixed(2);
+					objArr.push(obj);
+				}
+				
+				if(!empty(objArr) && objArr.length > 0) {
+					var brandRecStr = JSON.stringify(objArr);
+					args.Customer.profile.custom.brandPurchaseControlRecord = brandRecStr;
+					args.Customer.profile.custom.brandPurchaseLimitExp = expdate;
+				}
+			}
+		}
+		
+		
+	} catch(e) {
+		var error = e;
+		Logger.error("[SetPurchaseLimitBrands.ds] - Error While Executing Logic for Purchase Limit" + e);
+		return PIPELET_NEXT;
+	}
+   return PIPELET_NEXT;
+}

@@ -1,0 +1,29 @@
+/**
+*   @output OList : Object
+*   @output Status : Object
+*/
+importPackage( dw.system );
+var sf = require("bc_serviceframework");
+var Logger = require('dw/system').Logger;
+require("../services/OrderService");
+
+function execute( pdict : PipelineDictionary ) : Number 
+{
+	try
+	{	
+		var OrderService = sf.getService('OrderService');
+		var orderService = new OrderService();
+	
+		orderService.call();
+		
+		pdict.OList = orderService.object;
+		
+	   	return PIPELET_NEXT;
+	}
+	catch(e)
+	{
+		var error = e;
+		Logger.error('GetorderList has failed with the following error: ' + e);
+		return PIPELET_ERROR;
+	}
+}

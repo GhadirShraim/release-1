@@ -1,0 +1,98 @@
+<iscache type="relative" hour="24"/>
+<isdecorate template="content/home/pt_storefront">
+	<isinclude template="util/modules"/>
+	
+	<isset name="isNonLoginPortal" value="${'isNonLoginPortalUser' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.isNonLoginPortalUser) ? true : false }" scope="page" />
+	<isif condition="${!empty(isNonLoginPortal) && isNonLoginPortal}">
+		<isset name="cCode" value="${'tempChainCode' in pdict.CurrentSession.custom && !empty(pdict.CurrentSession.custom.tempChainCode) ? pdict.CurrentSession.custom.tempChainCode.replace('C', '') : ''}" scope="page"/>
+	<iselseif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+		<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="page"/>
+	<iselse/>
+		<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+	</isif>
+	
+	<isset name="digiclass" value="" scope="page" />
+	<isif condition="${pdict.CurrentHttpParameterMap.fdid.value == 'digitallibrary'}">
+		<isset name="digiclass" value="digitallibrary" scope="page" />
+	</isif>
+	<div class="beautyBlog ${digiclass}">
+		<isif condition="${pdict.CurrentHttpParameterMap.fdid.value == 'digitallibrary'}">
+			<isbreadcrumbs bcurl1="${URLUtils.https('Search-ShowLibraryContent','fdid','digitallibrary')}" bctext1="${pdict.ContentSearchResult.folder.displayName != null ? pdict.ContentSearchResult.folder.displayName : Resource.msg('account.beautyblog','account',null)}"/>
+		<iselseif condition="${pdict.ContentSearchResult.folder.displayName.lastIndexOf('Archive') > 0}">
+			<isbreadcrumbs bcurl1="${URLUtils.https('Search-ShowContent','fdid','blog-archive-' + cCode)}" bctext1="${pdict.ContentSearchResult.folder.displayName != null ? pdict.ContentSearchResult.folder.displayName : Resource.msg('account.beautyblog','account',null)}"/>
+		<iselse>
+			<isbreadcrumbs bcurl1="${URLUtils.https('Search-ShowContent','fdid','blog-' + cCode)}" bctext1="${pdict.ContentSearchResult.folder.displayName != null ? pdict.ContentSearchResult.folder.displayName : Resource.msg('account.beautyblog','account',null)}"/>
+		</isif>	
+
+		<div class="header-blog">
+			<isif condition="${pdict.CurrentHttpParameterMap.isblogsearch.value == 'true'}">
+				<h2><isprint value="${Resource.msg('nohits.header','search',null)}"></h2>
+			<iselse/>		
+				<h2><isprint value="${pdict.ContentSearchResult.folder.displayName != null ? pdict.ContentSearchResult.folder.displayName : Resource.msg('account.beautyblog','account',null)}"></h2>
+			</isif>
+		</div>
+			
+		<isset name="Refinements" value="${pdict.ContentSearchResult.refinements}" scope="page"/>
+	
+		<iscomment>Process refinement options based on configured refinement definitions</iscomment>
+		<isif condition="${Refinements != null && Refinements.refinementDefinitions.size() > 0}">
+			<isscript>
+				var filterCount = 0;
+			</isscript>
+				
+			<div class="listing-filters">
+				<div class="selected-filters">
+					<isloop items="${Refinements.refinementDefinitions}" var="RefinementDefinition" status="refinementsLoopState">
+						<isif condition="${RefinementDefinition.isAttributeRefinement()}">
+						<isset name="count" value="${0}" scope="page"/>
+							<isloop items="${Refinements.getAllRefinementValues(RefinementDefinition)}" var="RefinementValue">
+								<isif condition="${pdict.ContentSearchResult.isRefinedByAttributeValue(RefinementDefinition.attributeID,RefinementValue.value)}">
+									<span class="item">
+									<isif condition="${count != 0}">, 
+									<iselse>
+										<isset name="count" value="${count + 1}" scope="page"/>
+									</isif>
+									<isprint value="${RefinementValue.getDisplayValue()}"></span>
+									<isset name="filterCount" value="${filterCount + 1}" scope="page"/>
+								</isif>
+							</isloop>
+						</isif>
+					</isloop>
+				</div>
+			</div>
+		</isif>
+		
+		<isset name="useSelect" value="${true}" scope="page"/>
+		
+		<iscomment>show top content hits</iscomment>
+		<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">		
+			<div class="search-results-content">
+				<isif condition="${pdict.CurrentHttpParameterMap.fdid.value == 'digitallibrary'}">
+					<isinclude template="search/digitallibrarycontenthits"/>
+				<iselse>
+					<isinclude template="search/blogcontenthits"/>
+				</isif>
+			</div>
+
+			<iscomment>CP-833 pagination removed
+				<ispagingbar pageurl="${pdict.ContentSearchResult.url('Search-ShowLibraryContent')}"  pagingmodel="${pdict.ContentPagingModel}"/>
+			</iscomment>
+
+		<iselseif condition="${pdict.CurrentHttpParameterMap.isblogsearch.value == 'true'}">		
+			<div class="search-results-content">
+				<isinclude template="search/blogcontenthitsnoresult"/>
+			</div>	
+		</isif> 
+	
+		<iscomment>Renders the right hand navigation bar (includes banner, tags and comments)
+		<div class="blog-right-nav">
+			<isinclude template="components/blogrightnav"/>
+		</div>
+		</iscomment>
+	</div>
+	<!-- CP- 422 Back to Top Flyout Added -->
+	<div class="main-backtotop-view-less">
+		<img id="back-to-top" src="${URLUtils.staticURL('/images/back-to-top-new.png')}" />
+	</div>
+
+</isdecorate>

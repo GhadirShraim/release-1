@@ -1,0 +1,91 @@
+<isdecorate template="account/giftregistry/pt_giftregistry">
+<isinclude template="util/modules"/>
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+<isset name="SLUUID" value="${''}" scope="PAGE" />
+<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && !empty(pdict.CurrentCustomer.profile.custom.shoppingListUUID)}">
+	<isset name="SLUUID" value="${pdict.CurrentCustomer.profile.custom.shoppingListUUID}" scope="PAGE" />	
+</isif>
+	<h1 class="title h1"><isprint value="${Resource.msg('registrylist.registriesheader','account',null)}" /></h1>
+	<div class="backlink">
+		<a href="${URLUtils.url('Account-Show')}"><isprint value="${Resource.msg('account.backtomyaccount','account',null)}" /></a>
+	</div>
+	<!-- Add Shopping List For US/CA- Non Portal -->
+	<isif condition="${isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+		<div class="item-list gift-reg Mylistview">
+			<div class="MyListView">
+				<div class="event-name"><isprint value="${Resource.msg('store.pickup.storelist','account',null)}" /></div>
+				<div class="event-details">
+					<a href="${URLUtils.https('ShoppingList-Start')}" title="${Resource.msg('global.view','locale',null)}">
+						<isprint value="${Resource.msg('registrylist.manage','account',null)}" />
+					</a>
+				</div>
+			</div>
+		</div>
+	 </isif>
+	
+	<isif condition="${!empty(pdict.CurrentForms.productlists.items)}">			
+		<div class="item-list gift-reg Mylistview">
+				<isloop items="${pdict.CurrentForms.productlists.items}" var="item" status="loopstate">
+					<isif condition="${SLUUID != item.object.UUID}"> 
+						<div class="MyListView">
+							<div class="event-name"><isprint value="${item.object.name}"/></div>
+							<div class="event-details">
+								<a href="${URLUtils.https('GiftRegistry-ShowRegistryByID','ProductListID', item.object.UUID)}" title="${Resource.msg('global.view','locale',null)}">
+									<isprint value="${Resource.msg('registrylist.manage','account',null)}" />
+								</a>
+							</div>
+							<isset name="UUID" value="${item.object.UUID}" scope="page" />				
+						</div>
+					</isif>
+				</isloop>
+			</div>
+	</isif>
+	<div class="item-list gift-reg Mylistview myfav <isif condition="${empty(pdict.CurrentForms.productlists.items)}">myfavpadding</isif>  ">
+		<div class="MyListView">
+			<a class="event-name" title="${Resource.msg('headercustomerinfo.myfavourites','components',null)}"><isprint value="${Resource.msg('headercustomerinfo.myfavourites','components',null)}" /></a>
+			<div class="event-details">
+				<a href="${URLUtils.https('Wishlist-Show')}" title="${Resource.msg('global.view','locale',null)}">
+					<isprint value="${Resource.msg('registrylist.manage','account',null)}" />
+				</a>
+			</div>
+		</div>
+	</div>
+	<div id="dialog-delete" class="hide"><h3><isprint value="${Resource.msg('registrylist.confirmdelete','account',null)}" /></h3></div>
+	<form action="${URLUtils.https('GiftRegistry-CreateOne')}" method="post" id="${pdict.CurrentForms.giftregistry.htmlName}" class="createnew">	
+		<fieldset>
+			<div class="form-row create-new-registry">
+				<button type="submit" class="dialogify create-new-button" value="${Resource.msg('registrylist.newregistry','account',null)}"  name="${pdict.CurrentForms.giftregistry.create.htmlName}" data-dlg-action='{"isForm": true}' data-dlg-options='{"width":"auto","title":"${Resource.msg('registrylist.createnewlist','account',null)}", "dialogClass":"createnewlistdialog" }'>
+				 <isprint value="${Resource.msg('registrylist.newregistry','account',null)}" />	
+				</button>
+			</div>
+		</fieldset>
+	</form>
+	<isif condition="${!empty(pdict.ShoppingListThanks) && pdict.ShoppingListThanks}">
+		<isset name="storeDetail" value="${pdict.SelectesStore}" scope="Page" />
+		
+		<div class="thanks-popup hide" id="thanks-popup">
+			<iscontentasset aid="shoppintListThankYouPopUpMsgTop" />
+			<div class="selectes-store-address">
+				<isif condition="${!empty(storeDetail.address1)}">
+					<div class="address1">
+						<div><isprint value="${Resource.msg('registrylist.cosmoprof','account',null)}" /></div>
+						<isprint value="${storeDetail.address1}" />
+					</div>
+				 </isif>
+				 
+				 <isif condition="${!empty(storeDetail.address2)}">
+					<div class="address1">
+						<isprint value="${storeDetail.address2}" />
+					</div>
+				 </isif>
+				 <isif condition="${!empty(storeDetail.city)}"><span><isprint value="${storeDetail.city}" />,</span></isif><isif condition="${!empty(storeDetail.region)}"><span><span><isprint value="${storeDetail.region}" /></span>&nbsp;</isif><isif condition="${!empty(storeDetail.postalcode)}"><span><span><isprint value="${storeDetail.postalcode}" /></span></isif>
+				<isif condition="${!empty(storeDetail.phone)}">
+					 <div class="phone-num"><isprint value="${storeDetail.phone}" /></div>
+				 </isif>
+				
+			</div>
+			<iscontentasset aid="shoppintListThankYouPopUpMsgDown" />
+		</div>
+	 </isif>
+</isdecorate>

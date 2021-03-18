@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<custom-objects xmlns="http://www.demandware.com/xml/impex/customobject/2006-10-31">
+    <custom-object type-id="WebserviceConfiguration" object-id="CreditCardCheckerService">
+        <object-attribute attribute-id="lockedFor">1000</object-attribute>
+        <object-attribute attribute-id="logSoap">true</object-attribute>
+        <object-attribute attribute-id="logStatus">true</object-attribute>
+        <object-attribute attribute-id="maximumAttempts">2</object-attribute>
+        <object-attribute attribute-id="serviceEnableLocking">true</object-attribute>
+        <object-attribute attribute-id="targetEnvironment">CredictCardCecker-Sandbox</object-attribute>
+        <object-attribute attribute-id="timeout">1000</object-attribute>
+    </custom-object>
+	
+    <custom-object type-id="WebserviceConfiguration" object-id="ECBRate">
+        <object-attribute attribute-id="logSoap">true</object-attribute>
+        <object-attribute attribute-id="logStatus">true</object-attribute>
+        <object-attribute attribute-id="maximumAttempts">45</object-attribute>
+        <object-attribute attribute-id="targetEnvironment">ECB-Production</object-attribute>
+        <object-attribute attribute-id="timeout">10000</object-attribute>
+    </custom-object>
+    
+     <custom-object type-id="WebserviceConfiguration" object-id="HTTPFormPostService">
+        <object-attribute attribute-id="logSoap">true</object-attribute>
+        <object-attribute attribute-id="logStatus">true</object-attribute>
+        <object-attribute attribute-id="maximumAttempts">2</object-attribute>
+        <object-attribute attribute-id="targetEnvironment">FormPoster-Sandbox</object-attribute>
+        <object-attribute attribute-id="timeout">10000</object-attribute>
+    </custom-object>
+    
+    <custom-object type-id="WebserviceConfiguration" object-id="OrderHistoryConfig">
+        <object-attribute attribute-id="logSoap">true</object-attribute>
+        <object-attribute attribute-id="logStatus">true</object-attribute>
+        <object-attribute attribute-id="maximumAttempts">50</object-attribute>
+        <object-attribute attribute-id="targetEnvironment">Order-HeaderLevel</object-attribute>
+        <object-attribute attribute-id="timeout">10000</object-attribute>
+    </custom-object>
+</custom-objects>

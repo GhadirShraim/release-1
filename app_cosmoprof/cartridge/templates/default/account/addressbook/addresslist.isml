@@ -1,0 +1,27 @@
+	<isset name="DecoratorTemplate" value="account/pt_account" scope="page"/>
+	<iscomment>
+	<isif condition="${pdict.CurrentHttpParameterMap.format.stringValue == 'ajax' || pdict.CurrentHttpParameterMap.pwr.stringValue == 'true' || pdict.CurrentHttpParameterMap.source.stringValue == 'search' || pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart'}">
+		<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+	</isif>
+	 </iscomment>
+	<isdecorate template="${DecoratorTemplate}">
+	<isset name="bctext2" value="Addresses" scope="pdict"/>
+	<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+	
+	<div id="addresses">
+		<h1  class=" title h1"><isprint value="${Resource.msg('addresslist.header','account',null)}"/></h1>
+		<div class="backlink">
+ 
+				<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}"><isprint value="${Resource.msg('account.backtoaccountsetting','account',null)}" /></a>
+		</div>
+ 
+		<isinclude template="account/addressbook/addressinclude"/>
+		<div class="section-header">
+			<isif condition="${pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+				<a class="section-header-note primaryButtn " title="${Resource.msg('editaddress.addaddress','account',null)}" href="${URLUtils.url('Address-Add','pageload','true')}" >
+					<isprint value="${Resource.msg('addresslist.create','account',null)}" />	
+				</a>
+			</isif>
+		</div>
+	</div>
+	</isdecorate>

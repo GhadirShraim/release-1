@@ -1,0 +1,28 @@
+/**
+* 	Demandware Script File
+*	@output Professions : dw.util.LinkedHashMap
+*/
+
+var Site : dw.system.Site = require("dw/system").Site;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try 
+	{
+		var linkedHashMap : dw.util.LinkedHashMap = new dw.util.LinkedHashMap();
+		
+		var professions : Array = Site.current.getCustomPreferenceValue("professions");
+		
+		for each(var option : String in professions) {
+			linkedHashMap.put(option, option);
+		}
+		
+		args.Professions = linkedHashMap;
+	  
+	    return PIPELET_NEXT;
+	
+	} catch (e) {
+		var ex = e;
+		var ep = ex;
+	}
+}

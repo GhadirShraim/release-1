@@ -1,0 +1,288 @@
+<iscache type="relative" hour="24" varyby="price_promotion"/>
+<iscomment>
+	This template renders a product in the search result using a ProductSearchHit object.
+</iscomment>
+<isinclude template="util/modules"/>
+<isimagesizes />
+
+<isif condition="${!empty(pdict.Product) }">
+	<iscomment>Set the product of the product search hit locally for reuse</iscomment>
+	<isset name="Product" value="${pdict.Product}" scope="page"/>
+	<input type="hidden" class="prodObj" value="${Product.ID}"/>
+	<isset name="OrgProduct" value="${null}" scope="page"/>
+	
+	<iscomment>
+		Get the colors selectable from the current product master or variant range if we
+		need to determine them based on a search result.
+	</iscomment>
+	<isscript>
+		var selectableColors : dw.util.Collection = new dw.util.ArrayList();
+		var varAttrColor : dw.catalog.ProductVariationAttribute = null;
+
+		if( Product.master )
+		{
+			var varModel : dw.catalog.ProductVariationModel = Product.variationModel;
+			varAttrColor = varModel.getProductVariationAttribute("color");
+
+			if( varAttrColor != null )
+			{
+				selectableColors = Product.variationModel.getFilteredValues( varAttrColor );
+			}
+		}
+
+		var firstProduct : dw.catalog.Product = pdict.FirstProduct;
+		var selectedColor: dw.catalog.ProductVariationAttributeValue = null;
+		if( firstProduct && firstProduct.variant && varAttrColor != null )
+		{
+			selectedColor = firstProduct.variationModel.getSelectedValue( varAttrColor );
+		}
+	</isscript>
+
+    <iscomment>
+		Generate link to product detail page: by default it's just the product of the product search hit.
+		If a color variation is available, the first color is used as link URL.
+	</iscomment>
+	<isset name="firstColorVariation" value="${null}" scope="page"/>
+	<isset name="productUrl" value="${URLUtils.http('Product-Show', 'pid', Product.ID)}" scope="page"/>
+	<isif condition="${!empty(selectableColors) && selectableColors.size() > 0 && !empty(varAttrColor)}">
+		
+		<iscomment>if we have a selected color, this color is highlighted otherwise the first selectable color is hightlighted</iscomment>
+		<isif condition="${!empty(selectedColor)}">
+			<isset name="firstColorVariation" value="${selectedColor}" scope="page"/>
+		<iselse>
+			<isset name="firstColorVariation" value="${selectableColors.get(0)}" scope="page"/>
+		</isif>
+		<isif condition="${!empty(varAttrColor)}">
+			<isset name="productUrl" value="${pdict.Product.variationModel.url('Product-Show', varAttrColor, firstColorVariation)}" scope="page"/>
+		</isif>
+		
+	</isif>
+	
+	<div class="product-tile ${'isBonusProduct' in Product.custom && Product.custom.isBonusProduct ? 'naquickview' : ''}" id="${Product.UUID}" data-itemid="${Product.ID}">
+	<iscomment>Favorite List Add item  </iscomment>
+	<isset name="showfavicon" value="${(Product.master ? 'hideFavIcon' : 'showFavIcon')}" scope="page" />
+	<div class="favorite-wrapper ${showfavicon}">
+		<isif condition="${pdict.CurrentCustomer.authenticated}">
+			<isset name="addedToFavorite" value="${false}" scope="Page" />
+			<isif condition="${pdict.CurrentHttpParameterMap.addedToWishList.submitted && !empty(pdict.CurrentHttpParameterMap.addedToWishList)}">
+				<isset name="addedToFavorite" value="${true}" scope="Page" />
+			</isif>
+			<div class="favorite-container">
+				<a href="${!addedToFavorite ? URLUtils.url('Wishlist-Add','pid',Product.ID):URLUtils.url('Wishlist-Remove','pid',Product.ID)}" class="favoriteList ${addedToFavorite ? 'added':'remove'}" data-prodid="${Product.ID}" data-userauth="${customer.authenticated}"></a>		
+			</div>
+		 </isif>
+		
+				
+	</div>
+	
+	<div class="product-image"><!-- dwMarker="product" dwContentID="${Product.UUID}" -->
+		<iscomment>Product Image Overlay</iscomment>
+	<isif condition="${('ProductImageOverlay' in Product.custom && Product.custom.ProductImageOverlay) && ('overlayFrom' in Product.custom && Product.custom.overlayFrom) && ('overlayTo' in Product.custom && Product.custom.overlayTo)}">
+		<isinclude url="${URLUtils.url('Product-ProductBadges','productid', Product.ID)}"/>		
+	</isif>
+		<iscomment>Render the thumbnail</iscomment>
+		<iscomment>Determine the correct image, either first displayed color variation or default product thumbnail</iscomment>
+
+		<isif condition="${!empty(selectableColors) && selectableColors.size() > 0}">
+			<isif condition="${!empty(selectedColor)}">
+				<isset name="firstColorVariation" value="${selectedColor}" scope="page"/>
+			<iselse>
+				<isset name="firstColorVariation" value="${selectableColors.get(0)}" scope="page"/>
+			</isif>
+			<isset name="image" value="${firstColorVariation.getImage('large')}" scope="page"/>
+		<iselse>
+			<isset name="image" value="${Product.getImage('large',0)}" scope="page"/>
+		</isif>
+
+		<iscomment>If image couldn't be determined, display a "no image" medium</iscomment>
+		<isif condition="${!empty(image)}">
+			<isset name="thumbnailUrl" value="${image.getAbsImageURL(imageConfig.categoryGridImageTile != null ? imageConfig.categoryGridImageTile : imageConfig)}" scope="page"/>
+			<isset name="thumbnailAlt" value="${image.alt}" scope="page"/>
+			<isset name="thumbnailTitle" value="${image.title}" scope="page"/>
+		<iselse>
+			<isset name="thumbnailUrl" value="${URLUtils.staticURL('/images/noimagemedium.png')}" scope="page"/>
+			<isset name="thumbnailAlt" value="${Product.name}" scope="page"/>
+			<isset name="thumbnailTitle" value="${Product.name}" scope="page"/>
+		</isif>
+	
+		<isif condition="${thumbnailTitle == null}">
+			<isset name="thumbnailTitle" value="${Product.name}" scope="page"/>
+		</isif>
+		<isif condition="${thumbnailAlt == null}">
+			<isset name="thumbnailAlt" value="${Product.name}" scope="page"/>
+		</isif>
+	
+		<isif condition="${pdict.CurrentHttpParameterMap.isParameterSubmitted('cgid')}">
+			<a class="thumb-link" href="${productUrl.append('cgid',pdict.CurrentHttpParameterMap.cgid)}" title="${Product.name}">
+		<iselse/>
+			<a class="thumb-link" href="${productUrl}" title="${Product.name}">
+		</isif>
+				<img src="${thumbnailUrl}" alt="${thumbnailAlt}" title="${thumbnailTitle}" />
+
+			</a>
+			
+		
+	</div>
+	<isif condition="${Product.custom.newLaunch.toString() == 'Yes'}">
+		<span class="new-badges"></span>					
+	</isif>
+	
+	
+	<iscomment>Product Badge</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	<iscomment>
+		# SAL-651 - Display badge on GRID
+	</iscomment>
+	<isif condition="${!empty(Product.custom.badgeBody)}">
+		<div class="product-grid-badge">
+			<isprint value="${Product.custom.badgeBody}" encoding="off"/>
+		</div>
+	</isif>
+	
+	<iscomment>Product Brand</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	
+	<div class="product-brand">
+		<a class="name-link" href="${productUrl}" title="${Product.brand}">
+			<isprint value="${Product.brand}"/>
+		</a>
+	</div>	
+	
+	<iscomment>Product Name</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	
+	<div class="product-name">
+		<h2>
+			<a class="name-link" href="${productUrl}" title="${Product.name}">
+				<isprint value="${Product.name}"/>
+			</a>
+		</h2>
+	</div>
+			
+	<iscomment>Pricing</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	<isscript>
+		var catName = "";
+		var brandName = "";
+		var catID = "";
+		var manufacturerSKU = "";
+		if( Product.getPrimaryCategory() != null) {
+			catName = Product.getPrimaryCategory().displayName;
+		} else if(product.getCategories().length > 0) {
+			catName = Product.getCategories()[0].displayName;
+		}
+		
+		if( Product.getPrimaryCategory() != null) {
+			catID = Product.getPrimaryCategory().ID;
+		} else if(product.getCategories().length > 0) {
+			catID = Product.getCategories()[0].ID;
+		}
+		
+		if( Product.manufacturerSKU != null) {
+			manufacturerSKU = Product.manufacturerSKU;
+		} else {
+			manufacturerSKU = "";
+		}
+		
+	</isscript>
+	<input type="hidden" name="categoryName" value="${catName}" />
+	<input type="hidden" name="categoryID" value="${catID}" />
+	<input type="hidden" name="productID" value="${Product.ID}" />
+	<input type="hidden" name="manufacturerSKU" value="${manufacturerSKU}" />
+
+	<div class="product-pricing">
+		<iscomment>Login price view handling remote include</iscomment>
+		<isinclude url="${URLUtils.url('Product-PLPPricingLoginView','view','searchproducthitA','productid', Product.ID)}"/>
+	</div>
+	
+	
+	<iscomment>Promotion</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	<iscomment>Render information on active product promotions</iscomment>
+	<isif condition="${pdict.CurrentCustomer.authenticated}"> 
+		<isset name="promos" value="${dw.campaign.PromotionMgr.activeCustomerPromotions.getProductPromotions(Product)}" scope="page"/>
+		<isif condition="${!empty(promos)}">
+			<div class="product-promo">
+				<isloop items="${promos}" var="promo" status="promoloopstate">
+					<isif condition="${!promo.custom.discountModel}">
+						<div class="promotional-message <isif condition="${promoloopstate.first}"> first <iselseif condition="${promoloopstate.last}"> last</isif>">
+							<isprint value="${promo.calloutMsg}" encoding="off"/>
+						</div>
+					</isif>
+				</isloop>
+			</div>
+		</isif>
+	</isif>
+			
+	<iscomment>Reviews</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+		<isinclude template="product/components/reviews-stars"/>
+	
+	<iscomment>QuickView</iscomment>
+	<div class="tilequickview">Quick View</div>
+	
+	
+			
+	<iscomment>Compare</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+		
+	<iscomment>
+		Render the compare checkbox, if search result is based on a category context.
+		The checkbox is displayed if either the category or one of its parent categories
+		has the custom attribute "enableCompare" set to true.
+	</iscomment>
+	<isscript>
+		var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+	</isscript>
+	<isif condition="${!empty(pdict.CurrentHttpParameterMap.cgid.value) && ProductUtils.isCompareEnabled(pdict.CurrentHttpParameterMap.cgid.value)}">
+	       <div class="product-compare">        	
+			<isif condition="${!Product.productSet && !Product.bundle}">
+				<isscript>
+					// mark the compare checkbox checked if the current product is 
+					// in the current comparison list for the current category
+					
+					importScript( "catalog/libCompareList.ds" );
+	
+					var comparison = GetProductCompareList();
+					// Set the category
+					if(!empty(pdict.ProductSearchResult && !empty(pdict.ProductSearchResult.category) ))
+						comparison.setCategory(pdict.ProductSearchResult.category.ID);
+	
+					var comparisonProducts = null;
+					
+					if (comparison) {
+						comparisonProducts = comparison.getProducts();
+					}
+					
+					var checkedStr = '';
+					
+					if (!empty(comparisonProducts)) {								
+						var pIt = comparisonProducts.iterator();
+						var productId = null;
+						
+						while (pIt.hasNext()) {
+							productId = pIt.next();									
+							if (productId == Product.ID) {
+								checkedStr = 'checked="checked"';
+								break;
+							}
+						}
+					}		    				
+	   			</isscript>			
+				<input type="checkbox" class="compare-check" id="${'cc-'+Product.UUID}" <isprint value="${checkedStr}" encoding="off" />/>				
+				<label for="${'cc-'+Product.UUID}">Compare</label>				
+			</isif>
+		</div>
+	
+	</isif>
+	 
+	<iscomment>Swatches</iscomment>
+	<iscomment>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</iscomment>
+	
+	<isinclude template="product/components/swatchestile"/>
+	
+	<isinclude url="${URLUtils.url('SDD-SddBadges','view','PLP','productid', Product.ID)}"/>
+		
+	</div><!--  END: .product-tile -->
+	
+</isif>

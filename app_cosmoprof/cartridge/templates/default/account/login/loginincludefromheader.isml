@@ -1,0 +1,102 @@
+<isinclude template="util/modules"/>
+<isif condition="${!empty(pdict.pageFrom) && pdict.pageFrom == 'plcc'}">
+	<iscontentasset aid="plcc-signin" />
+</isif>
+<div class="login-box-content">
+		<form action="${URLUtils.httpsContinue()}" method="post" class="clearfix" id="${pdict.CurrentForms.login.htmlName}" name="header-login-form" autocomplete="off">			
+			<input type="hidden" name="${dw.web.CSRFProtection.getTokenName()}" value="${dw.web.CSRFProtection.generateToken()}">
+			<fieldset>
+				<div class="login-fields login-email">
+						<isinputfield formfield="${pdict.CurrentForms.login.username}"  type="input" requiredtext="${Resource.msg('login.username.missing-error','forms',null)}" />
+				</div>
+				<div class="login-fields login-password">
+					<isinputfield formfield="${pdict.CurrentForms.login.password}" type="password" requiredtext="${Resource.msg('login.password.missing-error','forms',null)}" xhtmlclass="password"/>
+				</div>
+				<div class="login-fields login-submit">
+					 <button type="submit" class="login-box-button primaryButtn" value="${Resource.msg('global.login','locale',null)}"  name="${pdict.CurrentForms.login.login.htmlName}">
+						
+						<isif condition="${!empty(pdict.pageFrom) && pdict.pageFrom == 'plcc'}">
+							${Resource.msg('global.loginapplynow','locale',null)}
+						<iselse/>
+							${Resource.msg('global.login','locale',null)}
+						</isif>
+						
+					 </button>
+				</div>
+				<div class="login-fields remember-reset-options">
+					<div class="login-remember-me"> 
+						<isinputfield formfield="${pdict.CurrentForms.login.rememberme}" type="checkbox" xhtmlclass="remember-me"/>
+					</div>
+					
+					<div class="password-reset">
+						<a id="password-reset" href="${URLUtils.url('Account-PasswordResetDialog')}" title="${Resource.msg('logininclude.forgotpassword','account',null)}" data-dlg-action='{"test":100}' data-dlg-options='{"width":"auto","height":"auto", "dialogClass":"forgot-password"}'>
+							${Resource.msg('logininclude.forgotpassword','account',null)}
+						</a>
+					</div>
+				</div>
+					<isset name="loginNotFound" value="${false}" scope="page" />
+					<iscomment>Login Unsuccessful Error Message</iscomment>
+					<isif condition="${pdict.serviceErrorCode != null && !pdict.PreRegister}">
+						<div class="error-form">
+							<isprint value="${pdict.CurrentSession.custom.phonenumber}"/>
+							${Resource.msg('forms.serviceunavailable','forms',null)}
+						</div>
+					<iscomment>
+						Handles both Legacy Customer Password Reset as well as errors from assigning Discount Model and Pricebooks
+					</iscomment>
+					<iselseif condition="${pdict.LoginErrorCode != null && pdict.LoginErrorCode}">
+						<div class="error-form">
+							${pdict.LoginErrorCode}
+						</div>
+					<iselseif condition="${pdict.TempCustomer != null && pdict.TempCustomer.profile != null && pdict.TempCustomer.profile.credentials.locked}">
+						<div class="error-form">
+							${Resource.msg('logininclude.locked','account',null)}
+						</div>
+					<iselseif condition="${pdict.TempCustomer != null && pdict.TempCustomer.profile != null && (pdict.TempCustomer.profile.credentials.remainingLoginAttempts == 1)}">
+						<div class="error-form">
+							${Resource.msg('logininclude.willbelocked','account',null)}
+						</div>
+					<iselseif condition="${!empty(pdict.RegistrationStatus) && pdict.RegistrationStatus.code == 'CustomerAlreadyExistError'}">			
+						<div class="error-form">
+							${Resource.msg('logininclude.loginfberror','account',null)}
+						</div>
+					<iselseif condition="${!pdict.CurrentForms.login.loginsucceeded.valid}">
+						<div class="error-form">
+							<isset name="loginAttempts" value="${pdict.CurrentHttpParameterMap.isParameterSubmitted('login') ? pdict.CurrentHttpParameterMap.login.intValue : 0}" scope="page"/>
+							<isset name="tempCustomer" value="${pdict.TempCustomer.profile.custom.chainCode}" scope="page" />
+							<isset name="specificChainCode" value="${'specificChainCode' in dw.system.Site.getCurrent().preferences.custom ? dw.system.Site.getCurrent().preferences.custom.specificChainCode :''}" scope="page" />
+							<isif condition="${!empty(specificChainCode) && (specificChainCode !== null)}"> 
+								<isloop items="${dw.system.Site.getCurrent().preferences.custom.specificChainCode}" var="chainCode" status="loopstate">
+									<isif condition="${loopstate.count == 1}">
+										<isif condition="${loginAttempts == 1}">
+											${Resource.msg('logininclude.loginerror2','account',null)}
+											<a id="password-reset" href="${URLUtils.url('Account-PasswordResetDialog')}" title="${Resource.msg('logininclude.forgotpassword','account',null)}" data-dlg-action='{"test":100}' data-dlg-options='{"width":"auto","height":"auto", "dialogClass":"forgot-password"}'>
+												${Resource.msg('logininclude.here','account',null)}
+											</a>
+											${Resource.msg('logininclude.loginerrorext2','account',null)}
+										<iselseif condition="${loginAttempts > 1}">
+											${Resource.msg('logininclude.loginerror3','account',null)}
+										<iselseif condition="${tempCustomer == '00777' || tempCustomer == '00888'}">
+											${Resource.msg('logininclude.cosmologinerror4','account', null)}	
+											<isbreak>
+										<iselse/>
+											<isprint value="${Resource.msgf('passwordreset.notfounderror','account',null, URLUtils.url('CustomerService-ContactUs'))}"  encoding="off"/>
+											<isset name="loginNotFound" value="${true}" scope="page" />
+											<isbreak>
+										</isif>
+									</isif>
+								</isloop>
+							</isif>
+							<isif condition="${!empty(loginNotFound) && loginNotFound == false}"> 
+								<isset name="loginAttempts" value="${new Number(loginAttempts).toFixed(0) + 1}" scope="page"/>
+							</isif>
+							<input type="hidden" id="loginAttempts"name="currLoginAttempts" value="${loginAttempts}"/>								
+						</div>
+					</isif>
+				
+
+				<input type="hidden" name="${pdict.CurrentForms.login.secureKeyHtmlName}" value="${pdict.CurrentForms.login.secureKeyValue}"/>
+				
+			</fieldset>
+		</form>
+	</div>

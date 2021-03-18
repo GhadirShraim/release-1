@@ -1,0 +1,13 @@
+<iscontent type="application/json" charset="UTF-8" compact="true"/>
+{"success": true
+<isif condition="${pdict.ProductList !=  null}">
+,
+"UUID" : "<isprint value="${pdict.ProductList.UUID}" />",
+"listName" : "<isprint value="${pdict.ProductList.name}" />"
+	<isif condition="${pdict.ProductList.UUID == pdict.ShoppingListID}">
+		,
+		"storepickup": "true"
+	</isif>
+ </isif>
+}
+

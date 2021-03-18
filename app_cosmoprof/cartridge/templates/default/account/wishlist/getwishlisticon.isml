@@ -1,0 +1,15 @@
+<!-- This module should be used only for Product Page PDP -->
+<isscript>
+	importScript('search/ProductGridUtils.ds');
+</isscript>
+
+<!--  Get the Product ID -->
+<isset name="productID" value="${pdict.product_id}" scope="PAGE" />
+<isset name="addedToFavorite" value="${false}" scope="Page" />
+<isset name="addedToFavorite" value="${ProductGridUtils.checkPDPWishListItems(productID)}" scope="Page" />
+
+<isif condition="${pdict.CurrentCustomer.authenticated}">
+	<div class="favorite-container">
+		<a href="${!addedToFavorite ? URLUtils.url('Wishlist-Add','pid',Product.ID):URLUtils.url('Wishlist-Remove','pid',Product.ID)}" class="favoriteList ${addedToFavorite ? 'added':'remove'}" data-prodid="${productID}" data-userauth="${customer.authenticated}"></a>		
+	</div>
+</isif>

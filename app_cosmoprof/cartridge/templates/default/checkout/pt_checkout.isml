@@ -1,0 +1,73 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en"> <!--<![endif]-->
+<!--[if IE 9]>    <html class="ie9 oldie" lang="en"> <![endif]-->
+<!--[if IE 10]>    <html class="ie10 oldie" lang="en"> <![endif]-->
+<!--[if IE 11]>    <html class="ie11 oldie" lang="en"> <![endif]-->
+
+<head>
+
+	<isscript>var pageContext={title:'Checkout',type:'checkout',ns:'checkout'};</isscript>
+	<isinclude template="util/modules"/>
+	
+	<isinclude template="components/header/htmlhead"/>
+	<isinclude template="checkout/pt_checkout_UI"/>
+
+	<iscomment>Add template-specific header information here.</iscomment>
+	<script src="${URLUtils.absStatic('/js/FlexMicroform.js')}"></script>
+	
+</head>
+
+<body>
+
+	<isinclude template="gtm/bodytrackingcode" />	
+	<iscomment> inclusion of static-header classname will remove absolute position for header </iscomment>
+	<div id="wrapper" class="pt_checkout static-header">
+	
+		<isinclude url="${URLUtils.url('Home-IncludeHeader')}"/>
+			
+		<div id="main" role="main" class="primary-focus clearfix">
+
+			<isif condition="${pdict.PlaceOrderError != null}">
+				<div class="errorMessage padtop20">
+					<p>
+					<br>
+					<span class="red">${Resource.msg('checkouterror.message1','checkout',null)}</span><br>
+					<span class="red">${Resource.msg('checkouterror.message2','checkout',null)}</span><br>
+					<span class="red">${Resource.msg('checkouterror.message3','checkout',null)}</span>
+					</p>
+					<div class="padtop20">
+					<a href="${URLUtils.url('Cart-Show')}"  class="button-fancy-small">${Resource.msg('checkout.returntocart','checkout',null)}</a>
+					</div>
+					<div class="padtop20"><iscontentasset aid="order-submit-error" encoding="off"/></div>
+				</div>
+
+			<iselse/>
+				<h1 class="checkout-header">${Resource.msg('pt_checkout.breadcrumb','checkout',null)}</h1>
+				
+				<iscomment>Below condition adds a classname in summary page in order to change the page layout for TABLET DESIGN of summary page</iscomment>
+				<div id="primary" class="primary-content ${(pdict.summaryPage != null && pdict.summaryPage == true) ?'summary-page' : ' '}">
+					<isreplace/>
+				</div>
+					
+				<div id="secondary" class="nav summary ${(pdict.summaryPage != null && pdict.summaryPage == true) ?'summary-page' : ' '}">
+					<isinclude template="checkout/minisummary"/>
+				</div>
+			</isif>
+			
+		</div>
+		<isscript>
+			session.custom.pageRetention = dw.web.URLUtils.https('Home-Show');
+		</isscript>
+		
+	
+	
+		<isinclude template="components/footer/footer"/>
+		<isinclude template="checkout/pt_checkout_VARS"/>
+		
+	</div>
+	
+</body>
+</html>

@@ -1,0 +1,31 @@
+<isinclude template="util/modules"/>
+<div class="quick-order-msg">
+	<div class="quickorder-popup">
+		<isif condition="${!empty(pdict.eProds) && pdict.eProds != null}">
+			<div class="quickorder-errorMessage">
+				<isset name="prodsArray" value="${pdict.eProds.split(',')}" scope="page"/>
+				<p>
+					<isprint value="${Resource.msg('global.errorqo','locale',null)}" />
+				</p>
+				<isloop items="${prodsArray}" var="prodID" begin="1">
+					<p>
+						<isprint value="${prodID}"/>
+					</p>
+				</isloop>
+			</div>
+		</isif>
+		<isif condition="${!empty(pdict.ErrorMsg)}">
+			<div class="quickorder-basketLimitErrorMsg">
+				<span><isprint value="${pdict.ErrorMsg}" /></span>
+			</div>
+		</isif>			
+		<isif condition="${empty(pdict.ErrorMsg)}">
+			<div class="quick-order-message">
+				<span>Product Added to the Cart</span>
+			</div>
+		</isif>		
+	</div>
+
+<isbonusdiscountlineitem p_alert_text="${Resource.msg('product.bonusproductalert','product',null)}" p_discount_line_item="${pdict.BonusDiscountLineItem}"/>
+
+</div>

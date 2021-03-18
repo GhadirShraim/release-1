@@ -1,0 +1,107 @@
+<isdecorate template="account/orderhistory/pt_orderhistory">
+	<isinclude template="util/modules"/>
+
+	<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}"/>
+		<h1>${Resource.msg('orders.purchasehistory','account',null)}</h1>
+	</isif>
+	
+		<isif condition="${pdict.ordersObj.empty}">
+			<div class="no_orders">${Resource.msg('orders.noorders','account',null)}</div>
+		<iselse>
+		
+		<form action="${URLUtils.httpsContinue()}" method="post" id="${pdict.CurrentForms.orders.htmlName}">
+			<div class="search-result-options">
+
+			<ul class="search-result-items">
+			<isloop items="${pdict.ordersObj.orders.order}" var="order" status="orderloopstate">
+				<li>
+					<div class="order-history-header">
+						<button type="submit"  value="${Resource.msg('orders.orderdetail','account',null)}" name="${order.show.htmlName}">
+							${Resource.msg('orders.orderdetail','account',null)}
+						</button>
+						
+						<div class="order-date">
+							<span class="label">${Resource.msg('orders.datelabel','account',null)}</span>
+							<span class="value"><isprint value="${order.orderDate}" /></span>
+						</div>
+		
+						<isset name="Order" value="${order.orderStatus}" scope="page"/>
+						<isinclude template="account/orderhistory/orderstatusinclude" />
+		
+						<div class="order-number">
+							<span class="label">${Resource.msg('orders.numberlabel','account',null)}</span>
+							<span class="value"><isprint value="${order.webOrderNumber}" /></span>
+						</div>
+					</div>
+					
+					<div class="order-history-items">
+						<table class="order-history-table">
+							<iscomment>For each shipment, render shipped to, items and order total </iscomment>
+								<tr>
+									<isif condition="${!empty(order.shipmentType) && order.shipmentType == 'instore'}">
+										<th class="order-shipped-to">${Resource.msg('cart.store.instorepickup','storepickup',null)}</td>
+									<iselse>
+										<th class="order-shipped-to">${Resource.msg('orders.shippedto','account',null)}</td>
+									</isif>	
+									<th class="order-items">${Resource.msg('orders.items','account',null)}</td>
+									<th class="order-total-price">${Resource.msg('orders.ordertotal','account',null)}</td>
+								</tr>
+								
+								<tr>
+									<td>
+										<span class="value"><isprint value="${order.shippingAddress.firstName}" /> <isprint value="${order.shippingAddress.lastName}" /></span><br/>
+										<isprint value="${order.shippingAddress.address1}" /><br/>
+										<isif condition="${!empty(order.shippingAddress.address2)}">
+											<isprint value="${order.shippingAddress.address2}" /><br/>
+										</isif>
+										<isprint value="${order.shippingAddress.city}" />, <isprint value="${order.shippingAddress.state}" /> <isprint value="${order.shippingAddress.zip}" /><br/>
+										<isprint value="${order.shippingAddress.country}" />
+									</td>
+									
+									<td class="order-items">
+										<ul>
+											<isloop items="${order.lineItems.lineItem}" var="PLI" status="pliloopstate">
+												<iscomment>if we have more product line items than the max page size, display view all link and create hidden div</iscomment>
+												<isif condition="${ ( pliloopstate.count - 1 ) >= pdict.OrderPagingModel.pageSize }">
+													<li class="hidden">
+												<iselse>
+													<li>
+												</isif>
+													<isprint value="${PLI.productID.substring(PLI.productID.lastIndexOf('-')+1)}"/><br/>
+													<isprint value="${PLI.productName}"/>
+												</li>
+											</isloop>
+			
+											<isloop items="${order.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+												<li>${Resource.msg('global.giftcertificate','locale',null)}</li>
+											</isloop>
+										</ul>
+									</td>
+									
+									<td>
+										<iscomment>Display total price for order</iscomment>
+										<span class="value"><isprint value="${order.orderTotal}"/></span>
+									</td>
+								</tr>
+						</table>
+					</div>
+				</li>
+				
+				<iscomment>if we have more than five orders, we use the paging bar</iscomment>
+				<isif condition="${orderloopstate.count >= (pdict.OrderPagingModel.pageSize + 1)}">
+					<isbreak/>
+				</isif>
+				
+			</isloop>
+			
+			</ul>
+			
+			<div class="search-result-options">
+				<ispagingbar pageurl="${URLUtils.https('Order-History')}" pagingmodel="${pdict.OrderPagingModel}"/>
+			</div>
+			
+			</form>
+			
+		</isif>
+
+</isdecorate>

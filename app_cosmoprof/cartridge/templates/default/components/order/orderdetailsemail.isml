@@ -1,0 +1,282 @@
+<iscomment>
+	Displays order details, such as order number, creation date, payment information,
+	order totals and information for each contained shipment.
+	This template module can be used in order confirmation pages as well as in the
+	order history to render the details of a given order. Depending on the context
+	being used in, one might omit rendering certain information.
+
+	Parameters:
+
+	order		: the order whose details to render
+	orderstatus	: if set to true, the order status will be rendered
+	              if set to false or not existing, the order status will not be rendered
+</iscomment>
+<isset name="Order" value="${pdict.order}" scope="page"/>
+
+<table style="${Resource.msg('email.containertable','email',null)}">
+	<tr>
+		<td  width="210" valign="top" style="${Resource.msg('email.tablecell','email',null)}">
+			<p>
+				<b>${Resource.msg('orderdetails.orderplaced','components',null)}</b>&nbsp;&nbsp;   <isprint value="${Order.creationDate}" style="DATE_LONG"/>&nbsp; <isprint value="${Order.creationDate}" style="DATE_TIME"/>	
+				
+				<br><b>${Resource.msg('orderdetails.ordernumber','components',null)}</b>&nbsp;&nbsp;   <isprint value="${Order.orderNo}"/>
+			
+				<isif condition="${!empty(Order.custom) && 'po' in Order.custom && !empty(Order.custom.po)}">
+					<br><b>${Resource.msg('orderdetails.ponumber','components',null)}</b>&nbsp;&nbsp;   <isprint value="${Order.custom.po}"/>
+				</isif>
+				
+				<isif condition="${!empty(Order.custom) && Order.custom.commentText && Order.custom.commentText != ''}">
+					<br><b>${Resource.msg('orderdetails.ordernotes','components',null)}</b>&nbsp;&nbsp;   <isprint value="${Order.custom.commentText}"/>
+				<iselseif condition="${!empty(Order.custom) && Order.custom.comment && Order.custom.comment != '' && Order.custom.commentText == null}">
+					<br><b>${Resource.msg('orderdetails.ordernotes','components',null)}</b>&nbsp;&nbsp;   <isprint value="${Order.custom.comment}"/>
+				</isif>
+				
+			</p>
+		</td>
+		<td valign="top" style="${Resource.msg('email.tablecell','email',null)}">
+			<iscomment>CP-1633 including the orderConfirmationNote content asset</iscomment>
+			<isprint value="${dw.content.ContentMgr.getContent('order-confirmation-notes').custom.body}"/>
+		</td>
+	</tr>
+</table>
+
+<table style="${Resource.msg('email.containertable','email',null)}">
+	<tr>
+		<th style="${Resource.msg('email.tableheaderlesspadding','email',null)}" colspan="3">${Resource.msg('orderdetails.paymentinfo','components',null)}</th>
+	</tr>
+	<tr>
+		<td style="${Resource.msg('email.tablecell','email',null)}">
+			<b>${Resource.msg('orderdetails.billingaddress','components',null)}</b>
+			<isminiaddress p_address="${Order.billingAddress}"/>
+		</td>
+		<td style="${Resource.msg('email.tablecell','email',null)}">
+
+			<isif condition="${Order.hasOwnProperty('paymentInstruments') && !empty(Order.paymentInstruments) && Order.paymentInstruments.length == 1}">
+				<b>${Resource.msg('orderdetails.paymentmethod','components',null)}</b>
+			<iselse>
+				<b>${Resource.msg('orderdetails.paymentmethods','components',null)}</b>
+			</isif>
+			
+			<iscomment>Render All Payment Instruments</iscomment>
+			<isloop items="${Order.getPaymentInstruments()}" var="paymentInstr" status="piloopstate">			
+				<div><isprint value="${dw.order.PaymentMgr.getPaymentMethod(paymentInstr.paymentMethod).name}" /></div>
+				<isif condition="${dw.order.PaymentInstrument.METHOD_GIFT_CERTIFICATE.equals(paymentInstr.paymentMethod)}">
+					<isprint value="${paymentInstr.maskedGiftCertificateCode}"/><br />
+				</isif>	
+				<isminicreditcard p_card="${paymentInstr}" p_show_expiration="${false}"/>						
+				<div>
+					<span class="label">${Resource.msg('global.amount','locale',null)}:</span>
+					<span class="value"><isprint value="${paymentInstr.paymentTransaction.amount}"/></span>
+				</div><!-- END: payment-amount -->
+			</isloop>	
+		</td>
+		<td style="${Resource.msg('email.tablecell','email',null)}">
+			<b>${Resource.msg('orderdetails.paymenttotal','components',null)}</b>
+			<isif condition="${Order.hasOwnProperty('shipments') && Order.shipments.length > 1}">
+				<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${true}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+			<iselse>
+				<isemailordertotals p_lineitemctnr="${Order}" p_showshipmentinfo="${false}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('global.ordertotal','locale',null)}"/>
+				<br />			
+			</isif> 
+		</td>
+
+	</tr>
+</table>
+
+
+<iscomment>render a box for each shipment</iscomment>
+
+	<isloop items="${Order.shipments}" var="shipment" status="shipmentloopstate">
+		
+		<iscomment>
+		<p><b>${(Resource.msg('order.orderconfirmation-email.shipmentnumber','order',null)) + shipmentloopstate.count}</b></p>
+		</iscomment>
+		
+		<isset name="sddEnabled" value="${false}" scope="page" />
+		<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+			<isset name="sddEnabled" value="${true}" scope="page" />
+		</isif>
+		
+		<isif condition="${shipment.productLineItems.size() > 0}">
+			<isif condition="${sddEnabled == true && !empty(Order.custom.preferredDeliveryTime) && Order.custom.isSDDBasket == true}">
+				<isset name="currCalader" value="${dw.util.StringUtils.formatCalendar(new dw.util.Calendar(), 'EEEE, MM/dd')}" scope="Page" />
+				<isset name="sddTime" value="${Order.custom.preferredDeliveryTime}" scope="page" />
+				<isset name="preferredSddTime" value="${sddTime.split('T')}" scope="page" />
+				<isset name="sddDate" value="${preferredSddTime[0].split('-')}" scope="page" />
+				<isset name="dateInstance" value="${new Date(sddDate[0], sddDate[1] - 1, sddDate[2])}" scope="page" />
+				<isscript>
+					var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+					var sddDayName = days[dateInstance.getDay()];
+				</isscript>								
+				<isset name="sddDeliveryDay" value="${sddDayName+','+(new Number(dateInstance.getMonth())+1)+'-'+dateInstance.getDate()+'-'+dateInstance.getFullYear()}" scope="page" />
+				<isset name="sddPreferredDeliveryTime" value="${sddDeliveryDay+' '+preferredSddTime[1]}" scope="page" />
+			    <div class="sdd-delivery-msg" style="${Resource.msg('email.tableheader.bold','email',null)}"><isprint value="${Resource.msg('orderconfirmations.delivery.message','components',null) +" "+ sddPreferredDeliveryTime}"/></div>				
+		    </isif>
+			<iscomment>Shipment items table</iscomment>
+			<isset name="countIndices" value="${0}" scope="page"/>
+			<isset name="DCProducts" value="${0}" scope="page"/>
+			<table style="${Resource.msg('email.containertable','email',null)}">
+				<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+					<isif condition="${sddEnabled == true && productLineItem.custom.sddOpted == true && !empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'SDD'}">	
+						<isif condition="${countIndices == 0}">
+							<thead>
+								<tr>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.item','locale',null)}</th>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.price','locale',null)}</th>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.quantity','locale',null)}</th>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.totalprice','locale',null)}</th>
+									<isif condition="${empty(shipment.custom.shipmentType) || shipment.custom.shipmentType != 'instore'}"/>
+										<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('orderdetails.shippingto','components',null)}</th>
+									<iselse>
+										<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('cart.store.instorepickup','storepickup',null)}</th>		
+									</isif>
+								</tr>
+							</thead>
+						</isif>	
+						<isset name="countIndices" value="${countIndices+1}" scope="page"/>		
+						<isinclude template="components/order/orderproductdisplay"/>
+					<iselse/>
+						<isset name="DCProducts" value="${DCProducts+1}" scope="page"/>
+					</isif>
+				</isloop>
+				
+				<isif condition="${DCProducts>0}">
+				<tr>
+					<td class="warehouse-delivery-msg" colspan="3" style="${Resource.msg('email.tableheader.bold','email',null)}"><isprint value="${Resource.msg('orderdetails.warehouse.message','components',null)}"/></td>
+				</tr>	
+					<isif condition="${countIndices == 0}">
+						<thead>
+							<tr>
+								<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.item','locale',null)}</th>
+								<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.price','locale',null)}</th>
+								<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.quantity','locale',null)}</th>
+								<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.totalprice','locale',null)}</th>
+								<isif condition="${empty(shipment.custom.shipmentType) || shipment.custom.shipmentType != 'instore'}"/>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('orderdetails.shippingto','components',null)}</th>
+								<iselse>
+									<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('cart.store.instorepickup','storepickup',null)}</th>		
+								</isif>
+							</tr>
+						</thead>
+					</isif>
+				</isif>
+				
+				<tr style="${Resource.msg('email.tableheader.bold','email',null)}">
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && 'SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true}">
+							<isinclude template="components/order/orderproductdisplay"/>
+						</isif>
+					</isloop>
+					
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && !('SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true)}">
+							<isinclude template="components/order/orderproductdisplay"/>
+						</isif>
+					</isloop>
+					
+					<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+						<isif condition="${empty(productLineItem.custom.deliveryMethod)}">
+							<isinclude template="components/order/orderproductdisplay"/>
+						</isif>
+					</isloop>
+				</tr>
+				
+			<iscomment>Shipment Gift Message</iscomment>
+			<isif condition="${shipment.gift}">
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.tablecell','email',null)}">
+						${Resource.msg('orderdetails.giftmessage','components',null)}
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.tablecell','email',null)}">
+						<isif condition="${!empty(shipment.giftMessage)}">
+							<isprint value="${shipment.giftMessage}"/>
+						<iselse>
+							&nbsp;
+						</isif>
+					</td>
+				</tr>
+			</isif>
+			</table>
+
+		</isif>
+
+		<isif condition="${shipment.giftCertificateLineItems.size() > 0}">
+
+			<iscomment>Shipment Gift Certificate</iscomment>
+			<table  style="${Resource.msg('email.containertable','email',null)}">
+				<thead>
+					<tr>
+						<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.item','locale',null)}</th>
+						<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('global.price','locale',null)}</th>
+						<th style="${Resource.msg('email.tableheader','email',null)}">${Resource.msg('orderdetails.shippingto','components',null)}</th>
+					</tr>
+				</thead>
+				<isloop items="${shipment.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+					<tr>
+						<td style="${Resource.msg('email.tablecell','email',null)}">
+							${Resource.msg('global.giftcertificate','locale',null)}
+							<div>
+								${Resource.msg('orderdetails.giftcertto','components',null)}
+									<isprint value="${giftCertificateLineItem.recipientName}"/><br />
+									<isprint value="${giftCertificateLineItem.recipientEmail}"/>
+							</div>
+							<div>
+								${Resource.msg('orderdetails.giftcertfrom','components',null)}
+									<isprint value="${giftCertificateLineItem.senderName}"/><br />
+									<isprint value="${Order.customerEmail}"/>									
+							</div>
+						</td>
+						<td style="${Resource.msg('email.tablecell','email',null)}">
+							<isprint value="${giftCertificateLineItem.price}"/>
+						</td>
+						<td style="${Resource.msg('email.tablecell','email',null)}">
+							<div>
+					    		${Resource.msg('orderdetails.giftcertshippingaddress','components',null)}
+					    		<div>
+									<isprint value="${giftCertificateLineItem.recipientName}"/>
+									<isprint value="${giftCertificateLineItem.recipientEmail}"/>
+								</div>
+					    	</div>
+							<div>
+					    		${Resource.msg('orderdetails.shippingmethod','components',null)}
+					    		${Resource.msg('orderdetails.giftcertshipping','components',null)}
+					    	</div>							
+						</td>
+					</tr>
+				</isloop>
+				
+				<iscomment>if shipment is marked as gift</iscomment>
+				<tr>
+					<td colspan="4" style="${Resource.msg('email.tablecell','email',null)}">
+						${Resource.msg('orderdetails.giftmessage','components',null)}
+					</td>
+				</tr>
+
+				<isif condition="${shipment.gift}">
+					<tr>
+						<td colspan="4" style="${Resource.msg('email.tablecell','email',null)}">
+							<isif condition="${!empty(shipment.giftMessage)}">
+								<isprint value="${shipment.giftMessage}"/>
+							<iselse>
+								&nbsp;
+							</isif>
+						</td>
+					</tr>
+				<iselse>
+					<tr>
+						<td colspan="4" style="${Resource.msg('email.tablecell','email',null)}">
+							<isset name="theGiftCert" value="${shipment.giftCertificateLineItems.iterator().next()}" scope="page"/>
+							<isif condition="${!empty(theGiftCert.message)}">
+								<isprint value="${theGiftCert.message}"/>
+							<iselse>
+								&nbsp;
+							</isif>
+						</td>
+					</tr>
+				</isif>
+			</table>
+
+		</isif>
+	</isloop>

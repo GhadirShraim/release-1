@@ -1,0 +1,16 @@
+<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+	<iscomment>Don't show footer </iscomment>
+<iselse>
+    <isif condition="${ 'isPlccFirst' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.isPlccFirst}" >
+		<iscomment> PLCC login-logout modal </iscomment>
+		<isinclude template="plcc/plcc_signout_modal" />
+	</isif>
+	<iscomment> PLCC seesion modal </iscomment>
+	<isinclude template="plcc/plcc_session_modal" />
+	<!-- Live Agent Code -->
+	<isinclude url="${URLUtils.url('CRMChat-LiveAgent')}"/>
+	<footer>
+		<iscomment># SAL-659 - Make the footer a content slot </iscomment>
+		<isslot id="footer-copy-global" description="Footer for Mobile" context="global" />
+	</footer>
+</isif>

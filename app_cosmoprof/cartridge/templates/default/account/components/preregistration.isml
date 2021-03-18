@@ -1,0 +1,133 @@
+<isinclude template="util/modules"/>
+	
+	<div class="login-box pre-registration">
+		<isscript>
+			var webaccessPortalPref = dw.system.Site.current.preferences.custom.webaccessPreregestration;
+			var tempChaincode = pdict.CurrentSession.custom.tempChainCode;
+			var webaccessPortal = false;
+			if(!empty(webaccessPortalPref)) {
+				for each(var cc in webaccessPortalPref ) {
+					if( !empty(tempChaincode) && (cc == tempChaincode) ) {
+						webaccessPortal = true;
+						break;
+					}
+				}
+			}
+			
+	        var portalRegistrationAssetConfig = 'portalsAssetConfig' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.portalsAssetConfig : '';
+		    portalRegistrationAssetConfig = portalRegistrationAssetConfig.replace(/ /g, '');
+			var hostJSON = dw.system.Site.current.preferences.custom.hostnameMapping;
+			var hostJSONStr = JSON.parse(hostJSON);
+			var tcc = hostJSONStr[request.httpHost];
+		    var portalvalueSplit = '|'+tcc+'|';
+			var portalLoginFlag = false;
+			if (isPortalUser && portalRegistrationAssetConfig.indexOf(portalvalueSplit) > -1) {
+			   portalLoginFlag = true; 
+			}
+		 </isscript>
+		
+		<iscomment>TODO: Create content slot for these items by portal code</iscomment>
+
+		<isif condition="${webaccessPortal}">
+			<h2 class="section-header">
+				${Resource.msg('preregistrationforwebaccess.header','account',null)}
+			</h2>
+		<iselseif condition="${isPortalUser}" >
+			<isif condition="${portalLoginFlag}">
+				<h2 class="section-header">
+					${Resource.msg('preregistration.headerNew','account',null)}
+				</h2>
+			<iselse>
+				<h2 class="section-header">
+					${Resource.msg('preregistration.header','account',null)}
+				</h2>						
+			</isif>
+		<iselse>
+			<h2 class="section-header">
+				${Resource.msg('preregistrationnotportal.header','account',null)}
+			</h2>
+		</isif>
+		<div class="registration-subheader">
+			<isif condition="${webaccessPortal}">
+				${Resource.msg('preregistration.details3','account',null)}
+			<iselseif condition="${!isPortalUser}" >
+				${Resource.msg('preregistration.details','account',null)}
+				<iscomment>
+				<div id="info" class="info">&nbsp;&nbsp;&nbsp;
+					<div class="info-pop" ></div>
+				</div>
+				 </iscomment>
+			<iselse>
+			    <isif condition="${portalLoginFlag}">
+    				<iscontentasset aid="portal-account-login-asset-info"/>
+    			<iselse>
+    				${Resource.msg('preregistration.details2','account',null)}    				
+				</isif>
+			</isif>
+		</div>
+		
+		<div>
+			<form action="${URLUtils.https('Account-PreRegister')}" name="${pdict.CurrentForms.preregistration.htmlName}" method="post" id="PreRegistrationForm">	
+				<fieldset>
+					<div class="reg-box-content">
+						<isif condition="${!isPortalUser}">
+							<isloop items="${pdict.CurrentForms.preregistration.cosmoprofAccount.customerType.options}" var="customerType">
+								<div class="form-row pre-reg-box">
+									<isset name="radioID" value="${customerType.value}" scope="page"/>
+									<label for="is-${radioID}" class="pre-reg-label${radioID}"><isprint value="${Resource.msg(customerType.label,'forms',null)}"/></label>
+									<isif condition="${!empty(pdict.CurrentForms.preregistration.cosmoprofAccount.cardNumber.htmlValue)}">
+										<isset name="cardChecked" value="${'checked="checked"'}" scope="page"/>
+										<isset name="accountChecked" value="${false}" scope="page"/>
+									<iselse>
+										<isset name="accountChecked" value="${false}" scope="page"/>
+										<isset name="cardChecked" value="${'checked="checked"'}" scope="page"/>
+									</isif>
+									<isif condition="${customerType.value == 'A'}">
+										<input type="radio" ${accountChecked || ''} class="input-radio" name="${pdict.CurrentForms.preregistration.cosmoprofAccount.customerType.htmlName}" value="${customerType.htmlValue}" data-type="${radioID}" id="is-${radioID}"/>
+									<iselse>
+										<input type="radio" ${cardChecked || ''} class="input-radio" name="${pdict.CurrentForms.preregistration.cosmoprofAccount.customerType.htmlName}" value="${customerType.htmlValue}" data-type="${radioID}" id="is-${radioID}"/>
+									</isif>
+								</div>
+							</isloop>
+						</isif>
+						
+						<isif condition="${!isPortalUser}">
+							<div id="div-card" class="prereg prereg-C" >
+								<isinputfield formfield="${pdict.CurrentForms.preregistration.cosmoprofAccount.cardNumber}"  type="input" astrickfornonmandatory="true" xhtmlclass="required" />
+							</div>
+						</isif>
+						<div id="div-account" class="prereg prereg-A" <isif condition="${!isPortalUser}">style="display:none;"</isif>>
+							<isinputfield formfield="${pdict.CurrentForms.preregistration.cosmoprofAccount.accountNumber}" type="input" astrickfornonmandatory="true" xhtmlclass="required" />
+						</div>
+						
+						<isinputfield formfield="${pdict.CurrentForms.preregistration.cosmoprofAccount.zip}" type="input" requiredtext="${Resource.msg('forms.errorZipParse','forms',null)}" astrickfornonmandatory="true" xhtmlclass="required" rowclass="${dw.system.Site.getCurrent().ID != 'CosmoProf-CA' ? 'select-zip noerror' : 'select-zip-CA noerror'}"/>
+					</div>
+					<div class="form-row pre-reg-button">
+						<button type="submit" value="submit" class="primaryButtn"  name="${pdict.CurrentForms.preregistration.cosmoprofAccount.register.htmlName}">
+							${Resource.msg('global.register','locale',null)}
+						</button>
+					</div>
+					
+					<input type="hidden" name="${pdict.CurrentForms.preregistration.secureKeyHtmlName}" value="${pdict.CurrentForms.preregistration.secureKeyValue}"/>	
+				</fieldset>	
+			</form>
+		</div>
+		<div id="preregisterErrorMessage">
+			<isif condition="${pdict.PreRegister}">
+				<isif condition="${pdict.InvalidFormError}"> 
+					<div class="error-form"><isprint value="${Resource.msg('forms.preregisterinvalid','forms',"null")}" /></div>
+				<iselseif condition="${!empty(pdict.serviceErrorCode)}" >
+					<div class="error-form"><isprint value="${Resource.msg(pdict.serviceErrorCode,'forms','null')}" /></div>
+				<iselseif condition="${pdict.exclusionError}">
+					${Resource.msg('forms.errorShipTo','forms',"forms.preregister.invalid")}
+			 	<iselseif condition="${!empty(pdict.ErrorCode)}">
+			 		<div class="error-form"><isprint value="${pdict.ErrorCode}" /></div>
+				<iselseif condition="${!empty(pdict.ErrorCodeReg)}">
+			 		${Resource.msg(pdict.ErrorCodeReg,'forms',"forms.preregister.invalid")}
+			 		<a id="password-reset" href="${URLUtils.url('Account-PasswordResetDialog')}" title="${Resource.msg('logininclude.forgotpassword','account',null)}" data-dlg-action='{"test":100}' data-dlg-options='{"width":"auto","height":"auto"}'>
+						${Resource.msg('account.clickhere','account',null)}
+					</a>
+			 	</isif>
+			 </isif>
+		</div>
+	</div>

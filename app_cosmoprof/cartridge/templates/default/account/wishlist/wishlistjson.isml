@@ -1,0 +1,12 @@
+<iscontent type="application/json" charset="UTF-8" compact="true"/>
+<iscomment>
+	This template renders the JSON for customer wishlist data
+</iscomment>
+<isscript>
+	var data = { "products" : [] };
+	for each ( var item : dw.customer.ProductListItem in pdict.ProductList.items) {
+		data.products.push(item.productID);
+	}
+	var json = JSON.stringify(data);	
+</isscript>
+<isprint value="${json}" encoding="off"/>

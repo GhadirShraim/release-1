@@ -1,0 +1,88 @@
+<isscript>
+	importScript( 'util/ViewHelpers.ds' );
+</isscript>
+
+<div class="accountmenu">
+	<ul class="menu">
+		<li>
+			<a data-submenu="#shipping" href="${URLUtils.https('Account-Show')}" title="${Resource.msg('global.accountlink','locale',null)}">${Resource.msg('headercustomerinfo.shipto','components',null)}
+			<isif condition="${pdict.CurrentCustomer.profile != null}">
+				<isset name="preferredAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress()}" scope="page" />
+			</isif>
+			<isif condition="${preferredAddress != null}">
+				<div>
+					<isprint value="${preferredAddress.address1}"/></br>
+					<isprint value="${preferredAddress.address2}"/></br>
+					<isprint value="${preferredAddress.city}"/></br>
+					<isprint value="${preferredAddress.stateCode}"/></br>
+					<isprint value="${preferredAddress.postalCode}"/>
+				</div>
+			</isif>
+			</a>
+		</li>
+		<li><a data-submenu="#reorder" href="">Reorder</a></li>
+		<li><a data-submenu="#favorites" href="">Favourites</a></li>
+		<li><a data-submenu="#orderstatus" href="">Order Status</a></li>
+		<li><a data-submenu="#contactus" href="">Contact Us</a></li>
+		<li>
+			<isif condition="${pdict.CurrentCustomer.profile != null}">
+				<a title="${Resource.msg('headercustomerinfo.not','components',null)} ${pdict.CurrentCustomer.profile.firstName} ${pdict.CurrentCustomer.profile.lastName}" class="logout-btn" href="${URLUtils.https('Login-Logout')}">${Resource.msg('global.logout','locale',null)}</a>
+			</isif>
+		</li>
+	</ul>
+	
+	<div class="submenu" id="shipping">
+		<div class="title">
+			Shipping
+		</div>
+
+	</div>
+	<div class="submenu" id="reorder">
+		<div class="title">
+			reorder
+		</div>
+		<ul>
+			<li><a class="toggle" href="">reorder</a>
+				<div class="col">
+					<ul>
+						<li><a href="">Sub. sub cat</a></li>
+					</ul>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<div class="submenu" id="favorites">
+		<div class="title">
+			favorites
+		</div>
+		<ul>
+			<li><a class="toggle" href="">favorites</a>
+				<div class="col">
+					<ul>
+						<li><a href="">Sub. sub cat</a></li>
+					</ul>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<div class="submenu" id="orderstatus">
+		<div class="title">
+			orderstatus
+		</div>
+		<ul>
+			<li><a class="toggle" href="">orderstatus</a>
+				<div class="col">
+					<ul>
+						<li><a href="">Sub. sub cat</a></li>
+					</ul>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<div class="submenu" id="contactus">
+		<div class="title">
+			contactus
+		</div>
+		
+	</div>
+</div>

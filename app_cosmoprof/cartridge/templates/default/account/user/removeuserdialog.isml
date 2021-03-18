@@ -1,0 +1,32 @@
+<isif condition="${!empty(pdict.RemovingCustomerNO)}">
+<isscript>
+		var customerToRemove = dw.customer.CustomerMgr.getProfile(pdict.RemovingCustomerNO);
+</isscript>
+</isif>
+<iscomment>TODO:  Resource messaging for display of data</iscomment>
+	<div id="removeUserContainer">
+		<div>
+			<isloop items="${customerToRemove.addressBook.addresses}" var="accountAddress" status="loopstate" >
+				<isprint value="${accountAddress.address1}"/><br/>
+			</isloop>
+		</div>
+	</div>
+	
+	<div class="manage-users-action">
+		<form method="post" action="${URLUtils.url('ManageUsers-Remove')}" id="remove-user-form">
+			<fieldset>
+				<div class="deleteconfirmation">
+					<div class="deleteConfirmmessage">
+						<div><isprint value="${Resource.msg('manageusers.sureremove','account',null)}" /></div>
+					</div>
+				<input type="hidden" name="profileNumber" value="${SubAccountProfile.customerNo}"/>
+					<div class="btns">
+					<div><button type="submit" class="primaryButtn" value="${Resource.msg('manageusers.remove','account',null)}" name="${pdict.CurrentForms.childprofile.remove.htmlName}">${Resource.msg('manageusers.remove','account',null)}</button></div>
+					<div><a href="" class="go-back-users secondarybtn"><isprint value="${Resource.msg('manageusers.back','account',null)}" /></a></div>
+					</div>
+					
+				</div>
+					<input type="hidden" name="${pdict.CurrentForms.childprofile.secureKeyHtmlName}" value="${pdict.CurrentForms.childprofile.secureKeyValue}"/>
+			</fieldset>
+		</form>			
+	</div>

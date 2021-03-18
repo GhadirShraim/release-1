@@ -1,0 +1,463 @@
+<iscomment>mobile has a different layout than desktop </iscomment>
+<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+	<isinclude template="rendering/category/categoryproducthitsmobile"/>
+<iselse/>
+	<isdecorate template="search/pt_productsearchresult_content">
+		<isscript>
+			var ProductUtils = require('app_cosmoprof/cartridge/scripts/product/ProductUtils').ProductUtils;
+			var compareEnabled = false;
+			if (!empty(pdict.CurrentHttpParameterMap.cgid.value)) {
+				compareEnabled = ProductUtils.isCompareEnabled(pdict.CurrentHttpParameterMap.cgid.value);
+			} 
+		</isscript>
+		
+		<iscomment>
+			Use the decorator template based on the requested output. If
+			a partial page was requested an empty decorator is used.
+			The default decorator for the product hits page is
+			search/pt_productsearchresult.
+		</iscomment>
+		
+		<iscache type="relative" minute="30" varyby="price_promotion"/>
+		
+		<isinclude template="util/modules"/>
+		
+		<iscomment>
+			Configured as default template for the product search results.
+			Displays a global slot with static html and the product search
+			result grid.
+		</iscomment>
+		
+		<iscomment>create reporting event</iscomment>
+		<isinclude template="util/reporting/ReportSearch.isml"/>
+		
+		<isif condition=${!pdict.bypassProducts}>
+		
+			<iscomment>suggest similar search phrase below the breadcrumb</iscomment>
+			<isif condition="${pdict.ProductSearchResult != null && !empty(pdict.ProductSearchResult.getSuggestedSearchPhrase())}">
+				<p class="did-you-mean">
+					${Resource.msg('search.nohits.didyoumeanex','search',null)}
+					<a title="${pdict.ProductSearchResult.suggestedSearchPhrase}" href="<isprint value="${URLUtils.http('Search-Show','q',pdict.ProductSearchResult.suggestedSearchPhrase)}"/>"><isprint value="${pdict.ProductSearchResult.suggestedSearchPhrase}"/></a>
+				</p>
+			</isif>
+			
+			<iscomment>
+				Render promotional content at the top of search results as global slot.
+				This content is only displayed if the search result is refined by a category.
+				If the search result is not refined by a category a global default is displayed.
+			</iscomment>
+
+			<iscomment> Uncomment below lines if banner needs to be displayed on selecting only one brand from refinement. 
+			<isinclude template="search/components/productsearchrefinebrand"/>
+			<isif condition="${selectedRefinementCount == 1 && isBrandRefinement}">
+	 			<isset name="seletedBrandNameStr" value="${'banner-' + seletedBrandName.toLocaleLowerCase().replace(/[^a-z0-9]/g, '')}" scope="page" />
+				<iscontentasset aid="${seletedBrandNameStr}" encoding="off"/>
+	 		</isif>
+	 		</iscomment>	
+
+			<div class="content-slot slot-grid-header">
+				<isif condition="${!empty(pdict.ProductSearchResult.category)}">
+					<isslot id="cat-banner" context="category" description="Category Banner" context-object="${pdict.ProductSearchResult.category}"/>
+				<iselse>
+					<isslot id="search-result-banner" description="Promotional Search Result Banner" context="global"/>
+				</isif>
+			</div>
+		
+			<isif condition="${( !pdict.ProductSearchResult.hasOwnProperty('refinedSearch') ||  !pdict.ProductSearchResult.refinedSearch) && empty(pdict.CurrentHttpParameterMap.cgid.value)}">
+				 <iscomment> CP-1166 - Commenting the Product and Articles link
+					 <div class="search-result-bookmarks">
+						${Resource.msg('topcontenthits.yoursearch','search',null)}
+						<a href="${'#results-products'}" class="<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">first</isif>" >${Resource.msg('search.producthits.006','search',null)}</a>&nbsp;
+						<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}"> 
+							<a href="${'#results-content'}">${Resource.msg('topcontenthits.goto','search',null)}</a>
+						</isif>
+					</div>
+				 </iscomment>
+				 <isif condition="${!empty(pdict.CustomProductSearchResult)}">
+				 	<h1 class="content-header" id="results-products">${Resource.msgf('search.producthitscount','search',null,pdict.CustomProductSearchResult.length)}</h1>
+				 <iselse>
+				 	<h1 class="content-header" id="results-products">${Resource.msgf('search.producthitscount','search',null,pdict.ProductSearchResult.count)}</h1>
+				 </isif>
+				
+			<iselse>
+				<h1 class="content-header" id="results-products"></h1>
+			</isif>
+			
+			<isscript>
+				var selectedString = 'selected="selected"';
+			</isscript>
+		
+		<isscript>
+			current = pdict.ProductPagingModel.start
+			totalCount = pdict.ProductPagingModel.count;
+			pageSize = pdict.ProductPagingModel.pageSize;
+			showingEnd = current + pageSize;
+	 </isscript>
+	 <div class="search-result-wrapper">
+	 <div class="searchItemsMobile">
+	  <isif condition="${( pdict.ProductSearchResult.hasOwnProperty('refinedSearch') || pdict.ProductSearchResult.refinedSearch)}">
+	 	<isinclude template="search/components/categorysearchrefinment"/>
+	 </isif>
+		<isif condition="${empty(pdict.ProductSearchResult.category)}"> 
+			<isset name="searchPhrase" value="${!empty(pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-"|'))-1)) ? pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-"|'))-1) : pdict.ProductSearchResult.searchPhrase}" scope="PAGE" />
+			<isprint value="${(pdict.ProductPagingModel.end + 1).toFixed()}" /> <isprint value="${Resource.msg('search.searchform.of','search',null)}" /> <isprint value="${pdict.ProductPagingModel.count}" /> <isprint value="${Resource.msgf('search.searchform.items','search',null,searchPhrase)}" /></a>
+		</isif>
+		<isif condition="${!empty(pdict.ProductSearchResult.category)}"> 
+			<isprint value="${(pdict.ProductPagingModel.end + 1).toFixed()}" /> <isprint value="${Resource.msg('search.searchform.of','search',null)}" /> <isprint value="${pdict.ProductPagingModel.count}" /> <isprint value="${Resource.msg('search.items','search',null)}" /></a>
+		</isif>
+	</div>	
+	 	<div class="search-result-options sortby_opt">	     
+	           <iscomment>sort by</iscomment>
+	           <isproductsortingoptions productsearchmodel="${pdict.ProductSearchResult}" pagingmodel="${pdict.ProductPagingModel}" uniqueid="grid-sort-header"/>
+	
+	        	<iscomment>render compare controls if we present in a category context</iscomment>
+	        	<isif condition="${!empty(pdict.ProductSearchResult) && !empty(pdict.ProductSearchResult.category) && compareEnabled}">
+	       	 		<iscomparecontrols category="${pdict.ProductSearchResult.category}"/>
+	       		 </isif>
+		</div>
+	
+		<div class="pagination">
+			<div class="results-hits">
+				<isif condition="${dw.system.Site.getCurrent().getCustomPreferenceValue('enableInfiniteScroll')}"><span class="current-page-label"></isif> <isprint value="${StringUtils.formatInteger(totalCount > showingEnd ? showingEnd : totalCount )}"/> ${Resource.msg('paginginformation.of','search',null)} <isif condition="${dw.system.Site.getCurrent().getCustomPreferenceValue('enableInfiniteScroll')}"></span></isif> 
+				<isprint value="${totalCount}"/> ${Resource.msg('paginginformation.items','search',null)}
+			</div>
+			<isif condition="${!empty(pdict.ProductPagingModel) && pdict.ProductPagingModel.count > 0}">
+				<div class="filter_opt" title="${Resource.msg('filter.search.title','search',null)}">				    
+			      	<isprint value="${Resource.msg('searchbreadcrumbs.filter','search',null)}" />			      	
+			     </div>
+		     </isif>
+		</div>
+	 
+	 </div>
+	
+	<div class="searchItemsDesktop">
+		 <isif condition="${( pdict.ProductSearchResult.hasOwnProperty('refinedSearch') || pdict.ProductSearchResult.refinedSearch)}">
+		 	<isinclude template="search/components/categorysearchrefinment"/>
+		 </isif>
+		 <isif condition="${empty(pdict.ProductSearchResult.category)}"> 
+			<isset name="searchPhrase" value="${!empty(pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1)) ? pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1) : pdict.ProductSearchResult.searchPhrase}" scope="PAGE" />
+			<isprint value="${(pdict.ProductPagingModel.end + 1).toFixed()}" /> <isprint value="${Resource.msg('search.searchform.of','search',null)}" /> <isprint value="${pdict.ProductPagingModel.count}" /> <isprint value="${Resource.msgf('search.searchform.items','search',null,searchPhrase)}" /></a>
+		 </isif>	
+	</div>
+			<isif condition="${!empty(pdict.ProductSearchResult.category)}"> 
+				<span class="show-on-desktop hide-ipad"><isprint value="${(pdict.ProductPagingModel.end + 1).toFixed()}" /> <isprint value="${Resource.msg('search.searchform.of','search',null)}" /> <isprint value="${pdict.ProductPagingModel.count}" /> <isprint value="${Resource.msg('search.items','search',null)}" /></span>
+			</isif>	
+			<isif condition="${!(pdict.ProductPagingModel == null) && !pdict.ProductPagingModel.empty && !empty(pdict.ProductSearchResult)}">
+				<div class="search-result-content">	
+					<isif condition="${!empty(pdict.CurrentHttpParameterMap.cgid.value)}"> 
+						<input type="hidden" class="productListVal" value="${'product category'}" name="productListVal" />
+					<iselse/>
+						<input type="hidden" class="productListVal" value="${'search results'}" name="productListVal" />
+					</isif>
+					<isproductgrid pagingmodel="${pdict.ProductPagingModel}" phrase="${pdict.CurrentHttpParameterMap.q.value}" productsearchmodel="${pdict.ProductSearchResult}" category="${pdict.ProductSearchResult.category}" wishlistitems="${pdict.WishListItems}"/>
+				</div>
+		
+		        <div class="search-result-options">
+		        
+					<iscomment>
+					<isproductsortingoptions productsearchmodel="${pdict.ProductSearchResult}" pagingmodel="${pdict.ProductPagingModel}" uniqueid="grid-sort-footer"/>
+					</iscomment>
+					<iscomment>pagination</iscomment>
+					<ispagingbar pageurl="${pdict.ProductSearchResult.url('Search-Show')}" pagingmodel="${pdict.ProductPagingModel}"/>
+					
+				</div>
+				<isif condition="${empty(pdict.CurrentHttpParameterMap.cgid.value)}"> 
+					<isif condition="${pdict.CurrentHttpParameterMap.backToSearchPage != null && pdict.CurrentHttpParameterMap.backToSearchPage.value == 'true' || !empty(pdict.CurrentHttpParameterMap.q.value)}"> 
+						<isset name="query" value="${!empty(pdict.CurrentHttpParameterMap.q.value.substring(0, (pdict.CurrentHttpParameterMap.q.value.indexOf('-'))-1)) ? pdict.CurrentHttpParameterMap.q.value.substring(0, (pdict.CurrentHttpParameterMap.q.value.indexOf('-'))-1) : pdict.CurrentHttpParameterMap.q.value}" scope="PAGE" />
+					</isif>
+				</isif>
+				<iscomment>show top content hits</iscomment>
+				
+				<iscomment> CP-1166 - Commenting the Articles Found section in search result page
+					<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}"> 
+						<h1 class="content-header" id="results-content">${Resource.msgf('topcontenthits.articlesfound','search',null,pdict.ContentSearchResult.count)}</h1>
+						<div class="search-results-content">
+							<isif condition="${pdict.ContentSearchResult.count == 0}">
+								<isset name="searchPhrase" value="${!empty(pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1)) ? pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1) : pdict.ProductSearchResult.searchPhrase}" scope="PAGE" />
+								<isif condition="${(pdict.CurrentHttpParameterMap.cgid.submitted && pdict.CurrentHttpParameterMap.cgid.value != '')}">
+									<isprint value="${Resource.msgf('nohits.noarticlemessage','search',null,pdict.ProductSearchResult.category.displayName)}" />
+								<iselse>
+									<isprint value="${Resource.msgf('nohits.noarticlemessage','search',null,searchPhrase)}" />
+								</isif>
+						 	</isif>
+							<isinclude template="search/topcontenthits"/>
+						</div>		        
+					</isif>
+				 </iscomment>
+			<iselse>
+		
+				<iscomment>display no results</iscomment>
+				<div class="no-results">
+					${Resource.msg('productresultarea.noresults','search',null)}
+				</div>
+		
+			</isif>
+			<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser) && pdict.CurrentCustomer.authenticated}">
+				<isif condition="${pdict.CurrentHttpParameterMap.cgid.submitted && !empty(pdict.CurrentHttpParameterMap.cgid.value)}"> 
+					<iscomment> CP-1212 Removing product recommendations from category pages.
+						<div class="category-recemmendation">
+							<isinclude url="${URLUtils.url('PIRecommendation-Show','PAGE','CATEGORY', 'cgid', pdict.CurrentHttpParameterMap.cgid.value)}" >
+						</div>
+					</iscomment>
+				<iselse>
+					<isif condition="${pdict.CurrentHttpParameterMap.q.submitted && !empty(pdict.CurrentHttpParameterMap.q.value)}"> 
+						<isset name="PAGE" value="${'CATEGORY'}" scope="Page" />
+						<isset name="PICat" value="${pdict.CurrentHttpParameterMap.q.value}" scope="Page" />
+						<isinclude template="component/PIRecommendationLogic"/>
+						<div class="category-recemmendation">
+							<div id="SEARCH-PI-Recommendation" data-page="CATEGORY" data-query="${pdict.CurrentHttpParameterMap.q.value}" data-piurl="${PIURl}">
+								<!-- Append The Recommendation here -->
+							</div>
+						</div>
+					</isif>
+				</isif>
+			</isif>
+		
+		<iselse/>
+	
+			<div class="content-slot slot-grid-header">
+				<isif condition="${!empty(pdict.ProductSearchResult.category)}">
+					<isslot id="cat-banner" context="category" description="Category Banner" context-object="${pdict.ProductSearchResult.category}"/>
+				<iselse>
+					<isslot id="search-result-banner" description="Promotional Search Result Banner" context="global"/>
+				</isif>
+			</div>
+		
+		    <iscomment> CP-1166 - Commenting the Product link, Articles link and Articles Found section in search result page
+	 			<div class="search-result-bookmarks">
+					${Resource.msg('topcontenthits.yoursearch','search',null)}
+					&nbsp;<a href="${'#results-content'}">${Resource.msg('topcontenthits.goto','search',null)}</a>
+				</div>
+				show top content hits
+				<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">
+					
+					<div class="search-results-content">
+						<isinclude template="search/topcontenthits"/>
+					</div>
+					
+				</isif>
+			</iscomment>
+			<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser) && pdict.CurrentCustomer.authenticated}">
+				<isif condition="${pdict.CurrentHttpParameterMap.cgid.submitted && !empty(pdict.CurrentHttpParameterMap.cgid.value)}"> 
+					<iscomment> CP-1212 Removing product recommendations from category pages.
+						<div class="category-recemmendation">
+							<isinclude url="${URLUtils.url('PIRecommendation-Show','PAGE','CATEGORY', 'cgid', pdict.CurrentHttpParameterMap.cgid.value)}" >
+						</div>
+					</iscomment>
+				<iselse>
+					
+					<isif condition="${pdict.CurrentHttpParameterMap.q.submitted && !empty(pdict.CurrentHttpParameterMap.q.value)}"> 
+						<isset name="PAGE" value="${'CATEGORY'}" scope="Page" />
+						<isset name="PICat" value="${pdict.CurrentHttpParameterMap.q.value}" scope="Page" />
+						<isinclude template="component/PIRecommendationLogic"/>
+						<div class="category-recemmendation">
+							<div id="SEARCH-PI-Recommendation" data-page="CATEGORY" data-query="${pdict.CurrentHttpParameterMap.q.value}" data-piurl="${PIURl}">
+								<!-- Append The Recommendation here -->
+							</div>
+						</div>
+					</isif>
+				</isif>
+			</isif>
+		</isif>
+			
+		<iscomment>Render promotional content at the bottom of search results as global slot</iscomment>
+		<div class="search-promo"><isslot id="search-promo" description="Promotional Content at the bottom of Search Results" context="global"/></div>
+		<iscomment>
+		<div class="backtotop-container">
+			<a class="backtotop"><i>Back To Top</i></a>
+		</div>
+		 </iscomment>
+		 <!-- Category Slot Commented -->
+		 <iscomment>
+			<isslot id="plpslot-banner-1" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-2" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-3" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-4" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-5" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-6" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-7" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-8" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-9" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-10" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-11" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-12" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-13" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-14" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-15" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-16" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-17" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-18" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-19" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-20" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-21" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-22" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-23" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-24" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-25" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-26" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-27" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-28" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-29" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-30" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-31" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-32" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-33" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-34" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-35" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-36" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-37" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-38" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-39" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-40" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-41" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-42" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-43" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-44" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-45" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-46" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-47" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+		
+		<iscomment>
+			<isslot id="plpslot-banner-48" description="" context="category" context-object="${pdict.ProductSearchResult.category}"  />
+		</iscomment>
+	</isdecorate>
+</isif>

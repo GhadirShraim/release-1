@@ -1,0 +1,45 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*-   @input ExampleIn : String This is a sample comment.
+*   @output RootFolder : dw.content.Folder
+*
+*/
+importPackage( dw.system )
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+    try {
+    	var isNonLoginPortal = 'isNonLoginPortalUser' in session.custom && !empty(session.custom.isNonLoginPortalUser) ? true : false;
+		var cCode;
+		if ('isPortalUser' in session.custom && session.custom.isPortalUser && customer.authenticated) {
+			cCode = customer.profile.custom.chainCode;
+		} else if('tempChainCode' in session.custom && !empty(session.custom.tempChainCode)) {
+			cCode = session.custom.tempChainCode.replace('C00', '');
+		} else {
+			cCode = dw.system.Site.getCurrent().preferences.custom.defaultChainCode;
+		}
+		var rootFolder;
+		if(!empty(cCode)) {
+			rootFolder = dw.content.ContentMgr.getFolder(dw.content.ContentMgr.getSiteLibrary(), cCode);
+		}
+		
+		args.RootFolder = !empty(rootFolder) ? rootFolder : dw.content.ContentMgr.getSiteLibrary().root;
+    } catch(e) {
+    	Logger.error("UpdateMetadat.ds: [Error] " + e);
+    }
+
+   return PIPELET_NEXT;
+}

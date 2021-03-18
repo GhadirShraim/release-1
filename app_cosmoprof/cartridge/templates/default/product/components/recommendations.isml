@@ -1,0 +1,187 @@
+<isif condition="${!empty(pdict.Product)}">
+	<isscript>
+		var su = require('dw/util').StringUtils;
+		
+		var consolidationCode = "";
+		
+		var excludeVOC = "";
+	
+		var cosmoProfUtils = require('app_cosmoprof/cartridge/scripts/util/CosmoProfUtils').CosmoProfUtils;
+		
+		var binarySearchResult = cosmoProfUtils.execBinarySearch(pdict.CurrentCustomer.profile.custom.accountNumber, pdict.CurrentCustomer.profile.custom.consolidationCode, pdict.CurrentCustomer.profile.custom.activeShipAddressID != null ? pdict.CurrentCustomer.getAddressBook().getAddress(pdict.CurrentCustomer.profile.custom.activeShipAddressID) : null, dw.system.Site.getCurrent().getCustomPreferenceValue('sitePrefix').value);
+	
+		if(pdict.CurrentSession.custom.incSearchConsolidation == 'false' && !empty(binarySearchResult))
+		{
+			consolidationCode = '|'+binarySearchResult.consolidationExclusionVal+'|';
+		}
+		else if(!empty(binarySearchResult))
+		{
+			excludeVOC = '|'+ binarySearchResult.vocExclusionVal +'|';		
+		}
+		
+		// get all orderable cross sell recommendations (1 = cross sell)
+		var recommendations : dw.util.Iterator = pdict.Product.getOrderableRecommendations(1).iterator();
+		var recProducts : dw.util.Collection = new dw.util.ArrayList();
+	
+		// display 20 recommendations at maximum 
+		var maxRecs = 20, counter = 0;
+	
+		while( recommendations.hasNext() )
+		{
+			var recommendation : dw.catalog.Recommendation = recommendations.next();
+			var recommendedProduct : dw.catalog.Product = recommendation.getRecommendedItem();
+			
+			if((!empty(consolidationCode) && !empty(recommendedProduct.custom.excludeConsolidation) && ((recommendedProduct.custom.excludeConsolidation).indexOf(consolidationCode) == -1) && pdict.CurrentSession.custom.incSearchConsolidation == 'false') || (pdict.CurrentSession.custom.incSearchConsolidation == 'true' && !empty(pdict.CurrentCustomer.profile.custom.consolidationCode) && !empty(recommendedProduct.custom.includeConsolidation) && ((recommendedProduct.custom.includeConsolidation).indexOf(pdict.CurrentCustomer.profile.custom.consolidationCode) > -1) && !empty(excludeVOC) && !empty(recommendedProduct.custom.excludeVOC) && ((recommendedProduct.custom.excludeVOC).indexOf(excludeVOC) == -1)) || (pdict.CurrentSession.custom.incSearchConsolidation == 'true' && !empty(pdict.CurrentCustomer.profile.custom.consolidationCode) && !empty(recommendedProduct.custom.includeConsolidation) && ((recommendedProduct.custom.includeConsolidation).indexOf(pdict.CurrentCustomer.profile.custom.consolidationCode) > -1) && empty(recommendedProduct.custom.excludeVOC)))
+			{
+			  	recProducts.add( recommendedProduct );
+			}
+			
+			if(++counter >= maxRecs)
+			{
+				break;
+			}
+		}
+	</isscript>
+	
+	<isinclude template="util/modules"/>
+		
+	<isif condition="${recProducts && recProducts.size() > 0}">		
+		<div class="global-slick-wrapper">	
+			<div class="recommendations cross-sell">
+				<h2>
+					<isif condition="${pdict.Product.productSet}">
+						${Resource.msg('recommendations.productsets','product',null)}
+					<iselse>
+						${Resource.msg('recommendations.products','product',null)}
+					</isif>
+				</h2>
+				<div id="carousel-recomendations" class="slick-slider-global">	
+	
+					<iscomment>Preserve the Product instance</iscomment>
+					<isset name="mainProduct" value="${pdict.Product}" scope="pdict"/>
+					<isloop items="${recProducts}" var="rec" end="19">
+						<isset name="Product" value="${rec}" scope="pdict"/>
+						<isset name="pName" value="${pdict.Product.name}" scope="page"/>
+						
+						<isimagesizes />
+						
+						<isif condition="${!empty(pdict.Product.getImage('large',0))}">
+							<isset name="imageUrl" value="${pdict.Product.getImage('large', 0).getAbsImageURL(imageConfig.pdpYouMightAlsoLike != null ? imageConfig.pdpYouMightAlsoLike : imageConfig)}" scope="page"/>
+							<isset name="imageAlt" value="${pdict.Product.getImage('large', 0).alt}" scope="page"/>
+							<isset name="imageTitle" value="${pdict.Product.getImage('large', 0).title}" scope="page"/>
+						<iselse>
+							<isset name="imageUrl" value="${URLUtils.staticURL('/images/noimagelarge.png')}" scope="page"/>
+							<isset name="imageAlt" value="${pdict.Product.name}" scope="page"/>
+							<isset name="imageTitle" value="${pdict.Product.name}" scope="page"/>
+						</isif>
+						<div>
+							<div class="product-tile tooltip">
+								<isset name="showfavicon" value="${(pdict.Product.master ? 'hideFavIcon' : 'showFavIcon')}" scope="page" />
+								<div class="favorite-wrapper ${showfavicon}">
+									<isif condition="${pdict.CurrentCustomer.authenticated}">
+										<isgetwishlisticon product_id="${pdict.Product.ID}" />
+									</isif>
+									<iscomment>
+										<isinclude url="${URLUtils.url('Wishlist-FavoriteListPDP','pid', pdict.Product.ID)}"/>	
+									</iscomment>
+								</div>
+								<div class="analytics capture-product-id"><isprint value="${pdict.Product.ID.substring(pdict.Product.ID.lastIndexOf('-')+1)}"/></div>
+								<input type="hidden" class="recomendation_pid" value="${pdict.Product.ID}" scope="page"/>
+								<isset name="recoProduct" value="${pdict.Product}" scope="page"  />
+								 <isscript>
+								   var catName = "";
+									if( recoProduct.getPrimaryCategory() != null) {
+										catName = recoProduct.getPrimaryCategory().displayName;
+									} else if(recoProduct.getCategories().length > 0) {
+										catName = recoProduct.getCategories()[0].displayName;
+									}
+								</isscript>
+								<input type="hidden" name="categoryName" value="${catName}" />
+								<div class="product-image recommendation_image">
+									<a href="${URLUtils.http('Product-Show','pid', pdict.Product.ID,'ylike','ylike')}">
+										<img src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}"/>
+										
+									</a>
+								</div>
+								<isif condition="${pdict.Product.custom.newLaunch.toString() == 'Yes'}">
+									<span class="new-badges"></span>
+								</isif>
+								<div class="product-brand custom-scroll" itemprop="name">
+									<a href="${URLUtils.http('Product-Show','pid', pdict.Product.ID,'ylike','ylike')}" title="${pName}"><isprint value="${pdict.Product.brand}" /></a>									
+								</div>
+								<div class="product-name custom-scroll">
+									<a href="${URLUtils.http('Product-Show','pid', pdict.Product.ID,'ylike','ylike')}" title="${pName}"><isprint value="${pName}"/></a>
+								</div>
+								<iscomment> redsign 
+								<isset name="GridValue" value="${false}" scope="page" />
+								<isinclude template="product/components/pricing.isml"/>
+								</iscomment>
+								<isinclude template="product/components/reviews-stars"/>
+								<div class="tooltip-content" data-layout="medium">
+									<div class="recommendation-tooltip-header">
+										<div class="product-name"><isprint value="${pName}"/></div>
+										
+										<iscomment>Login price view handling remote include</iscomment>
+										<isinclude url="${URLUtils.url('Product-PricingLoginView','view','recommendationsview','productid', pdict.Product.ID)}"/>
+										
+									</div>
+									<div class="recommendation-tooltip-description">
+										<span class="label">${Resource.msg('global.description','locale',null)}</span>
+										<p class="value"><isif condition="${! empty(pdict.Product.longDescription)}"><isprint value="${pdict.Product.longDescription}" encoding="off" /><iselse></isif></p>
+									</div>
+									
+									<isset name="pam" value="${pdict.Product.getAttributeModel()}" scope="page"/>
+									<isset name="mainGroup" value="${pam.getAttributeGroup('mainAttributes')}" scope="page"/>
+									<isif condition="${!empty(mainGroup)}">
+										<div class="recommendation-tooltip-attributes">
+											<span class="label">${Resource.msg('global.details','locale',null)}</span>
+											<div class="value">
+												<ul>
+													<isloop items="${pam.getVisibleAttributeDefinitions(mainGroup)}" var="Definition" status="loopstate1">
+														<li class="attribute">
+															<span class="label"><isprint value="${Definition.getDisplayName()}"/>:</span>
+															<span class="value">
+																<iscomment>special formatting for some types</iscomment>
+																<isif condition="${Definition.valueTypeCode == Definition.VALUE_TYPE_BOOLEAN}">
+																	<isif condition="${pam.getValue(Definition)}">
+																		${Resource.msg('global.yes','locale',null)}
+																	<iselse>
+																		${Resource.msg('global.no','locale',null)}
+																	</isif>
+																<iselseif condition="${Definition.valueTypeCode == Definition.VALUE_TYPE_DATETIME}">
+																	<isprint value="${pam.getDisplayValue(Definition)}" style="DATE_SHORT"/>&nbsp;
+																	<isprint value="${pam.getDisplayValue(Definition)}" style="DATE_TIME"/>
+																<iselseif condition="${Definition.multiValueType}">
+																	<isloop items="${pam.getDisplayValue(Definition)}" var="DisplayValue" status="loopstate">
+																		<isprint value="${DisplayValue}"/>
+																	</isloop>
+																<iselse>
+																	<isif condition="${Definition.requiresEncoding()}">
+																		<isprint value="${pam.getDisplayValue(Definition)}"/>
+																	<iselse>
+																		<isprint value="${pam.getDisplayValue(Definition)}"/>
+																	</isif>
+																</isif>
+																<isif condition="${Definition.getUnit() != null}">
+																	<isprint value="${Definition.getUnit()}"/>
+																<iselse>
+																
+																</isif>
+															</span>
+														</li>
+													</isloop>
+												</ul>
+											</div>
+										</div>
+									</isif>
+								</div>
+							</div>
+						</div>
+					</isloop>
+					<iscomment>Restore the Product instance</iscomment>
+					<isset name="Product" value="${pdict.mainProduct}" scope="pdict"/>
+				</div>
+			</div>
+		</div><!-- ENDS global-slick-wrapper-->
+	</isif>
+</isif>

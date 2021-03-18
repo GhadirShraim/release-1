@@ -1,0 +1,39 @@
+<iscomment>
+	This is the footer for all pages. Be careful caching it if it contains
+	user dependent information. Cache its elements instead if necessary (do not forget
+	to change the isinclude into a pipeline include for that).
+</iscomment>
+<isinclude template="util/modules"/>
+
+<div id="footer" role="contentinfo" class="cp_footer">
+	<iscomment>Moved Footer Content into Remote Include. </iscomment>
+	<isinclude url="${URLUtils.url('Home-Footer')}"/>
+</div>
+
+
+<iscomment>
+	Customer registration can happen everywhere in the page flow. As special tag in the pdict
+	is indicating it. So we have to check on every page, if we have to report this event for
+	the reporting engine.
+</iscomment>
+<isinclude template="util/reporting/ReportUserRegistration.isml"/>
+
+<iscomment>
+GTM
+</iscomment>
+
+<input type="hidden" name="productindexval" value="" id="productindexval" />
+
+<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser)}">
+<iscomponent pipeline ="PredictiveIntelligent-Start"
+  pagecontexttype=${('pageContext' in this && !empty(pageContext)) ? pageContext.type+'' : null}
+  pagecontexttitle=${('pageContext' in this && !empty(pageContext)) ? pageContext.title+'' : null}
+  pid=${pdict.CurrentHttpParameterMap.pid.stringValue}
+  searchterm=${pdict.CurrentHttpParameterMap.q.stringValue} 
+  orderno=${!empty(pdict.Order) ? pdict.Order.orderNo : null}
+  vsuemail=${!empty(pdict.CurrentForms.profile.customer.email.value) ? pdict.CurrentForms.profile.customer.email.value : ''}
+  saloonemail=${!empty(pdict.CurrentForms.profile.salonemail.value) ? pdict.CurrentForms.profile.salonemail.value : ''}
+  pagecgid=${pdict.CurrentHttpParameterMap.cgid.stringValue} />
+</isif>
+
+<isinclude template="components/footer/footer_UI"/>

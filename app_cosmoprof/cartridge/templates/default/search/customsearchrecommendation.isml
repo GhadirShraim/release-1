@@ -1,0 +1,26 @@
+<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser) && pdict.CurrentCustomer.authenticated}">
+	<isif condition="${pdict.CurrentHttpParameterMap.cgid.submitted && !empty(pdict.CurrentHttpParameterMap.cgid.value)}"> 
+		<div class="category-recemmendation">
+			<isset name="PAGE" value="${'CATEGORY'}" scope="Page" />
+			<isset name="PICat" value="${pdict.CurrentHttpParameterMap.q.value}" scope="Page" />
+			<isinclude template="component/PIRecommendationLogic"/>
+			<div id="SEARCH-PI-Recommendation" data-page="CATEGORY" data-query="${pdict.CurrentHttpParameterMap.cgid.value}" data-piurl="${PIURl}">
+				<!-- Append The Recommendation here -->
+			</div>
+		</div>
+	<iselse>
+		<isif condition="${pdict.CurrentHttpParameterMap.q.submitted && !empty(pdict.CurrentHttpParameterMap.q.value)}"> 
+			<div class="category-recemmendation">
+				<isset name="PAGE" value="${'CATEGORY'}" scope="Page" />
+				<isset name="PICat" value="${pdict.CurrentHttpParameterMap.q.value}" scope="Page" />
+				<isinclude template="component/PIRecommendationLogic"/>
+				<div id="SEARCH-PI-Recommendation" data-page="CATEGORY" data-query="${pdict.CurrentHttpParameterMap.q.value}" data-piurl="${PIURl}">
+					<!-- Append The Recommendation here -->
+				</div>
+			</div>
+		</isif>
+	</isif>
+	<div class="brand-message hide">
+		<em><isprint value="${Resource.msg('search.recommendation.brand.message','search',null)}" /></em>
+	</div>
+</isif>

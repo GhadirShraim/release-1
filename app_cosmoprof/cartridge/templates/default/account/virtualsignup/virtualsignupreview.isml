@@ -1,0 +1,349 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+
+	
+<iscomment> not sure why but these checkbox values are  not being passed to this isml - they are in the previous ICN though </iscomment>
+	<isscript>
+		var employeetypes = pdict.CurrentForms.profile.employeetype;
+		var professiontype = pdict.CurrentForms.profile.professiontype;
+		emp = [];
+		prof = [];
+		for each(let emptype in employeetypes){
+			if(emptype.value == true){
+				emp.push(emptype.formId);
+			}
+		}
+		for each(let proftype in professiontype){
+			if(proftype.value == true){
+			var label = Resource.msg(proftype.label, 'forms', null);
+				prof.push(label);
+			}
+		}
+		emp.join(",");
+		prof.join(",");
+	</isscript>
+	<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-start-form" name="${pdict.CurrentForms.profile.htmlName}">
+		<div class="vsu-review">
+			<isset name="confirmError" value="${false}" scope="page"/>
+			<isif condition="${'SignupConfirmError' in pdict && pdict.SignupConfirmError}">
+				<isset name="confirmError" value="${pdict.SignupConfirmError}" scope="page"/>
+			</isif>
+			<iscomment> 
+				Error encountered on CreateCRMCustomerService; display error message from content asset.
+			</iscomment>
+			<isif condition="${pdict.IsServiceDown}">
+				<div class="service-error">
+					<isprint value="${Resource.msg('virtualsignup.servicerrormsg','account',null)}" />
+				</div>
+			<iselseif condition="${confirmError}">
+				<iscomment>
+					<iscontentasset aid="vsu-signupconfirmerror" />
+				</iscomment>
+				<isif condition="${confirmError !=null}"> 
+					<div class="service-error"> 
+						<isprint value="${pdict.errorMessage}" />
+					</div>
+				</isif>	
+			</isif>
+			
+			<div class="vsu-review-top">
+				<legend>${Resource.msg('virtualsignup.finalstep','account',null)}</legend>
+				<p>${Resource.msg('virtualsignup.finalstep1','account',null)}</p>
+				<p>${Resource.msg('virtualsignup.finalstep2','account',null)}</p>
+			</div>
+			<isif condition="${!empty(pdict.CardNotFound) && pdict.CardNotFound}">
+				<div class="error">
+					<h4> <isprint value="${Resource.msg('virtualsignup.cardnotfound','account',null)}" /> </h4>
+				</div>
+			</isif>
+			
+		<isset name="selectedType" value="${pdict.CurrentForms.profile.cosmoProfession.professionType.htmlValue}" scope="page"/>
+		<isif condition="${selectedType == 'SA'}">
+			<div class="vsu-review-info">
+				<legend>${Resource.msg('virtualsignup.businessinfo','account',null)}</legend>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.name','account',null)}</label><span>${pdict.CurrentForms.profile.address.firstname.value} ${pdict.CurrentForms.profile.address.lastname.value}</span>
+				</div>
+				<isif condition="${pdict.CurrentForms.profile.cosmoProfession.professionType && !empty(pdict.CurrentForms.profile.cosmoProfession.professionType.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.professiontype','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.cosmoProfession.professionType.selectedOption.label,'forms',null)}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.businessname && !empty(pdict.CurrentForms.profile.business.businessname.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.salonname','account',null)}</label><span>${pdict.CurrentForms.profile.business.businessname.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.businesslicense && !empty(pdict.CurrentForms.profile.business.businesslicense.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.bizlicense','account',null)}</label><span>${pdict.CurrentForms.profile.business.businesslicense.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.businesstype && !empty(pdict.CurrentForms.profile.business.businesstype.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.biztype','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.business.businesstype.selectedOption.label,'forms',null)}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.businessyears && !empty(pdict.CurrentForms.profile.business.businessyears.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.years','account',null)}</label><span>${pdict.CurrentForms.profile.business.businessyears.value}</span>
+					</div>
+				</isif>
+				<isif condition="${emp && !empty(emp)}">
+					<div class="form-row business-type">
+						<label>${Resource.msg('virtualsignup.employeetype','account',null)}</label><span><isprint value="${emp.toString()}"></span>
+					</div>
+				</isif>
+				<isif condition="${prof && !empty(prof)}">
+					<div class="form-row business-type">
+						<label>${Resource.msg('virtualsignup.professionaltype','account',null)}</label><span><isprint value="${prof.toString()}"></span>
+					</div>
+				</isif>
+				<div class="vsu-hidden-fields">
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+					<isif condition="${pdict.CurrentForms.profile.vsu.textmessage.checked=='true'}">
+						<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+					<iselse>
+						<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+					 </isif>
+					 <isif condition="${pdict.CurrentForms.profile.vsu.emailmessage.checked == 'true'}">
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+				 	<iselse>
+				 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+				    </isif>
+					
+				</div>
+				
+			</div><!-- End of Business Info for Sallon and Owner -->
+			<div class="vsu-review-info">
+				<legend>${Resource.msg('virtualsignup.contactinfo','account',null)}</legend>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.email','account',null)}</label><isif condition="${!empty(pdict.CurrentForms.profile.customer.email.value)}"><span>${pdict.CurrentForms.profile.customer.email.value}</span></isif>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.address1','account',null)}</label><span>${pdict.CurrentForms.profile.address.vsu.address1.value}</span>
+				</div>
+				
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.address2','account',null)}</label><span>${pdict.CurrentForms.profile.address.vsu.address2 && !empty(pdict.CurrentForms.profile.address.vsu.address2.value) ? pdict.CurrentForms.profile.address.vsu.address2.value : '-'}</span>
+				</div>
+				<isif condition="${dw.system.Site.current.ID != 'CosmoProf-CA'}">	
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.puertorico','account',null)}</label><span>${pdict.CurrentForms.profile.customer.puertorico && !empty(pdict.CurrentForms.profile.customer.puertorico.value) ? pdict.CurrentForms.profile.customer.puertorico.value : '-'}</span>
+					</div>
+				</isif>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.city','account',null)}</label><span>${pdict.CurrentForms.profile.address.city.value}</span>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.state','account',null)}</label><span>${pdict.CurrentForms.profile.address.states.shortstate.value}</span>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.zip','account',null)}</label><span>${pdict.CurrentForms.profile.address.zip.value}</span>
+				</div>
+				<isif condition="${pdict.CurrentForms.profile.address.mobilephone && !empty(pdict.CurrentForms.profile.address.mobilephone.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.mobilephone','account',null)}</label><span>${pdict.CurrentForms.profile.address.mobilephone.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.address.workphone && !empty(pdict.CurrentForms.profile.address.workphone.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.workphone','account',null)}</label><span>${pdict.CurrentForms.profile.address.workphone.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.vsu.birthdayoffers && !empty(pdict.CurrentForms.profile.vsu.birthdayoffers.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.birthday','account',null)}</label><span>${pdict.CurrentForms.profile.vsu.birthdayoffers.value}</span>
+					</div>
+				</isif>
+				<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+				<div class="vsu-review-buttons">
+					<button type="submit" value="${Resource.msg('global.edit','account',null)}" name="${pdict.CurrentForms.profile.edit.htmlName}">
+						${Resource.msg('virtualsignup.edit','account',null)}
+					</button>
+					<button type="submit" value="submit" name="${pdict.CurrentForms.profile.save.htmlName}">
+						${Resource.msg('global.submit','locale',null)}
+					</button>
+				</div>
+			</div><!-- End of contact Information for Sallon Owner -->
+		<iselse>
+			<div class="vsu-review-info">
+				<legend>${Resource.msg('virtualsignup.professionalinfo','account',null)}</legend>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.name','account',null)}</label><span>${pdict.CurrentForms.profile.address.firstname.value} ${pdict.CurrentForms.profile.address.lastname.value}</span>
+				</div>
+				<isif condition="${pdict.CurrentForms.profile.cosmoProfession.professionType && !empty(pdict.CurrentForms.profile.cosmoProfession.professionType.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.professiontype','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.cosmoProfession.professionType.selectedOption.label,'forms',null)}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.beautylicense  && !empty( pdict.CurrentForms.profile.business.beautylicense.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.beautylicense','account',null)}</label><span>${pdict.CurrentForms.profile.business.beautylicense.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.beautylicensestateUS  && !empty(pdict.CurrentForms.profile.business.beautylicensestateUS.value) && dw.system.Site.getCurrent().ID != 'CosmoProf-CA'}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.issuingstate','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.business.beautylicensestateUS.selectedOption.label,'forms',null)}</span>
+					</div>
+				</isif>
+				
+				<isif condition="${pdict.CurrentForms.profile.business.beautylicensestateCA  && !empty(pdict.CurrentForms.profile.business.beautylicensestateCA.value) && dw.system.Site.getCurrent().ID != 'CosmoProf'}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.issuingstate','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.business.beautylicensestateCA.selectedOption.label,'forms',null)}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.business.licenseexpiration && pdict.CurrentForms.profile.business.licenseexpiration.htmlValue !=''}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.expdate','account',null)}</label><span>${pdict.CurrentForms.profile.business.licenseexpiration ? pdict.CurrentForms.profile.business.licenseexpiration.htmlValue : '-'}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.student.schoolname  && !empty( pdict.CurrentForms.profile.student.schoolname.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.school','account',null)}</label><span>${pdict.CurrentForms.profile.student.schoolname.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.student.graduationdate  && !empty( pdict.CurrentForms.profile.student.graduationdate.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.graddate','account',null)}</label><span>${pdict.CurrentForms.profile.student.graduationdate.value}</span>
+					</div>
+				</isif>
+				<isif condition="${selectedType !='BO'}"> 
+					<isif condition="${prof && !empty(prof)}">
+						<div class="form-row business-type">
+							<label>${Resource.msg('virtualsignup.professionaltype','account',null)}</label><span><isprint value="${prof.toString()}"></span>
+						</div>
+					</isif>
+					<isif condition="${emp && !empty(emp)}">
+						<div class="form-row business-type">
+							<label>${Resource.msg('virtualsignup.employeetype','account',null)}</label><span><isprint value="${emp.toString()}"></span>
+						</div>
+					</isif>
+				</isif>
+			</div>
+							
+			
+			<div class="vsu-review-info">
+				<legend>${Resource.msg('virtualsignup.contactinfo','account',null)}</legend>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.email','account',null)}</label><isif condition="${!empty(pdict.CurrentForms.profile.customer.email.value)}"><span>${pdict.CurrentForms.profile.customer.email.value}</span></isif>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.address1','account',null)}</label><span>${pdict.CurrentForms.profile.address.vsu.address1.value}</span>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.address2','account',null)}</label><span>${pdict.CurrentForms.profile.address.vsu.address2 && !empty(pdict.CurrentForms.profile.address.vsu.address2.value) ? pdict.CurrentForms.profile.address.vsu.address2.value : '-'}</span>
+				</div>
+				<isif condition="${dw.system.Site.current.ID != 'CosmoProf-CA'}">	
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.puertorico','account',null)}</label><span>${pdict.CurrentForms.profile.customer.puertorico && !empty(pdict.CurrentForms.profile.customer.puertorico.value) ? pdict.CurrentForms.profile.customer.puertorico.value : '-'}</span>
+					</div>
+				</isif>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.city','account',null)}</label><span>${pdict.CurrentForms.profile.address.city.value}</span>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.state','account',null)}</label><span>${pdict.CurrentForms.profile.address.states.shortstate.value}</span>
+				</div>
+				<div class="form-row">
+					<label>${Resource.msg('virtualsignup.zip','account',null)}</label><span>${pdict.CurrentForms.profile.address.zip.value}</span>
+				</div>
+				<isif condition="${pdict.CurrentForms.profile.address.mobilephone && !empty(pdict.CurrentForms.profile.address.mobilephone.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.mobilephone','account',null)}</label><span>${pdict.CurrentForms.profile.address.mobilephone.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.address.workphone && !empty(pdict.CurrentForms.profile.address.workphone.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.workphone','account',null)}</label><span>${pdict.CurrentForms.profile.address.workphone.value}</span>
+					</div>
+				</isif>
+				<isif condition="${pdict.CurrentForms.profile.vsu.birthdayoffers && !empty(pdict.CurrentForms.profile.vsu.birthdayoffers.value)}">
+					<div class="form-row">
+						<label>${Resource.msg('virtualsignup.birthday','account',null)}</label><span>${pdict.CurrentForms.profile.vsu.birthdayoffers.value}</span>
+					</div>
+				</isif>
+			</div>
+			
+			<div class="vsu-review-info">
+				<isif condition="${selectedType != 'LI'}">
+					<legend>${Resource.msg('virtualsignup.businessinfo','account',null)}</legend>
+					<isif condition="${pdict.CurrentForms.profile.business.businessname && !empty(pdict.CurrentForms.profile.business.businessname.value)}">
+						<div class="form-row">
+							<label>${Resource.msg('virtualsignup.salonname','account',null)}</label><span>${pdict.CurrentForms.profile.business.businessname.value}</span>
+						</div>
+					</isif>
+					<isif condition="${pdict.CurrentForms.profile.business.businesslicense && !empty(pdict.CurrentForms.profile.business.businesslicense.value)}">
+						<div class="form-row">
+							<label>${Resource.msg('virtualsignup.bizlicense','account',null)}</label><span>${pdict.CurrentForms.profile.business.businesslicense.value}</span>
+						</div>
+					</isif>
+					<isif condition="${pdict.CurrentForms.profile.business.businesstype && !empty(pdict.CurrentForms.profile.business.businesstype.value)}">
+						<div class="form-row">
+							<label>${Resource.msg('virtualsignup.biztype','account',null)}</label><span>${Resource.msg(pdict.CurrentForms.profile.business.businesstype.selectedOption.label,'forms',null)}</span>
+						</div>
+					</isif>
+					<isif condition="${pdict.CurrentForms.profile.business.businessyears && !empty(pdict.CurrentForms.profile.business.businessyears.value)}">
+						<div class="form-row">
+							<label>${Resource.msg('virtualsignup.years','account',null)}</label><span>${pdict.CurrentForms.profile.business.businessyears.value}</span>
+						</div>
+					</isif>
+					<isif condition="${emp && !empty(emp)}">
+						<div class="form-row business-type">
+							<label>${Resource.msg('virtualsignup.employeetype','account',null)}</label><span><isprint value="${emp.toString()}"></span>
+						</div>
+					</isif>
+					<isif condition="${prof && !empty(prof)}">
+						<div class="form-row business-type">
+							<label>${Resource.msg('virtualsignup.professionaltype','account',null)}</label><span><isprint value="${prof.toString()}"></span>
+						</div>
+					</isif>
+					
+				</isif>
+				<div class="vsu-hidden-fields">
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+					<isif condition="${pdict.CurrentForms.profile.vsu.textmessage.checked=='true'}">
+						<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+					<iselse>
+						<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+					 </isif>
+					<isif condition="${pdict.CurrentForms.profile.vsu.emailmessage.checked == 'true'}">
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+				 	<iselse>
+				 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+				    </isif>
+					
+				</div>
+				<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+				
+				<div class="vsu-review-buttons">
+					<button type="submit" value="${Resource.msg('global.edit','account',null)}" name="${pdict.CurrentForms.profile.edit.htmlName}">
+						${Resource.msg('virtualsignup.edit','account',null)}
+					</button>
+					<button type="submit" value="submit" name="${pdict.CurrentForms.profile.save.htmlName}">
+						${Resource.msg('global.submit','locale',null)}
+					</button>
+				</div>
+			</div>
+		</isif><!-- End of isif -->
+		</div>
+	</form>
+</isdecorate>

@@ -1,0 +1,53 @@
+<isinclude template="util/modules"/>
+<isif condition="${!empty(pdict.ContentSearchResult) && pdict.ContentSearchResult.count > 0}">
+	<iscomment>calculated correct index position to separate the result columns</iscomment>
+	<isscript>
+		var count = pdict.ContentSearchResult.count;
+		if(count > 6)
+		{
+			count = 6;
+		}
+		var cutIndex = Math.ceil( count / 2 ) - 1;
+		var endIndex = cutIndex + (cutIndex + 1);
+	</isscript>
+	<isset name="contentCount" value="${0}" scope="page"/>
+	<isset name="searchPhrase" value="${!empty(pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1)) ? pdict.ProductSearchResult.searchPhrase.substring(0, (pdict.ProductSearchResult.searchPhrase.indexOf('-'))-1) : pdict.ProductSearchResult.searchPhrase}" scope="PAGE" />
+		<div class="itemNum"><span class="less-count"><isprint value="${count.toFixed(0)}" /></span><span class="more-count"></span><isprint value="${Resource.msgf('search.articlescount','search',null,pdict.ContentSearchResult.count)}" />
+		<iscomment>
+			<isif condition="${pdict.breadcrumb != null}">
+				<isprint value="${Resource.msgf('search.articlesearchphrase','search',null,pdict.breadcrumb.trim())}" >
+			<iselse>
+				<isprint value="${Resource.msgf('search.articlesearchphrase','search',null,pdict.ProductSearchResult.searchPhrase)}" />
+			</isif>
+		 </iscomment>
+		 <isprint value="${Resource.msgf('search.quotesforsearch','search',null,searchPhrase)}" />
+		</div>
+	<ul class="folder-content-list">
+
+		<iscomment>render the results as two column layout</iscomment>
+		<isloop items="${pdict.ContentSearchResult.content}" var="asset" status="loopstate">
+			<isset name="contentCount" value="${contentCount+1}" scope="page"/>
+			<iscomment><isif condition="${asset.custom.public}"></iscomment>			
+				<li class="<isif condition="${contentDisplayCount > 6}">showAndhide hide</isif>">
+					<isset name="contentDisplayCount" value="${contentCount+1}" scope="page"/>
+					<a href="${URLUtils.url('Page-Show','cid', asset.ID)}" title="${asset.name}" class="content-title">
+						<isprint value="${asset.name}"/>
+					</a>					
+					<div class="content-description"><isprint value="${asset.description}"/></div>					
+					<a href="${URLUtils.url('Page-Show','cid', asset.ID)}" class="readmore">
+						<isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" />
+					</a>
+				</li>				
+			<iscomment></isif></iscomment>
+		</isloop>
+	</ul>
+	<isif condition="${pdict.ContentSearchResult.count>6}">
+		<!-- <form action="${pdict.ContentSearchResult.url('Search-ShowContent')}" method="get"> -->
+			 <div class="form-row" style="text-align:center;">
+				<button type="submit" class="secondarybtn viewallcontent" value="${Resource.msgf('topcontenthits.viewmore','search',null)}" data-attr="${Resource.msgf('topcontenthits.viewless','search',null)}"><span>${Resource.msg('topcontenthits.viewmore','search',null)} </span></button>
+			</div> 
+			<input type="hidden" name="q" value="${pdict.ContentSearchResult.searchPhrase}" />
+		<!-- </form> -->
+	</isif>
+	
+</isif>

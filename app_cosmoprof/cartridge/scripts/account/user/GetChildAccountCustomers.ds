@@ -1,0 +1,39 @@
+/**
+* Get Child Account Customers
+* Gets a list of customers that are sub accounts of this owner customer
+*
+*
+*   @input CurrentCustomer : dw.customer.Customer  This is the account owner
+*   @output SubAccountCustomerList : dw.util.Collection
+*
+*/
+
+var ArrayList = require('dw/util').ArrayList;
+var CustomerMgr = require('dw/customer').CustomerMgr;
+var Profile = require('dw/customer').Profile;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		if (!empty(args.CurrentCustomer) && !empty(args.CurrentCustomer.profile.custom.listChildrenAccounts)){
+			var childAccountsArray : Array = args.CurrentCustomer.profile.custom.listChildrenAccounts;
+			var tempSubAccountList : ArrayList = new ArrayList();
+			
+			for(var i = 0; i<childAccountsArray.length; i++){
+				var tempCustId : String = childAccountsArray[i];
+				var tempCustomer : Profile = CustomerMgr.getProfile(tempCustId);
+				tempSubAccountList.add(tempCustomer);
+			}
+			
+			args.SubAccountCustomerList = tempSubAccountList;
+		}	
+	}
+	catch (ex){
+		Logger.error("[GetSubAccountCustomers] There was an error getting the list of sub account customers: {0}",ex);
+		
+		args.SubAccountCustomerList = new ArrayList(); 
+	}
+
+   return PIPELET_NEXT;
+}

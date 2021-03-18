@@ -1,0 +1,184 @@
+<iscache status="off"/>
+<isinclude template="util/modules"/>
+<isset name="showHeaderCustInfo" value="${!pdict.CurrentSession.custom.isPortalUser || pdict.CurrentCustomer.authenticated || (pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated) || (pdict.CurrentCustomer.registered && !pdict.CurrentCustomer.authenticated)}" scope="page" />
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+<div class="navigation-bar">
+	<isif condition="${showHeaderCustInfo}">
+		<div class="CustomerInfo hide-mobile">
+			<!--  utility user menu -->		
+			<ul class="menu-utility-user">
+			 	
+			 	<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated)}">
+				 				
+				 	<li class="my-account dd3 last">
+				 		<a href="${URLUtils.https('Account-Show')}" title="${Resource.msg('headercustomerinfo.myaccount','components',null)}">
+						${Resource.msg('headercustomerinfo.myaccount','components',null)}</a>
+					 	<div class="dd3">
+							<div class="user-info">
+								<div class="welcome-user">
+					    			${Resource.msg('headercustomerinfo.welcomeback','components',null)}
+		     						<isprint value="${pdict.CurrentCustomer.profile.firstName}"/>!
+		     					</div>
+				    			<isif condition="${!empty(pdict.CurrentCustomer.profile)}">
+				    				<isset name="preferredAddress" value="${pdict.CurrentCustomer.profile.getAddressBook().getPreferredAddress()}" scope="page" />	
+				    			</isif>
+							    <isif condition="${preferredAddress != null}">
+								   	<div class="shipping-to">
+									    ${Resource.msg('headercustomerinfo.shipto','components',null)}</br>
+									    <isif condition="${'addressLabel' in preferredAddress.custom && !empty(preferredAddress.custom.addressLabel)}">
+									    	<isprint value="${preferredAddress.custom.addressLabel}"/><br>
+									    </isif>
+										    <isif condition="${!empty(preferredAddress.companyName)}"> 
+										    	<isprint value="${preferredAddress.companyName}" /></br>
+										    </isif>	
+									    <isprint value="${preferredAddress.firstName}"/> <isprint value="${preferredAddress.lastName}"/><br>
+									    <isif condition="${'attentionTo' in preferredAddress.custom && !empty(preferredAddress.custom.attentionTo)}">
+											<isprint value="${Resource.msgf('global.attnto', 'locale', null, preferredAddress.custom.attentionTo)}"/><br>
+										</isif>
+									    <isprint value="${preferredAddress.address1}"/></br>
+									    <isif condition="${(preferredAddress.address2 != null) && (preferredAddress.address2 != "")}">
+									    	<isprint value="${preferredAddress.address2}"/></br>
+									    </isif>
+									    <isprint value="${preferredAddress.city}"/>, <isprint value="${preferredAddress.stateCode}"/> <isprint value="${preferredAddress.postalCode}"/>
+								    </div>
+							    	<div class="change-ship">
+										  <iscomment>Added a new parameter to identify from which page the user opted for change address. Ticket #CP-52 </iscomment>								  
+										  <isif condition="${'callFrom' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.callFrom!=null}"> 
+											  <a href="${URLUtils.abs('LoginBarrier-SelectShippingAddress','callFrom',pdict.CurrentSession.custom.callFrom)}" class="dialogify user-account"  data-dlg-options='{"width":650,"height":auto}'>
+										     	  ${Resource.msg('headercustomerinfo.changeshipto','components',null)}
+											   </a>
+										   <iselse>									  
+										  		<a href="${URLUtils.abs('LoginBarrier-SelectShippingAddress')}" class="dialogify user-account"  data-dlg-options='{"width":650,"height":auto}'>
+										     		${Resource.msg('headercustomerinfo.changeshipto','components',null)}
+											    </a>
+										   </isif>
+									</div>
+								</isif>
+				    		</div>
+				    		<div class="myaccount-info">				    		
+				    			<div class="logout">
+				    				<span class="notyou">${Resource.msg('global.notyou','locale',null)}</span>
+									<a class="logout-btn" href="${URLUtils.https('Login-Logout')}">
+									  	${Resource.msg('global.logout','locale',null)}
+									</a>
+								</div>
+							    <div class="favorites">
+								    <a href="${URLUtils.https('Order-History')}" title="${Resource.msg('orders.purchasehistory', 'account', null)} " class="user-account">
+							     		${Resource.msg('orders.purchasehistory', 'account', null)}
+								    </a>
+								</div>
+								<iscomment>Adding “All Lists” to My Account dropdown menu </iscomment>
+									<div class="mylist" > 
+									    <a href="${URLUtils.https('GiftRegistry-Start')}" title="${Resource.msg('headercustomerinfo.lists','components',null)} " class="user-account">
+								     		${Resource.msg('headercustomerinfo.lists','components',null)}
+									    </a>
+									</div>
+								
+								
+								<isset name="portalTable" value="${JSON.parse(dw.system.Site.getCurrent().getCustomPreferenceValue('portalRelationalTable'))}" scope="page"/>
+								<isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">
+									<isset name="cCode" value="${pdict.CurrentCustomer.profile.custom.chainCode.slice(2,5)}" scope="page"/>
+								<iselse/>
+									<isset name="cCode" value="${dw.system.Site.getCurrent().preferences.custom.defaultChainCode}" scope="page"/>
+								</isif>
+								
+								<div class="myprofile">
+								    <a href="${URLUtils.https('Account-Show')}" title="<isif condition="${!empty(portalTable) && !empty(portalTable['cCode'])}">${Resource.msgf('headercustomerinfo.mycos','components',null, portalTable['cCode'])}</isif>" class="user-account">
+							     		${Resource.msgf('headercustomerinfo.mycos','components',null, 'Profile')}
+								    </a>
+								</div>    
+								
+				    		</div>
+						</div>				 
+				     </li>
+				    <iscomment>
+				     <isif condition="${isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+							<!-- Store Locator -->
+							<isinclude url="${URLUtils.url('ShoppingList-HeaderInfo')}" />
+				     </isif>
+				      </iscomment>
+					 <isif condition="${isCosmoUser}">
+						<li>
+							<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+								<a href="http://stores.cosmoprofbeauty.com?cosmoprof_app=true" title="${Resource.msg('header.storelocator','components',null)}">
+									${Resource.msg('header.storelocator','components',null)}
+								</a>
+							<iselse>
+								<a href="http://stores.cosmoprofbeauty.com/" title="${Resource.msg('header.storelocator','components',null)}">
+									${Resource.msg('header.storelocator','components',null)}
+								</a>
+							</isif>
+						</li>	
+					 </isif>
+				     <li>
+				     	<div>
+						    <a href="${URLUtils.https('Account-QuickOrder')}" title="${Resource.msg('headercustomerinfo.quickorder','components',null)} " class="user-account">
+					     		${Resource.msg('headercustomerinfo.quickorder','components',null)}
+						    </a>
+						</div>   
+				     </li>
+			 	
+				<iselse>
+				
+					<li class="login-navigationbar">
+						<a href="${URLUtils.https('LoginBarrier-LoginRedirect')}" title="${Resource.msg('header.Login','components',null)}">
+							${Resource.msg('header.Login','components',null)}
+						</a>
+					</li>
+				
+					<li class="my-account dd3 newcustomer">
+				 		<span class="new-cust-msg"><isprint value="${Resource.msg('headercustomerinfo.newcustomer','components',null)}" /> </span>
+					 	<iscontentasset aid="new-customer-menu" />
+				 	</li>
+					
+					<isif condition="${isCosmoUser}">
+						<li>
+							<isif condition="${'appRequest' in session.custom && !empty(session.custom.appRequest)}">
+								<a href="http://stores.cosmoprofbeauty.com?cosmoprof_app=true" title="${Resource.msg('header.storelocator','components',null)}">
+									${Resource.msg('header.storelocator','components',null)}
+								</a>
+							<iselse>
+								<a href="http://stores.cosmoprofbeauty.com/" title="${Resource.msg('header.storelocator','components',null)}">
+									${Resource.msg('header.storelocator','components',null)}
+								</a>
+							</isif>
+						</li>
+					</isif>
+					<isif condition="${(pdict.CurrentCustomer.registered) && (pdict.CurrentCustomer.authenticated)}">
+						<li>
+							<a href="${URLUtils.https('Account-QuickOrder')}" title="${Resource.msg('global.helplink','locale',null)}">
+				     			${Resource.msg('global.helplink','locale',null)}
+						    </a>
+					  	</li>
+					<iselse/>
+						<li>    
+							<a href="${URLUtils.https('Account-QuickOrder')}"  title="${Resource.msg('global.quickorder','locale',null)}">${Resource.msg('global.quickorder','locale',null)}</a>
+						</li>
+				 	 </isif>
+				</isif>
+			</ul>
+		</div>
+	</isif>
+	<isif condition="${pdict.CurrentCustomer.authenticated && pdict.CurrentCustomer.registered && isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+		<div id="in-store-pickup">
+			<isinclude url="${URLUtils.url('Cart-InStorePickup')}"/>
+		</div>
+	</isif>
+	<div id="mini-cart">
+		 <isinclude url="${URLUtils.url('Cart-MiniCart')}"/>
+	</div>
+</div>
+<isif condition="${pdict.CurrentSession.custom.isPortalUser && pdict.CurrentCustomer.authenticated}">	
+		<div class="header-searchicon hide-mobile">
+			<span class="searchnormal">
+				<img src="${URLUtils.staticURL('/images/header/searchicon.jpg')}" alt="" />
+			</span>
+			<span class="searchactive">
+				<img src="${URLUtils.staticURL('/images/header/search_close.jpg')}" alt="" />
+			</span>
+		</div>		
+		<div class="header-search">		
+			<isinclude template="search/simplesearch"/>
+		</div>
+</isif>	

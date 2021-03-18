@@ -1,0 +1,13 @@
+<isscript>
+	try
+	{
+		var imageConfigStr = dw.system.Site.current.preferences.custom.imageSizes;
+		var imageConfig = JSON.parse(imageConfigStr);
+	}
+	catch(e)
+	{
+		//Set default width and height if an error occurs (most likely a non-valid JSON)
+		imageConfig = {"scaleHeight":100,"scaleWidth":100};
+		Logger.error('Image Sizes template has failed with the following error: ' + e);
+	}
+</isscript>

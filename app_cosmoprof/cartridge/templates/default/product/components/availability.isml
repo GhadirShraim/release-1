@@ -1,0 +1,14 @@
+<iscontent type="text/html" charset="UTF-8" compact="true"/>
+<iscomment>
+Prints a message about the product's availability. The messages to be displayed are defined as resources.
+</iscomment>
+
+<isset name="availabilityStatus" value="${av.status}" scope="PAGE"/>
+
+<div class="availability-msg">
+	<isif condition="${availabilityStatus == dw.catalog.ProductAvailabilityModel.AVAILABILITY_STATUS_IN_STOCK}">
+		<p class="in-stock-msg">${StringUtils.format(Resource.msg('global.availabilityinstock','locale',null))}</p>			
+	<iselse>
+		<p class="not-available-msg">${Resource.msg('global.availabilityallnotavailable','locale',null)}</p>				
+	</isif>
+</div>

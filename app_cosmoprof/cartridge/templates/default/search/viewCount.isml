@@ -1,0 +1,5 @@
+<isset name="counter" value="${(dw.object.CustomObjectMgr.getCustomObject('blogviewcount',pdict.folderContentID))? (dw.object.CustomObjectMgr.getCustomObject('blogviewcount',pdict.folderContentID)).custom.blogviewcounter : new Number(0)}" scope="page" />
+<isprint value="${counter.toFixed()}"/>
+
+
+

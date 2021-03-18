@@ -1,0 +1,29 @@
+'use strict';
+
+var Logger = require('dw/system/Logger');  
+
+function doServiceCall(salesforceAccountId) {
+		var HashMap = require('dw/util/HashMap');
+		var Status = require('dw/system/Status');
+		var OnAccountHTTPServices = require('~/cartridge/scripts/checkout/onaccount/services/OnAccountServiceInit');
+		var params = new HashMap();
+		params.put('salesforceAccountNumber', salesforceAccountId);
+		
+		var service = OnAccountHTTPServices.OnAccountCardsRetrievalService;
+		var serviceResponse = service.call(params);
+		var jsonServiceResponse = serviceResponse.object;
+		var retrieveOnAccountCardsServiceResponse;
+		if (jsonServiceResponse) {
+			retrieveOnAccountCardsServiceResponse = new Status(Status.OK, serviceResponse.error, 'ServiceReplyCorrect: ' + serviceResponse.ok);
+			retrieveOnAccountCardsServiceResponse.addDetail("jsonServiceResponse", serviceResponse.object);
+		} else {
+			retrieveOnAccountCardsServiceResponse = new Status(Status.ERROR, serviceResponse.errorMessage);
+		}
+		
+		return retrieveOnAccountCardsServiceResponse;
+}
+
+/** Exported functions **/
+module.exports = {
+		doServiceCall: doServiceCall
+};

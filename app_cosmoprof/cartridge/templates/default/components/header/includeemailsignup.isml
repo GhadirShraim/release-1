@@ -1,0 +1,39 @@
+<isinclude template="util/modules"/>
+<isset name="allowEmailSignup" value="${false}" scope="Page" />
+<isset name="siteAllowEmailSignup" value="${'chainCodeAllowEmailSignup' in dw.system.Site.current.preferences.custom ? new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowEmailSignup) : ''}" scope="Page" />
+<isif condition="${pdict.CurrentCustomer.authenticated && empty(session.privacy.ignoreEmailSignup)}">
+    <isset name="customerChainCode" value="${pdict.CurrentCustomer.profile.custom.chainCode}" scope="Page" />
+    <isif condition="${!empty(siteAllowEmailSignup) && siteAllowEmailSignup.contains(customerChainCode)}">
+        <isset name="allowEmailSignup" value="${true}" scope="Page" />
+    </isif>
+    <isif condition="${allowEmailSignup && !pdict.CurrentCustomer.profile.custom.emailOptIn && pdict.CurrentCustomer.profile.custom.customerType == 'C'}">
+        <!--  Check If Customer Already Declined the Choice.Wait for 30 Days -->
+        <isset name="doNotDecline" value="${(new dw.util.Calendar()).compareTo((new dw.util.Calendar(new Date(!empty(pdict.CurrentCustomer.profile.custom.declineEmailSignupDate) ? pdict.CurrentCustomer.profile.custom.declineEmailSignupDate : ''))))}" scope="Page" />
+        <isif condition="${empty(pdict.CurrentCustomer.profile.custom.declineEmailSignupDate) || doNotDecline == 1 }">
+            <button class="subscribe-email-button"></button>
+            <div class="email-opt-section">
+                <div class="emailopt-content-section">
+                    <div class="emailopt-head">
+                        <span class="close-modal"></span>
+                    </div>
+                    <div class="emailopt-content-outer">
+                        <div class="emailopt-content" id="email-opt-in-wrapper">
+                            <iscontentasset aid="emailsignup" />
+                            <form action="#" id="email-subscribe" name="email-signup">
+                                <div class="radio-holder">
+                                    <input type="radio" id="yes" name="emailsubscribe" value="1" />
+                                    <label for="yes">sign me up!</label>
+                                </div>
+                                <div class="radio-holder">
+                                    <input type="radio" id="no" name="emailsubscribe" value="0" />
+                                    <label for="no">no, not right now.</label>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="overlay-img-holder"></div>
+            </div>
+        </isif>
+    </isif>
+</isif>

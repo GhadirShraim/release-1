@@ -1,0 +1,40 @@
+<isinclude template="util/modules"/>
+<div class="relatedPosts">
+		<div class='title'>Related Post</div>
+		<ul class="Articles">
+			<isloop items="${pdict.contents}" var="content" status="loopstate">
+				<isset name="classfirst" value="" scope="page"/>
+				<isif condition="${loopstate.count == 1}">
+					<isset name="classfirst" value="${'first'}" scope="page"/>
+				</isif>
+				<li class="article ${classfirst}">
+					<div>
+						<iscomment> CP-545 Blog - Comment out Shares and Views
+							<span class="views"><isinclude url="${URLUtils.url('Search-ViewCount','folderID', content.ID)}" />${Resource.msg('topcontenthits.views','search',null)}</span>
+						</iscomment>
+						<div class="row-1">
+							<a href="${URLUtils.url('Page-Show','cid', content.ID)}">
+								<img class="contentThumbnail" src="${content.custom.thumbnailImage.getAbsURL()}"/> 
+							</a>
+						</div>
+						<div class="row-2">
+							<h3 class="related-article-title"><a href="${URLUtils.url('Page-Show','cid', content.ID)}"><isprint value="${content.custom.title}"/></a></h3>
+							<p class="description"><isprint value="${content.description}"/></p>
+							<a class="readmore" href="${URLUtils.url('Page-Show', 'cid', content.ID)}"><isprint value="${Resource.msg('topcontenthits.readmore','search',null)}" encoding="off" /></a>
+							<iscomment> CP-545 Blog - Comment out Shares and Views
+								<div class="share">
+									<div class="shareIcon">
+										<i class="fa fa-share" aria-hidden="true"></i>
+										<isinclude url="${URLUtils.url('Search-ShareCount','folderID', content.ID, 'loopstatecount', loopstate.count, 'isblog', true, 'loopindex', 'related')}" />
+									</div>	
+									<div class="social-icons">
+										<div class="addthis_native_toolbox " data-url="${URLUtils.url('Page-Show','cid', content.ID)}"></div>
+		 							</div>
+								</div>
+							</iscomment>
+						</div>
+					</div>
+				</li>
+			</isloop>
+		</ul>
+</div><!-- END: contentgrid -->

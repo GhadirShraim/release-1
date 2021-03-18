@@ -1,0 +1,112 @@
+ <iscache type="relative" hour="24" varyby="price_promotion" /> 
+ 
+<isset name="isQuickView" value="${pdict.CurrentHttpParameterMap.source.stringValue == 'quickview' || pdict.CurrentHttpParameterMap.source.stringValue == 'cart' || pdict.CurrentHttpParameterMap.source.stringValue == 'giftregistry' || (pdict.CurrentHttpParameterMap.source.stringValue == 'wishlist' && empty(pdict.CurrentHttpParameterMap.format))}" scope="page"/>
+
+<isobject object="${pdict.Product}" view="detail">
+	<div id="pdpMain" class="pdp-main ww"  itemscope itemtype="http://schema.org/Product">				
+		<isscript>
+           var portalEnableMaxQty = 'portalChainCodeMaxQtyEnable' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.portalChainCodeMaxQtyEnable : '';
+		   portalEnableMaxQty = portalEnableMaxQty.replace(/ /g, '');
+		   var customerChainCode = 'chainCode' in pdict.CurrentCustomer.profile.custom && pdict.CurrentCustomer.profile.custom.chainCode ? pdict.CurrentCustomer.profile.custom.chainCode : ''; 
+		   var portalvalueSplit = '|'+customerChainCode+'|';		    			
+		</isscript>
+
+		<input type="hidden" id="PortalAllowed" value="${portalEnableMaxQty.indexOf(portalvalueSplit) > -1 ? true : false}" />
+		<iscomment>Image and variation options are part of the include template</iscomment>
+		<iscomment>CP-427</iscomment>
+		<div class="visually-hidden">
+			<h1><isprint value="${pdict.Product.name}"/><isif condition="${!empty(pdict.Product.brand)}">-<isprint value="${pdict.Product.brand}"/></isif></h1>
+		</div>
+		
+		<isif condition="${pdict.Product.productSet || pdict.Product.bundle}">
+				<isinclude template="product/producttopcontentPS" />
+		<iselse>
+				<isinclude template="product/producttopcontent" />
+		</isif>
+		<isif condition="${!isQuickView}">
+		<iscomment>
+			<isinclude template="product/components/recommendations"/>
+		</iscomment>
+	    <div class="enishtine-recomndations">
+		<isslot id="pdp-recommendations" description="PDP Recommendations" context="global" />
+		</div>
+			<isif condition="${dw.system.Site.getCurrent().preferences.custom.enablePI === true && empty(session.custom.isPortalUser) && pdict.CurrentCustomer.authenticated}">
+				<!-- MOving to Server Side Call -->
+				<iscomment>
+					<isinclude url="${URLUtils.url('PIRecommendation-Show','PAGE','PDP', 'pid', pdict.Product.ID)}" >
+				</iscomment>
+				<!-- Build URL and logic for Cart to trigger PI -->
+				<isset name="PAGE" value="${'PDP'}" scope="Page" />
+				<isset name="PIProductID" value="${pdict.Product.ID}" scope="Page" />
+				<isinclude template="component/PIRecommendationLogic"/>
+				
+				<div id="PDP-PI-Recommendation" data-page="PDP" data-query="${pdict.Product.ID}" data-piurl="${PIURl}" >
+					<!-- Append The Recommendation here -->
+				</div>
+				<div class="brand-message hide">
+					<em><isprint value="${Resource.msg('search.recommendation.brand.message','search',null)}" /></em>
+				</div>
+			</isif>
+		</isif>
+		
+		<iscomment> Adding bazaar voice content </iscomment>
+		<isif condition="${!isQuickView}">
+			<div class="pdp-bv-wrapper">
+				<div class="PDP-reviews">
+					<div class="set-layout">
+						<isinclude url="${URLUtils.url('Product-GetReviews', 'pid', pdict.Product.ID)}"/>
+					</div>
+				</div>
+				<isif condition="${pdict.CurrentCustomer.authenticated}">
+					<div class="PDP-write-reviews" id="reviewsec">
+						<div class="set-layout">
+							<isinclude template="product/writereview" />
+						</div>
+					</div>
+				</isif>
+			</div>
+		</isif>
+		
+		<isif condition="${pdict.Product.primaryCategory != null}">
+			<isset name="categoryGTM" value="${pdict.Product.primaryCategory.displayName}" scope="page"/>
+		<iselseif condition="${pdict.Product.variant == true && pdict.Product.masterProduct != null && pdict.Product.masterProduct.primaryCategory != null}" >
+			<isset name="categoryGTM" value="${pdict.Product.masterProduct.primaryCategory.displayName}" scope="page"/>
+		<iselse/>
+			<isset name="categoryGTM" value="${pdict.Product.categories.get(0).displayName}" scope="page"/>
+		</isif>
+		<isif condition="${isQuickView}">
+			<isscript>
+				 var prodGTM = {
+					"prodId":pdict.Product.ID.toString(),
+					"prodName":pdict.Product.name.toString(),
+					"prodCat":categoryGTM,
+					"prodBrand":pdict.Product.brand.toString()
+				};
+			</isscript>	
+			<input type="hidden" id="ProdGTM" value="${JSON.stringify(prodGTM)}" />
+		<iselse/>
+			<input type="hidden" id="productNameGTM" value="${pdict.Product.name.toString()}" />
+			<input type="hidden" id="productBrandGTM" value="${pdict.Product.brand.toString()}" />
+			<input type="hidden" id="productCategoryGTM" value="${categoryGTM}" />
+		</isif>
+		
+		<iscomment>
+		<isif condition="${isQuickView}">
+			<isif condition="${dw.system.Site.getCurrent().getCustomPreferenceValue('enableGTM')}">
+				<iscomponent pipeline ="GTM-FooterInclude" pid=${pdict.CurrentHttpParameterMap.pid.stringValue}
+				  pagecontexttype=${('pageContext' in this && !empty(pageContext)) ? pageContext.type+'' : null}
+				  pagecontexttitle=${('pageContext' in this && !empty(pageContext)) ? pageContext.title+'' : null}
+				  searchterm=${pdict.CurrentHttpParameterMap.q.stringValue} 
+				  searchresultscount=${!empty(pdict.ProductSearchResult) ? pdict.ProductSearchResult.count+'' : null}
+				  orderno=${!empty(pdict.Order) ? pdict.Order.orderNo : null}
+				  contentsearchresultscount=${!empty(pdict.ContentSearchResult) ? pdict.ContentSearchResult.count+'' : null}
+				  pagecgid=${pdict.CurrentHttpParameterMap.cgid.stringValue} />
+				  <script src="${URLUtils.staticURL('/js/GTMAnalytics.js')}"></script>			  			  
+			</isif>
+		</isif>
+		</iscomment>
+		<div class="LoginAsset hide">
+			<iscontentasset aid="Login-asset"/>
+		</div>
+	</div><!--/pdpMain -->
+</isobject>

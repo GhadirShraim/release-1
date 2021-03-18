@@ -1,0 +1,74 @@
+<isdecorate template="account/pt_virtualsignup"/>
+	<isinclude template="util/modules"/>
+	<isscript>
+		var employeetypes = pdict.CurrentForms.profile.employeetype;
+		var professiontype = pdict.CurrentForms.profile.professiontype;
+		emp = [];
+		prof = [];
+		for each(let emptype in employeetypes){
+			if(emptype.value == true){
+				emp.push(emptype.formId);
+			}
+		}
+		for each(let proftype in professiontype){
+			if(proftype.value == true){
+				emp.push(proftype.formId);
+			}
+		}
+		emp.join(",");
+		prof.join(",");
+	</isscript>
+	
+	 
+	<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-start-form" name="${pdict.CurrentForms.profile.htmlName}" class="messaging-options validate-Terms">
+		<fieldset class="messaging-options terms-conditions">
+			<legend>${Resource.msg('virtualsignup.terms','account',null)}</legend>
+			
+			<!--  THIS WILL BE A MODAL WINDOW -->
+			<div class="dialog-required"> <span class="required-indicator">&#42; <em>${Resource.msg('global.requiredfield','locale',null)}</em></span></div>
+			<a class="termsconditiions" href="${URLUtils.url('Page-Show','cid', 'terms')}" title="${Resource.msg('virtualsignup.termslink','account',null)}"> ${Resource.msg('virtualsignup.termslink','account',null)}</a>
+			<div class="chkbox">
+			<span class="readterm-indicator required-indicator">*</span>
+			<isinputfield formfield="${pdict.CurrentForms.profile.vsu.readterms}" type="checkbox" rowclass=""  requiredtext="${Resource.msg('forms.requiredinput','forms',null)}"/>
+			</div>
+			<div class="chkbox"> 
+			<span class="readterm-indicator required-indicator">*</span>
+			<isinputfield formfield="${pdict.CurrentForms.profile.vsu.readcontract}" type="checkbox" rowclass="" requiredtext="${Resource.msg('forms.requiredinput','forms',null)}"/>
+			</div>
+			<a class="termsconditiions moroccanoil moroterms" href="${URLUtils.url('Page-Show','cid', 'moroccanoilterms')}" title="${Resource.msg('virtualsignup.termslink','account',null)}"> ${Resource.msg('virtualsignup.moroccanoil','account',null)}</a>
+		</fieldset>
+		
+		<div class="vsu-hidden-fields">
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.owner}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.suiterenter}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.chairrenter}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.salonemployee}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.employeetype.student}" type="checkbox" rowclass="employee-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.cosmetologist}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.barber}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.nailtechnician}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.esthetician}" type="checkbox" rowclass="professional-type-row"/>
+			<isinputfield formfield="${pdict.CurrentForms.profile.professiontype.massagetherapist}" type="checkbox" rowclass="professional-type-row"/>
+			<isif condition="${pdict.CurrentForms.profile.vsu.textmessage.checked=='true'}">
+				<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+			<iselse>
+				<isinputfield formfield="${pdict.CurrentForms.profile.vsu.textmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+			</isif>
+			 <isif condition="${pdict.CurrentForms.profile.vsu.emailmessage.checked == 'true'}">
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked" value1="true"/>
+			 	<iselse>
+			 		<isinputfield formfield="${pdict.CurrentForms.profile.vsu.emailmessage}" type="checkbox" rowclass="professional-type-row" attribute1="checked"/>
+			 </isif>
+			 
+		</div>
+		<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+		<div class="form-row form-row-button final-step">
+			<button type="submit" value="bupkiss" name="${pdict.CurrentForms.profile.previous.htmlName}" id="go-to-prev" data-sessionId="${request.httpReferer}" title="Previous">
+				${Resource.msg('global.previousarrow','locale',null)}
+			</button>
+			<button type="submit" value="submit" class="js-vsu-agreement-btn" name="${pdict.CurrentForms.profile.save.htmlName}" title="Next">
+				${Resource.msg('global.nextarrow','locale',null)}
+			</button>
+		</div>
+	</form>
+</isdecorate>

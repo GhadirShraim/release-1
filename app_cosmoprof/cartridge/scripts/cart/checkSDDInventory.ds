@@ -1,0 +1,44 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*    @input Basket : dw.order.LineItemCtnr
+*-   @output ExampleOut : Number
+*
+*/
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+    if (!session.custom.isPortalUser && 'isEligibleForSSD' in session.privacy && !empty(session.privacy.isEligibleForSSD) && 'bsgOrders' in session.privacy && !empty(session.privacy.bsgOrders)) {
+      var plis : dw.util.Iterator = args.Basket.allProductLineItems.iterator();
+  	  while (plis.hasNext()) {
+          var pli : dw.order.ProductLineItem = plis.next();
+          var perpetual = pli.product.availabilityModel.inventoryRecord.perpetual;
+          if (perpetual === false && pli.custom.deliveryMethod == null && !pli.bundledProductLineItem) {
+              var productListInventory = dw.catalog.ProductInventoryMgr.getInventoryList('sdd_inventory_list');
+			  if (!empty(productListInventory)) {
+				var availabilityModel : dw.catalog.ProductAvailabilityModel = pli.product.getAvailabilityModel(productListInventory);
+				if (!empty(availabilityModel.inventoryRecord) && availabilityModel.inventoryRecord.perpetual) {
+					// Don't Remove and Set SDD Invenotory
+					pli.custom.sddOpted = true;
+					pli.custom.deliveryMethod = 'SDD';
+					pli.custom.isSDDEligible = true;					
+				}
+			  }          	
+          }
+  	  }
+    }
+      return PIPELET_NEXT;
+}

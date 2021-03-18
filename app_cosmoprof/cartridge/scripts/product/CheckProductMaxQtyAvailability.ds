@@ -1,0 +1,36 @@
+/**
+*
+*   @input ProductLineItem : dw.order.ProductLineItem The ProductLineItem.
+*	@input Product : dw.catalog.Product
+*	@input CurrentCustomer : dw.customer.Customer
+*   @output ProductQty : Number
+*
+*/
+
+
+function execute( args : PipelineDictionary ) : Number
+{
+	var prod = args.Product;
+	var productMaxQtyFlag = 'quantityLimit' in prod.custom;
+	var productMaxExtend = false;
+
+	var portalEnableMaxQty = 'portalChainCodeMaxQtyEnable' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.portalChainCodeMaxQtyEnable : '';
+	portalEnableMaxQty = portalEnableMaxQty.replace(/ /g, '');
+	var customerChainCode = args.CurrentCustomer.authenticated && ('chainCode' in args.CurrentCustomer.profile.custom && args.CurrentCustomer.profile.custom.chainCode) ? args.CurrentCustomer.profile.custom.chainCode : ''; 
+	var portalvalueSplit = '|'+customerChainCode+'|';		    			
+
+	if (portalEnableMaxQty.indexOf(portalvalueSplit) > -1 && productMaxQtyFlag) {
+		var ProductLineItem = args.ProductLineItem;
+		var prodMaxQty = 'quantityLimit' in prod.custom ? prod.custom.quantityLimit : '';
+		var appliedQty = args.CurrentHttpParameterMap.Quantity.doubleValue;
+		var prodQTY =  !empty(ProductLineItem) ? ProductLineItem.getQuantityValue() + appliedQty :  appliedQty;
+		
+		if (!empty(prodMaxQty) && (prodQTY > prodMaxQty) && !empty(ProductLineItem)) {
+			prodQTY = 	prodMaxQty - ProductLineItem.getQuantityValue();
+			productMaxExtend = true;
+		}
+	}
+	
+   args.ProductQty = portalEnableMaxQty.indexOf(portalvalueSplit) > -1 && productMaxQtyFlag && productMaxExtend ? prodQTY : args.CurrentHttpParameterMap.Quantity.doubleValue;
+   return PIPELET_NEXT;
+}

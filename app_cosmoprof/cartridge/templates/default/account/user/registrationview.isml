@@ -1,0 +1,192 @@
+<!--- TEMPLATENAME: registrationview.isml --->
+<isdecorate template="account/pt_account">
+ <isinclude	template="util/modules" /> 
+
+<isscript>
+importScript("util/ViewHelpers.ds");
+ var firstName : String = pdict.CurrentCustomer.profile.firstName; 
+ var lastName : String = pdict.CurrentCustomer.profile.lastName; 
+ var fullName : String = StringUtils.format("{0} {1}", firstName, lastName); 
+</isscript>
+
+<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+<div class="MyInformation">
+	<h1 class="title h1"> <isprint value="${Resource.msg('account.accountinfo','account',null)}" /> </h1>
+	<div class="backlink">
+		<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}"><isprint value="${Resource.msg('account.backtoaccountsetting','account',null)}" /></a>
+	</div>
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('account.fullname','account',null)}" /></div>
+		<div><isprint value="${fullName}" /></div>
+	</div>
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('account.accountcardnumber','account',null)}" /></div>
+		<isif condition="${ pdict.CurrentCustomer.profile.custom.customerType.value == 'A' || pdict.CurrentCustomer.profile.custom.isChildAccount || pdict.CurrentCustomer.profile.custom.isAccountOwner}">
+			<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.accountNumber)}">
+				<div><isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}" /></div>
+			<iselse>
+				<div><isprint value="${pdict.CurrentCustomer.profile.custom.cardNumber}" /></div>
+			</isif>
+		<iselse>
+			<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.cardNumber)}">
+				<div><isprint value="${pdict.CurrentCustomer.profile.custom.cardNumber}" /></div>
+			<iselse>
+				<div><isprint value="${pdict.CurrentCustomer.profile.custom.accountNumber}" /></div>
+			</isif>
+		</isif>
+	</div>
+	
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('account.email','account',null)}" /></div>
+		<div><isprint value="${pdict.CurrentCustomer.profile.email}" /></div>
+	</div>
+		
+
+<isif condition="${pdict.CurrentUser.profile.custom.customerType.value == 'C'}">
+	<div class="contacts">
+		<div class="contactNum">
+			<div><isprint value="${Resource.msg('account.home','account',null)}" /></div>
+			<div><isprint value="${ViewHelpers.PhoneNumberFormatter(pdict.CurrentCustomer.profile.phoneHome)}"/></div>
+		</div>
+		
+		<div class="contactNum">
+			<div><isprint value="${Resource.msg('account.mobile','account',null)}" /></div>
+			<div><isprint value="${ViewHelpers.PhoneNumberFormatter(pdict.CurrentCustomer.profile.phoneMobile)}" /></div>
+		</div>
+		<div class="contactNum">	
+			<div><isprint value="${Resource.msg('account.work','account',null)}" /></div>
+			<div><isprint value="${ViewHelpers.PhoneNumberFormatter(pdict.CurrentCustomer.profile.phoneBusiness)}" /></div>
+		</div>	
+	</div>
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('account.describeme','account',null)}" /></div>
+		<div>
+			<isif condition="${pdict.CurrentCustomer.profile.custom.owner}"> 
+				<isprint value="${Resource.msg('account.Owner', 'account', null)}" />
+			<iselseif condition="${pdict.CurrentCustomer.profile.custom.suiterenter}" >
+				<isprint value="${Resource.msg('account.SuiteRenter', 'account', null)}" />
+			<iselseif condition="${pdict.CurrentCustomer.profile.custom.chairrenter}" >
+				<isprint value="${Resource.msg('account.ChairRenter', 'account', null)}" />
+			<iselseif condition="${pdict.CurrentCustomer.profile.custom.salonemployee}" >
+				<isprint value="${Resource.msg('account.SalonEmployee', 'account', null)}" />
+			<iselseif condition="${pdict.CurrentCustomer.profile.custom.student}" >
+				<isprint value="${Resource.msg('account.Student', 'account', null)}" />
+			</isif>
+		</div>
+	</div> 
+	
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('profile.professionaltype', 'forms', null)}" /></div>
+		<div>
+			<isif condition="${pdict.CurrentUser.profile.custom.cosmetologist}">
+				<isprint value="${Resource.msg('account.cosmetologist', 'account', null)}" />
+			</isif>
+			
+			<isif condition="${pdict.CurrentUser.profile.custom.barber}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.cosmetologist}">
+					<isprint value="${Resource.msg('account.barber', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.barber', 'account', null)}" />
+				</isif>
+			</isif>
+			
+			<isif condition="${pdict.CurrentUser.profile.custom.nailtechnician}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.cosmetologist && !pdict.CurrentUser.profile.custom.barber}">
+					<isprint value="${Resource.msg('account.nailTechnician', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.nailTechnician', 'account', null)}" />
+				</isif>
+					
+			</isif>
+			
+			<isif condition="${pdict.CurrentUser.profile.custom.esthetician}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.cosmetologist && !pdict.CurrentUser.profile.custom.barber && !pdict.CurrentUser.profile.custom.nailtechnician}">
+					<isprint value="${Resource.msg('account.esthetician', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.esthetician', 'account', null)}" />
+				</isif>
+					
+			</isif>
+			
+			<isif condition="${pdict.CurrentUser.profile.custom.massagetherapist}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.cosmetologist && !pdict.CurrentUser.profile.custom.barber && !pdict.CurrentUser.profile.custom.nailtechnician && !pdict.CurrentUser.profile.custom.esthetician}">
+					<isprint value="${Resource.msg('account.massagetherapist', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.massagetherapist', 'account', null)}" />
+				</isif>
+				
+			</isif>
+		</div>
+	</div>
+	
+	<div>
+		<div class="navtitle"><isprint value="${Resource.msg('account.birthdayclub','account',null)}" /></div>
+		
+		<div><isprint value="${pdict.CurrentCustomer.profile.custom.birthdayClub}" /></div>	
+	</div>
+	
+	<div class="communication-preference">
+		<div class="navtitle"><isprint value="${Resource.msg('account.communicationpreferences','account',null)}" /></div>
+		<div>
+			<isif condition="${pdict.CurrentUser.profile.custom.mobileOptIn}">
+				<isprint value="${Resource.msg('account.textmessage', 'account', null)}" />
+			</isif>
+	
+			<isif condition="${pdict.CurrentUser.profile.custom.emailOptIn}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.mobileOptIn}">
+					<isprint value="${Resource.msg('account.emailmessage', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.emailmessage', 'account', null)}" />
+				</isif>
+					
+			</isif>
+	
+			<isif condition="${pdict.CurrentUser.profile.custom.directMailOptIn}">
+				<isif condition="${!pdict.CurrentUser.profile.custom.mobileOptIn && !pdict.CurrentUser.profile.custom.emailOptIn}">
+					<isprint value="${Resource.msg('account.directmail', 'account', null)}" />
+				<iselse>
+					<isprint value="${Resource.msg('account.comma', 'account', null)}" />
+					<isprint value="${Resource.msg('account.directmail', 'account', null)}" />
+				</isif>
+					
+			</isif>
+		</div>
+	</div>
+</isif>
+
+	<isif condition="${pdict.CurrentUser.profile.custom.customerType.value == 'A' || pdict.CurrentUser.profile.custom.customerType.value == 'C'}">
+		<div class="additional-email">
+			<div class="navtitle"><isprint value="${Resource.msg('profile.AddtionalemailAddress','forms',null)}" /></div>
+			<div class="additional-email-details">
+				<isloop items="${pdict.CurrentCustomer.profile.custom.additionalEmail.split(',')}" var="emailAddress">
+					<div><isprint value="${emailAddress}" /></div>
+				</isloop>
+			</div>
+		</div>
+		
+		<div class="btn">
+			<div class="editInfoBtn">
+				<a class="buttonstyle primaryButtn" title="Show or update your personal information" href="${URLUtils.https('Account-EditProfile')}">${Resource.msg('account.editinformation','account',null)}</a>
+			</div>	
+			<div class="changPswrd">
+				<a class="changepassword secondarybtn" title="Change your password" href="${URLUtils.https('Account-ChangePassword')}"><isprint value="${Resource.msg('account.changepassword', 'account', null)}" /></a>
+			</div>
+		</div>
+	<iselse>
+	
+		<div class="btn">
+			<div class="changPswrd">
+				<a class="changepassword secondarybtn" title="Change your password" href="${URLUtils.https('Account-ChangePassword')}"><isprint value="${Resource.msg('account.changepassword', 'account', null)}" /></a>
+			</div>
+		</div>
+	</isif>
+	
+</div>	
+</isdecorate>
+	
+	

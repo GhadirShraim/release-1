@@ -1,0 +1,12 @@
+/**
+*
+*/
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+	//TODO: Add profile data to customer
+
+	return PIPELET_NEXT;
+}

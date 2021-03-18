@@ -1,0 +1,33 @@
+/**
+* Parses the Order History XML and outputs to JSON
+* Sample implementation of the new xmlToJson function within WebServiceUtils
+*
+
+*-   @input ExampleIn : String This is a sample comment.
+*    @output OList : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.io);
+
+var WebServiceUtils = require("bc_serviceframework/cartridge/scripts/util/WebServiceUtils").WebServiceUtilities;
+
+function execute( pdict : PipelineDictionary ) : Number
+{
+	var jsonObj = {};
+	try{
+		var theXML = "<GetOrderHeadersResponse> <orders> <order> <webOrderNumber>00000000</webOrderNumber> <orderStatus>Shipped</orderStatus> <orderDate>1/5/2014</orderDate> <shippingAddress> <firstName>Chris</firstName> <lastName>Spellman</lastName> <address1>15 Park Row West</address1> <address2>Suite 202</address2> <city>Providence</city> <state>RI</state> <zip>02720</zip> <country>US</country> </shippingAddress> <orderTotal>235</orderTotal> <lineItems> <lineItem> <productID>AB12345</productID> <productName>Shampoo/Conditioner Combo Box</productName> </lineItem> <lineItem> <productID>CD4567</productID> <productName>Hair Gel</productName> </lineItem> </lineItems> </order> <order> <webOrderNumber>12345678</webOrderNumber> <orderStatus>Shipped</orderStatus> <orderDate>3/5/2014</orderDate> <shippingAddress> <firstName>John</firstName> <lastName>Smith</lastName> <address1>100 Main Street</address1> <address2>Apt 123</address2> <city>Providence</city> <state>RI</state> <zip>02903</zip> <country>US</country> </shippingAddress> <orderTotal>456</orderTotal> <lineItems> <lineItem> <productID>XYZ12345</productID> <productName>Shampoo/Conditioner Combo Box</productName> </lineItem> <lineItem> <productID>CD789</productID> <productName>Hair Gel</productName> </lineItem> <lineItem> <productID>BWM456</productID> <productName>Wicked nice car</productName> </lineItem> </lineItems> </order> </orders> </GetOrderHeadersResponse>";
+	
+		jsonObj = WebServiceUtils.xmlToJson(new XML(theXML));
+		var jArray = parseJSON(jsonObj.orders);
+	    
+	}catch(e){
+		trace(e);
+	}finally{
+		if(!empty(jsonObj)){
+			trace("\r\njson: "+JSON.stringify(jsonObj));
+			pdict.ordersObj= jsonObj;
+		}
+	}
+   return PIPELET_NEXT;
+}

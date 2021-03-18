@@ -1,0 +1,294 @@
+
+<isdecorate template="checkout/pt_checkout"/>
+<isinclude template="util/modules"/>
+
+<iscomment>
+	This template visualizes the last step of the checkout, the order summary
+	page prior to the actual order placing.
+	It displays the complete content of the cart including product line items,
+	bonus products, redeemed coupons and gift certificate line items.
+</iscomment>
+
+<isset name="isCreditCardAreaDisplayed" value="${pdict.iFrameCheckout}" scope="page" />
+	
+<isreportcheckout checkoutstep="${5}" checkoutname="${'OrderSummary'}"/>
+	<isif condition="${!empty(pdict.CyberSourceAuthorizeError) && pdict.CyberSourceAuthorizeError}"> 
+		<isscript>
+			var phoneNumJSON = dw.system.Site.current.preferences.custom.ccPhoneNumbers;
+			var customerServiceNum = JSON.parse(dw.system.Site.current.preferences.custom.ccPhoneNumbers);
+		 </isscript>
+		 <isset name="chainCode" value="${pdict.CurrentCustomer.authenticated ? pdict.CurrentCustomer.profile.custom.chainCode : '00'+dw.system.Site.current.preferences.custom.defaultChainCode}" scope="page"/>
+		 <isset name="isPortalUser" value="${'isPortalUser' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+		<isif condition="${isPortalUser}">
+ 			<isset name="chainCode" value="${pdict.CurrentSession.custom.tempChainCode}" scope="page"/>
+ 	 		<isif condition="${!empty(chainCode) && !empty(customerServiceNum)}">
+ 	 			<isset name="customerServiceNo" value="${customerServiceNum[chainCode]}" scope="Page" />
+ 			 </isif>
+   		<iselse>
+  			<isset name="customerServiceNo" value="${customerServiceNum["" +"C"+chainCode+ ""]}" scope="Page" />
+ 		 </isif>
+ 		 <p class="summaryError">
+			<isprint value="${Resource.msgf('checkout.cybersourceerrormsg', 'checkout', null, customerServiceNo)}" />
+		</p>
+		
+	<iselseif condition="${pdict.PaymentOrderError}">
+		<p class="summaryError">
+			${Resource.msg('summary.paymenterror','checkout',null)}
+			${Resource.msg(pdict.PaymentOrderError,'checkout',null)}
+		</p>
+	</isif>
+	
+	<isscript> 
+		delete pdict.CurrentSession.privacy.orderMessage
+	</isscript>
+	
+	<isif condition="${!pdict.CurrentForms.multishipping.entered.value}">
+    	<ischeckoutprogressindicator step="3" multishipping="false" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	<iselse>
+		<ischeckoutprogressindicator step="2" multishipping="true" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	</isif>
+	<iscomment> 
+	<isif condition="${!pdict.CurrentForms.multishipping.entered.value}">
+		<ischeckoutprogressindicator step="3" multishipping="false" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	<iselse>
+		<ischeckoutprogressindicator step="4" multishipping="true" rendershipping="${pdict.Basket.productLineItems.size() == 0 ? 'false' : 'true'}"/>
+	</isif></iscomment>
+	
+	
+	<div class="review-order step-3">
+		
+		<div class="ship-bill-address-wrapper">
+			<div class="prepopulated-address-section">
+				<isinclude template="checkout/shipping/shippingsummary"/>
+				<isinclude template="checkout/billing/minibillinginfo"/>
+			</div>
+			<iscomment> Shows minisummary only to Tablet as part of redesign</iscomment>
+			<div class="billing-summary show-only-tablet">
+				<isinclude template="checkout/minisummary"/>
+			</div>
+		</div>
+		
+		<div class="page-header summary-header">${Resource.msg('summary.pageheader','checkout',null)}</div>
+		
+		<div id="cart-table" class="item-list checkout-details">
+			<div class="items-inyour-cart"><isprint value="${Resource.msgf('cart.total.itemscount','checkout',null,pdict.Basket.productLineItems.size())}" /></div>
+			
+			<iscomment>render each shipment</iscomment>
+			<isset name="shipmentCount" value="${0}" scope="page"/>
+					<isloop items="${pdict.Basket.shipments}" var="shipment" status="shipmentloopstate">
+					<isif condition="${shipment.productLineItems.size() > 0 || shipment.giftCertificateLineItems.size() > 0}">
+						<isset name="shipmentCount" value="${shipmentCount+1}" scope="page"/>
+						<isif condition="${pdict.Basket.shipments.size() > 1}">
+							<div class="cart-row">
+								<div>
+									<div class="shipment-label">Shipment ${'#' + shipmentCount}</div>
+								</div>
+							</div>
+						</isif>
+						
+						<isset name="itemcount" value="${new Number(0)}" scope="Page" />
+						<isset name="sddEnabled" value="${false}" scope="page" />
+						<isif condition="${!pdict.CurrentSession.custom.isPortalUser && 'isEligibleForSSD' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.isEligibleForSSD) && 'bsgOrders' in pdict.CurrentSession.privacy && !empty(pdict.CurrentSession.privacy.bsgOrders)}">
+							<isset name="sddEnabled" value="${true}" scope="page" />
+						</isif>	
+						<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+							<isif condition="${sddEnabled == true && productLineItem.custom.sddOpted == true && productLineItem.custom.deliveryMethod == 'SDD'}">
+								<isif condition="${itemcount == 0}">
+									<isif condition="${!empty(pdict.Basket.custom.preferredDeliveryTime) && pdict.Basket.custom.isSDDBasket == true}">
+										<isset name="currCalader" value="${dw.util.StringUtils.formatCalendar(new dw.util.Calendar(), 'EEEE, MM/dd')}" scope="Page" />
+										<isset name="sddTime" value="${pdict.Basket.custom.preferredDeliveryTime}" scope="page" />
+										<isset name="preferredSddTime" value="${sddTime.split('T')}" scope="page" />
+										<isset name="sddDate" value="${preferredSddTime[0].split('-')}" scope="page" />
+										<isset name="dateInstance" value="${new Date(sddDate[0], sddDate[1] - 1, sddDate[2])}" scope="page" />
+										<isscript>
+											var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+											var sddDayName = days[dateInstance.getDay()];
+										</isscript>						
+										<isset name="sddDeliveryDay" value="${sddDayName+','+(new Number(dateInstance.getMonth())+1)+'-'+dateInstance.getDate()+'-'+dateInstance.getFullYear()}" scope="page" />
+										<isset name="sddPreferredDeliveryTime" value="${sddDeliveryDay+' '+preferredSddTime[1]}" scope="page" />
+										<div class="sdd-order-message"><isprint value="${Resource.msg('orderconfirmations.delivery.message','components',null) +" "+ sddPreferredDeliveryTime}"/></div>					
+								    </isif>
+								</isif>
+								<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+								<isinclude template="checkout/summary/summaryproductdisplay"/>
+							</isif>
+						</isloop>
+						
+						<isset name="itemcount" value="${new Number(0)}" scope="Page" />
+						<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+							<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && 'SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true}">
+								<isif condition="${itemcount == 0}">
+									<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+								</isif>
+								<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+								<isinclude template="checkout/summary/summaryproductdisplay"/>
+							</isif>
+						</isloop>
+						
+						<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+							<isif condition="${!empty(productLineItem.custom.deliveryMethod) && productLineItem.custom.deliveryMethod == 'DC' && !('SDDAvailable' in productLineItem.product.custom && productLineItem.product.custom.SDDAvailable == true)}">
+								<isif condition="${itemcount == 0}">
+									<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+								</isif>
+								<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+								<isinclude template="checkout/summary/summaryproductdisplay"/>
+							</isif>
+						</isloop>
+						
+						<isloop items="${shipment.productLineItems}" var="productLineItem" status="pliloopstate">
+							<isif condition="${empty(productLineItem.custom.deliveryMethod)}">
+								<isif condition="${itemcount == 0}">
+									<div class="order-from-warehouse">${Resource.msg('orderdetails.warehouse.message','components',null)}</div>
+								</isif>
+								<isset name="itemcount" value="${itemcount + 1}" scope="Page" />
+								<isinclude template="checkout/summary/summaryproductdisplay"/>
+							</isif>
+						</isloop>
+						
+					<isloop items="${shipment.giftCertificateLineItems}" var="giftCertificateLineItem" status="gcliloopstate">
+						<tr  class="cart-row <isif condition="${gcliloopstate.first}"> first <iselseif condition="${gcliloopstate.last}"> last</isif>">
+							<td class="item-image">
+								<img src="${URLUtils.staticURL('/images/gift_cert.gif')}" alt="<isprint value="${giftCertificateLineItem.lineItemText}"/>" />
+							</td>
+							<td class="item-details">
+								<div class="gift-certificate-to">
+									<span class="label">${Resource.msg('global.to','locale',null)}:</span>
+									<span class="value">
+										<isprint value="${giftCertificateLineItem.recipientName}"/> 
+										(<isprint value="${giftCertificateLineItem.recipientEmail}"/>) 
+									</span>
+								</div>
+								<div class="gift-certificate-from">
+									<span class="label">${Resource.msg('global.from','locale',null)}:</span>
+									<span class="value"><isprint value="${giftCertificateLineItem.senderName}"/></span>
+								</div>
+							</td>
+							<td class="item-quantity" colspan="2">1</td>
+							<td  class="item-total">
+								<isprint value="${giftCertificateLineItem.price}"/>
+							</td>
+						</tr>
+					</isloop>
+				</isif>
+			</isloop>
+			
+			<iscomment>RENDER COUPON/ORDER DISCOUNTS			
+			<isloop items="${pdict.Basket.couponLineItems}" var="couponLineItem" status="cliloopstate">
+				<isif condition="${couponLineItem.valid && !('discountModel' in couponLineItem.promotion.custom && couponLineItem.promotion.custom.discountModel)}">
+					<div class="cart-row <isif condition="${cliloopstate.first}"> first <iselseif condition="${cliloopstate.last}"> last</isif>">
+						<div class="item-image"><!-- BLANK IMAGE CELL --></div>
+						<div  class="item-details">
+							<div class="name">${Resource.msg('summary.coupon','checkout',null)}</div>
+							<div class="cart-coupon">
+								<span class="label">${Resource.msg('summary.couponnumber','checkout',null)}</span>
+								<span class="value"><isprint value="${couponLineItem.couponCode}"/></span>
+							</div>
+							<isloop items="${couponLineItem.priceAdjustments}" var="Promo" status="loopstate">
+								<div class="discount clearfix <isif condition="${loopstate.first}"> first <iselseif condition="${loopstate.last}"> last</isif>">
+								||||---${Promo.discountModel} ----||||
+									<span class="label"><isprint value="${Promo.lineItemText}"/></span>
+									<span class="value">(<isprint value="${Promo.price}"/>)</span>
+								</div>
+							</isloop>
+						</div>
+						<div class="item-quantity">&nbsp;</div>
+						<div class="item-quantity-details">
+							<div class="item-edit-details">
+								<a href="${URLUtils.url('Cart-Show')}">${Resource.msg('global.editdetails','locale',null)}</a>
+							</div>
+						</div>
+						<div class="item-total">
+							<isif condition="${couponLineItem.applied}">
+								<span class="coupon-applied">${Resource.msg('summary.applied','checkout',null)}</span>
+							<iselse>
+								<span class="coupon-not-applied">${Resource.msg('summary.notapplied','checkout',null)}</span>
+							</isif>
+						</div>
+					</div>
+				</isif>
+			</isloop>
+			<isloop items="${pdict.Basket.priceAdjustments}" var="priceAdjustment" status="cliloopstate">
+				<tr>
+					<td colspan="5" class="cart-promo">
+						<div>
+							<span class="label">${Resource.msg('summary.orderdiscount','checkout',null)}</span>
+							<span class="value"><isprint value="${priceAdjustment.lineItemText}"/></span>
+						</div>
+					</td>
+				</tr>
+			</isloop>
+			</iscomment> 
+		</div><!-- end: item-list  -->
+	</div>
+	<isslot id="placeorder-slot" description="Slot next to Order Totals in the footer of the Place Order page." context="global"/>
+	
+	<iscomment> redesign
+		<isif condition="${pdict.CurrentSession.custom.device == 'mobile'}">
+			<isinclude template="checkout/minisummarymobile"/>
+		</isif>
+	</iscomment>
+	
+	<div class="table-actions">
+	
+		<isif condition="${pdict.Basket.productLineItems.size() > 3}"> 
+			<div>
+				<a class="transparent-button see-more" data-seeless="${Resource.msg('cart.seeless','checkout',null)}" data-seemore="${Resource.msg('cart.seemore','checkout',null)}">${Resource.msg('cart.seemore','checkout',null)}</a>
+			</div>
+		</isif>
+	</div>
+	
+	
+	<div class="order-summary-footer">
+
+		<div class="summary-help">
+			<iscontentasset aid="cs-contact-number"/>
+		</div>
+			
+		<iscomment>
+		<isif condition="${pdict.CurrentSession.custom.device != 'mobile'}">
+			<div class="place-order-totals">
+				<isordertotals p_lineitemctnr="${pdict.Basket}" p_showshipmentinfo="${false}" p_shipmenteditable="${false}" p_totallabel="${Resource.msg('summary.ordertotal','checkout',null)}"/>
+			</div>
+		</isif>
+		</iscomment>
+		<form action="${URLUtils.https('COSummary-Submit')}" method="post"  id="${pdict.CurrentForms.ordertrack.htmlName}" class="submit-order">
+			<fieldset>
+				<div class="SummaryContainer">
+					<iscomment>
+						<div class="orderNotesContainer">
+							<span class="csnoteheader">${Resource.msg('summary.csnoteheader','checkout',null)}</span>
+								<span>${Resource.msg('summary.note','checkout',null)}</span>
+							<isinputfield formfield="${pdict.CurrentForms.summary.comment}" type="textarea" attribute3="data-character-limit" value3="500"/>
+							<p>
+							<span class="csnotedesc">${Resource.msg('summary.csnotedesc','checkout',null)}</span>
+							</p>
+						</div>
+						<div class="POContainer">
+							<isinputfield formfield="${pdict.CurrentForms.ordertrack.ponumber}" type="input"/> 
+						</div>
+					 </iscomment>
+					
+					<div class="order-review-summary">
+						<isordertotals p_lineitemctnr="${pdict.Basket}" p_showshipmentinfo="${true}" p_totallabel="${Resource.msg('global.total','locale',null)}" p_heading="${Resource.msg('ordersummary.ordersummary','components',null)}"/>
+					</div>
+				</div>
+				<div class="form-row">
+						<iscomment> Dont show place order button if user selects new credit : iframe</iscomment>
+						<div class="submit-order-wrapper">
+								<button class="button-fancy-large chechout-button" type="submit" value="${Resource.msg('global.submitorder','locale',null)}" <isif condition="${!empty(pdict.InvalidSDDBasket) && pdict.InvalidSDDBasket == true}">disabled</isif> >
+									${Resource.msg('global.placeorder','locale',null)}
+								</button>
+								<span class="submit-button-msg">${Resource.msg('summary.submitbuttonmsg','checkout',null)}</span>
+							</div>
+					<div class="checkoutMsg">
+						<span>${Resource.msg('summary.checkoutmsg','checkout',null)}</span>
+					</div>
+					<div class="checkout-msg-for-mobile">
+						${Resource.msg('summary.checkoutmsgmobile','checkout',null)}
+					</div>
+				</div>
+				<input type="hidden" name="${pdict.CurrentForms.summary.secureKeyHtmlName}" value="${pdict.CurrentForms.summary.secureKeyValue}"/>
+			</fieldset>
+		</form>
+	</div>
+</isdecorate>

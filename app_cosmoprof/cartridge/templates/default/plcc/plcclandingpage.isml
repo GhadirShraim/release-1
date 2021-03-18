@@ -1,0 +1,22 @@
+<!--- TEMPLATENAME: plcclandingpage.isml --->
+<isinclude template="util/modules"/>
+<isdecorate template="content/home/pt_storefront">
+<div id="primary" class="primary-content">
+<isinclude url="${URLUtils.url('PLCC-LandingContent')}"/>
+<isif condition="${!empty(pdict.CurrentCustomer.authenticated) && pdict.CurrentCustomer.authenticated && pdict.CurrentCustomer.profile.custom.profilestatustype != 'accepted'}">
+	<div id="primary" class="primary-content plcc-unregistered user-pending hide">
+		<div id="pendinguser-popup" class="hide">
+			<iscontentasset aid="apply-pending-user" encoding="off"/>
+		</div>
+	</div>
+<iselse>
+	<div id="primary" class="primary-content plcc-unregistered hide ">
+		<a class="unregistered" href="${URLUtils.url('PLCC-NewCustomer')}"><button type="submit" class="apply-button">Apply Now </button></a>
+	</div>
+</isif>
+
+</div>
+
+</isdecorate>
+
+

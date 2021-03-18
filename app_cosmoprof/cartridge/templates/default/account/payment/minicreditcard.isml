@@ -1,0 +1,78 @@
+<iscomment>
+	Creates a mini credit card display.
+	If p_card is given the second parameter is ignored.
+	Only shown if Owner, Type and Number are not empty (p_card is a credit card).
+	
+	Parameter:
+	p_card	       : the PaymentInstrument object to display
+	p_cc_formfield : a credit card formfield element
+</iscomment>
+<isscript>
+	var ccType   : String;
+	var ccNumber : String;
+	var ccMonth  : Integer;
+	var ccYear   : Integer;
+	var ccOwner  : String;
+    var ccToken  : String;
+	if( pdict.p_card != null )
+	{   
+		ccType   = pdict.p_card.creditCardType;
+		ccToken  = pdict.p_card.creditCardToken;
+		ccNumber = pdict.p_card.maskedCreditCardNumber;
+		ccMonth  = pdict.p_card.creditCardExpirationMonth;
+		ccYear   = pdict.p_card.creditCardExpirationYear;
+		ccOwner  = pdict.p_card.creditCardHolder;
+		var token_number = ccToken.substring(ccToken.length-4);
+		var last_token_number ;
+			if(ccToken.indexOf(token_number) != -1){
+			    last_token_number = ccToken.replace(token_number,'');
+				last_token_number = last_token_number.replace(/./gi, '*');
+				ccToken = last_token_number+token_number;
+			}
+		
+	}
+	else
+	{
+		ccType   = pdict.p_cc_formfield.type.htmlValue;
+		ccNumber = pdict.p_cc_formfield.number.htmlValue;
+		ccMonth  = pdict.p_cc_formfield.month.value;
+		ccYear   = pdict.p_cc_formfield.year.value;
+		ccOwner  = pdict.p_cc_formfield.owner.htmlValue;
+	}
+</isscript>
+
+<isif condition="${!empty(pdict.isorderconfirmationpage) && pdict.isorderconfirmationpage == 'true'}">
+	<isif condition="${!empty(ccNumber)}">
+		<isprint value="${ccNumber}"/><br />
+	</isif>
+	<isif condition="${!empty(ccOwner)}">	
+		<isprint value="${ccOwner}"/><br />
+	</isif>
+	<isif condition="${!empty(ccType)}">
+		<isif condition="${!empty(pdict.p_card.custom.isPLCC) && pdict.p_card.custom.isPLCC}">
+			${Resource.msg('paymentinstrument.isPLCC','account',null)}<br />
+		<iselse>
+			<isprint value="${ccType}"/><br />
+		</isif>	
+	</isif>
+	<isif condition="${!empty(ccMonth) && !empty(ccYear)}">	
+		${Resource.msg('minicardcard.expires','account',null)}<isprint value="${ccMonth}" formatter="00"/>.<isprint value="${ccYear}" formatter="0000"/>
+	</isif>
+<iselse>
+	<isif condition="${!empty(ccOwner)}">	
+		<isprint value="${ccOwner}"/><br />
+	</isif>
+	<isif condition="${!empty(ccNumber)}">
+		<isprint value="${ccNumber}"/><br />
+	</isif>
+	<isif condition="${!empty(ccType)}">
+		<isif condition="${!empty(pdict.p_card.custom.isPLCC) && pdict.p_card.custom.isPLCC}">
+			${Resource.msg('paymentinstrument.isPLCC','account',null)}<br />
+		<iselse>
+			<isprint value="${ccType}"/><br />
+		</isif>			
+	</isif>
+	<isif condition="${!empty(ccMonth) && !empty(ccYear)}">	
+		${Resource.msg('minicardcard.expires','account',null)}<isprint value="${ccMonth}" formatter="00"/>.<isprint value="${ccYear}" formatter="0000"/>
+	</isif>
+</isif>

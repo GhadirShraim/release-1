@@ -1,0 +1,33 @@
+/**
+* Find Customers To Delete
+* To define input and output parameters, create entries of the form:
+*
+*   @output CustomersToDelete : Array
+*
+*/
+var CustomerMgr = require('dw/customer').CustomerMgr;
+var Profile = require('dw/customer').Profile;
+var SeekableIterator = require('dw/util').SeekableIterator;
+var Logger = require('dw/system').Logger;
+
+function execute( args : PipelineDictionary ) : Number
+{
+	try {
+		var customersDisabled : SeekableIterator = CustomerMgr.searchProfiles("custom.deleteFlag = {0}", null,true);
+		
+		var profileArray : Array = [];
+		for each (var profile : Profile in customersDisabled) {
+			profileArray.push( profile );
+		}
+		
+		customersDisabled.close();
+		
+		args.CustomersToDelete = profileArray;
+	} catch (ex) {
+		Logger.error("[FindCustomersToDelete] There was an error finding disabled customers: {0}", ex);
+		
+		return PIPELET_ERROR;
+	}
+
+   return PIPELET_NEXT;
+}

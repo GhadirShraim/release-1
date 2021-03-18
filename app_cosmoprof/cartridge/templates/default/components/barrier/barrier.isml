@@ -1,0 +1,51 @@
+<iscache status="off">
+<isset name="DecoratorTemplate" value="components/barrier/pt_barrier" scope="page"/>
+<isset name="isAjax" value="${(pdict.CurrentHttpParameterMap.format.stringValue == 'ajax') || !empty(pdict.fromRegistration)}" scope="page"/>
+<isif condition="${'isPortalUser' in pdict.CurrentSession.custom && pdict.CurrentSession.custom.isPortalUser}" >
+	<isset name="DecoratorTemplate" value="components/barrier/pt_portalbarrier" scope="page"/>
+</isif>
+<isif condition="${isAjax}">
+	<isset name="DecoratorTemplate" value="util/pt_empty" scope="page"/>
+</isif>
+
+<isdecorate template="${DecoratorTemplate}">
+	<isinclude template="util/modules"/>
+	<isif condition="${pdict.LoginSuccess}">
+		<div class="loginsuccesstrue">
+			<iscomment>Just to check if Customer Exist in DW and Login is success! </iscomment>
+		</div>
+	 </isif>
+
+	<isif condition="${!empty(pdict.showAddressSelection) && pdict.showAddressSelection}">
+		<a href="${URLUtils.url('LoginBarrier-SelectShippingAddress')}" id="barrier-address-trigger-link" class="dialogify" data-dlg-options='{"dialogClass":"close","closeOnEscape":"false" }' ></a>
+		<isif condition="${!empty(pdict.CurrentUser) && pdict.CurrentUser.authenticated}">
+   			<div class="login-box login-account">
+	   			  <div class="login-box-content returning-customers clearfix">
+	   			  	  <div class="customerid hide">${pdict.CurrentUser.ID}</div>
+	   			  </div>
+   			</div>
+   		</isif>
+	<iselse>
+		<iscomment>TODO:  Make resource for title and other text</iscomment>
+		
+		<div>
+			<isinclude template="account/login/logininclude"/>
+		</div>
+		
+		<div>
+			<ispreregistration />
+		</div>
+		
+	</isif>
+
+	<isif condition="${isAjax}">
+		<script type="text/javascript">
+			app.loginbarrier.init();
+		</script>
+	</isif>
+
+</isdecorate>
+
+<script type="text/javascript">
+	app.pageRetentionURL = "${'pageRetention' in pdict.CurrentSession.custom ? pdict.CurrentSession.custom.pageRetention : ''}";
+</script>

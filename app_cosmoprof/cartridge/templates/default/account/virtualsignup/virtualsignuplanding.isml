@@ -1,0 +1,53 @@
+<isdecorate template="account/pt_virtualsignup"/>
+<isinclude template="util/modules"/>
+	<isif condition="${!empty(pdict.CurrentHttpParameterMap.sessionViolation.value) && pdict.CurrentHttpParameterMap.sessionViolation.value =='true' }">
+		<div class="error">
+			<isprint value="${Resource.msg('vsu.sessionout', 'account', null)}" />
+		</div>
+	 </isif>
+	<isslot id="vsu-landing-introcopy" description="Intro copy for the virtual account signup page" context="global" />
+	<iscomment> 
+		<div class="vsu-landing-banner">
+			<isslot id="vsu-landing-banner" description="Banner for the virtual account signup page" context="global" />
+		</div>
+	</iscomment>
+	 
+	<div class="virtualsignup-bottom"> 
+		<isif condition="${!empty(session.custom.vsuemployee) && session.custom.vsuemployee}">
+			<div class="vsu-landing-validation">
+				<isif condition="${typeof pdict.StoreAssociateErrorStatus != 'undefined' && pdict.StoreAssociateErrorStatus.error}">
+					<div>${Resource.msg(pdict.StoreAssociateErrorStatus.code,'virtualsignup','Invalid Credentials')}</div>
+				</isif>
+				<form method="post" id="vsu-associate-validation-form" class="associate-validation" action="${URLUtils.httpsContinue()}">
+					<isinputfield formfield="${pdict.CurrentForms.profile.associate.associateid}" type="input" rowClass="associatevalidation"/>
+					<isinputfield formfield="${pdict.CurrentForms.profile.associate.associatestorenumber}" type="input" rowClass="associatevalidation"/>
+					<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+					
+					<button type="submit" name="${pdict.CurrentForms.profile.associate.validate.htmlName}" id="StoreAssociateButton" value="${Resource.msg('virtualsignup.validate', 'account', null)}">
+						${Resource.msg('virtualsignup.validate', 'account', null)}
+					</button>
+					<div class="login-rememberme">
+						<isinputfield formfield="${pdict.CurrentForms.profile.associate.rememberme}" type="checkbox" xhtmlclass="remember-me"/>
+					</div>
+					
+				</form>
+			</div>
+		<iselse/>
+			<div class="vsu-landing-start">
+				<iscomment> 
+					<div class="vsu-landing-start-asset">
+						<isslot id="vsu-landing-start" description="Start slot for the virtual account signup page" context="global" />
+					</div> 
+				</iscomment>
+				<form method="post" action="${URLUtils.httpsContinue()}" id="vsu-begin-signup" name="${pdict.CurrentForms.profile.htmlName}">
+					<div class="form-row form-row-button ">
+						<button type="submit" value="bupkiss" class="primaryButtn" name="${pdict.CurrentForms.profile.save.htmlName}">
+							${Resource.msg('virtualsignup.begin','account',null)}
+						</button>
+					</div>
+				<input type="hidden" name="${pdict.CurrentForms.profile.secureKeyHtmlName}" value="${pdict.CurrentForms.profile.secureKeyValue}"/>
+			</form>
+			</div>
+		</isif>
+	</div>
+</isdecorate>

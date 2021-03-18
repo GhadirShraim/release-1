@@ -1,0 +1,612 @@
+/**
+* View Helpers are small snippets of code that can be called in your views to help keep isml DRY
+* i.e. Any code that you are repeating regularly can most likely be moved into a helper.
+*/
+
+importPackage( dw.system );
+importPackage(dw.util);
+var CatalogMgr = require('dw/catalog').CatalogMgr;
+
+/**
+ * Gets a list of online categories that have the showInMenu attribute set to true.
+ *
+ * @input Category  : category A Category list
+ * @output subcategories  : Array Subcategories for menu
+ */
+function getSubcategoriesInMenuForCategory(Category : dw.catalog.Category) : Object {
+    var Subcategories = Category.getOnlineSubCategories();
+    var result = [];
+    if(!empty(Subcategories)){
+        for each(var Subcategory : dw.catalog.Category in Subcategories) {
+        	if(('showInMenu' in Subcategory.custom) && Subcategory.custom.showInMenu.valueOf()) {
+        		result.push(Subcategory);
+        	}
+        }
+    }
+    return result;
+} 
+
+/**
+*	This function is used to exclude or include categories based on matching of consolidation 
+*	and portal codes to the exclusion lists per category
+*/
+function checkIfExcluded(conCode,cCode,cat) : Boolean {
+	
+	try
+	{      
+		var isConMatch = false;
+		var isPorMatch = false;
+		
+		var customAttrs = cat.getCustom();
+		var exCon = 'excludedConsolidations' in customAttrs ? customAttrs.excludedConsolidations : [];
+		var exPor = 'excludedPortal' in customAttrs ? customAttrs.excludedPortal : [];
+		
+		for(var n=0;n<exCon.length;n++)
+		{
+			if(exCon[n].value == conCode)
+			{
+				isConMatch = true;
+				break;
+			}
+		}
+		
+		for(var k=0;k<exPor.length;k++)
+		{
+			if(exPor[k].value == cCode)
+			{
+				isPorMatch = true;
+				break;
+			}
+		}
+		
+		//Check to see if both or one of the portal and consolidation codes match the exclusions
+		//If there is a match, exclude the category by returning TRUE
+		if((isConMatch && isPorMatch) || isConMatch || isPorMatch)
+		{
+    		return true;
+    	}
+	        
+		//return FALSE if no conditions are met, which means do NOT exclude this category
+		return false;
+	}
+	catch(e)
+	{
+		Logger.error("ViewHelper.ds method checkIfExcluded has failed with the following error: " + e);
+		return false;	
+	}	
+}
+
+/**
+*	This function is used to build an array of tags from the content blog
+*/
+function buildTagsArray(contentsearchresult) : Array {
+	
+	try
+	{    
+		if(contentsearchresult == null || empty(contentsearchresult))
+		{
+			return [];
+		}
+		
+		var tagsArray = [];
+
+		for each(var c in contentsearchresult.content)
+		{
+			var tags = ('tags' in c.custom && c.custom.tags != null ? c.custom.tags.split(',') : []);
+			
+			for each(var tag in tags)
+			{
+				if(tagsArray.indexOf(tag) < 0)
+				{
+					tagsArray.push(tag);
+				}
+			}		
+		}
+	
+		return tagsArray;
+	}
+	catch(e)
+	{
+		Logger.error("ViewHelper.ds method buildTagsArray has failed with the following error: " + e);
+		return [];	
+	}	
+}
+
+function getTopLevelCategory() : Object {
+
+    var siteCatalog : dw.catalog.Catalog = CatalogMgr.getSiteCatalog();
+    var root : dw.catalog.Category = null;
+
+	if(siteCatalog != null)
+    {
+    	root = siteCatalog.getRoot();
+    }
+    
+    return root;
+}
+
+/**
+*	This function is used to check if an object is online based on
+*	from and to dates
+*/
+function checkIfOnlineFromTo(from,to) : Boolean {
+	
+	try
+	{      
+		var currentCal = new dw.util.Calendar();
+		var fromCal = !empty(from) ? new dw.util.Calendar(from) : '';
+		var toCal = !empty(to) ? new dw.util.Calendar(to) : '';
+		
+		if(!empty(fromCal) && !empty(toCal))
+		{
+			var from = fromCal.before(currentCal);
+			var to = toCal.after(currentCal);
+			
+			if(from && to)
+			{
+				return true;
+			}	
+		}
+		else if(!empty(fromCal) && empty(toCal))
+		{
+			if(fromCal.before(currentCal))
+			{
+				return true;
+			}
+		}
+		else if(empty(fromCal) && !empty(toCal))
+		{
+			if(toCal.after(currentCal))
+			{
+				return true;
+			}
+		}
+		else if(empty(fromCal) && empty(toCal))
+		{
+			return true;
+		}
+		return false;
+	}
+	catch(e)
+	{
+		Logger.error("ViewHelper.ds method checkIfOnlineFromTo has failed with the following error: " + e);
+		return false;	
+	}	
+}
+
+/**
+*	namespace for functions used on categoryflyout.isml
+*/
+function MainNavigationUtilities() {}
+
+/**
+*	calculates rendering information based on the category using subcategory information  
+*/
+MainNavigationUtilities.generateFlyoutRendering = function(topCat) {
+	var flyoutRenderer = new Object();
+	var subCategories = getSubcategoriesInMenuForCategory(topCat);
+	flyoutRenderer.subCategories = subCategories;
+	
+	
+	if(subCategories.length > 15) {
+		flyoutRenderer.firstcolcount = Math.ceil(subCategories.length).toFixed();
+	} else {
+	   	flyoutRenderer.firstcolcount = subCategories.length;
+	}
+	
+	flyoutRenderer.columns = flyoutRenderer.firstcolcount != subCategories.length ? 2 : 1;
+	flyoutRenderer.hasCustomContent = !empty(topCat.custom.headerMenuBanner);
+	flyoutRenderer.renderFlyout = !!(flyoutRenderer.hasCustomContent ||  (subCategories.length != 0));
+	if(flyoutRenderer.hasCustomContent && !empty(subCategories)){
+	    flyoutRenderer.columns++;
+	}
+	
+	flyoutRenderer.topCatId = topCat.getID();
+	
+	if ('headerMenuOrientation' in topCat.custom && !empty(topCat.custom.headerMenuOrientation) && topCat.custom.headerMenuOrientation == 'Horizontal') {
+		flyoutRenderer.colLayout = "horizontalCol";
+		flyoutRenderer.colLayoutHoriz = true;
+	} else {
+		flyoutRenderer.colLayout = "verticalCol";
+		flyoutRenderer.colLayoutHoriz = false;
+	}
+	return flyoutRenderer;
+}
+	
+/**
+*	Prints out category's alternative url if maintained on custom attribute
+*	uses custom attribute of type MarkupText to be able to maintain url-util styled urls - i.e $url('GiftCert-Purchase')$  
+*/
+MainNavigationUtilities.getCategoryUrl = function(category) {
+	var url : dw.web.URL = dw.web.URLUtils.http('Search-Show', 'cgid', category.getID());
+	if (('alternativeUrl' in category.custom) && !empty(category.custom.alternativeUrl)) {
+		url = category.custom.alternativeUrl;
+	}
+	
+	if ('appRequest' in session.custom && !empty(session.custom.appRequest) && !empty(category.custom.app_alternative_url)) {
+		url = category.custom.app_alternative_url;
+	}		
+	return url;
+}	
+/**
+* Returns HttpParameterMap as JSON serializable simple object
+*/
+MainNavigationUtilities.getSimpleHttpParams = function(map : dw.web.HttpParameterMap) {
+	var params = {};
+	for(var i=0,len=map.parameterNames.length;i<len;i++) {	
+		var paramName = map.parameterNames[i];
+		params[paramName] = map.get(paramName).stringValue;
+	}
+	return params;
+}
+
+/**
+* Returns HttpParameterMap as uri encoded querystring 
+*/
+MainNavigationUtilities.getHttpParamsAsQueryString = function(map : dw.web.HttpParameterMap, suppressParams : Array) {	
+	var len = map.parameterNames.length;
+	var params : Array = [];
+	for(var i=0,len=map.parameterNames.length;i<len;i++) {
+		var paramName = map.parameterNames[i];
+		if (suppressParams && suppressParams.indexOf(paramName) >= 0) { continue; }	
+		params.push(encodeURIComponent(paramName)+"="+encodeURIComponent(map.get(paramName).stringValue));		
+	}
+	var result = params.join("&"); 
+	return result;
+}
+
+function fluidRetailGetImageUrl(type : String, product : dw.catalog.Product, color : String) : String {
+
+  var customer_id = "c1442";
+  var p_id = getMasterProductId(product);
+  if(empty(color)){
+  	var color : String = getColorName(product);
+  }
+
+  var image_settings = {
+        category:       "http://cdn.fluidretail.net/customers/{customer_id}/{id}/generated/{id}_{color}_1_230x345.jpg"
+      , recommendation: "http://cdn.fluidretail.net/customers/{customer_id}/{id}/generated/{id}_{color}_1_128x192.jpg"
+      , pdpthumbnail:   "http://cdn.fluidretail.net/customers/{customer_id}/{id}/generated/{id}_{color}_1_40x60.jpg"
+      , cart:           "http://cdn.fluidretail.net/customers/{customer_id}/{id}/generated/{id}_{color}_1_84x126.jpg"
+      , swatchsmall:    "http://cdn.fluidretail.net/customers/{customer_id}/{id}/{id}_swatches_small/thumb_variation_{color}_11x11.jpg"
+      , swarchlarge:    "http://cdn.fluidretail.net/customers/{customer_id}/{id}/{id}_swatches_small/thumb_variation_{color}_11x11.jpg"
+  };
+
+    if(!type in image_settings) {
+    	return;
+    }
+    
+    return image_settings[type].
+            replace((new RegExp('{customer_id}','')), customer_id).
+            replace((new RegExp('{id}','g')), p_id).
+            replace((new RegExp(color?'{color}':'_{color}','')), color||'');
+}
+
+
+/**
+ * Gets the color name for a product or its default variation.
+ */
+function getColorName(product : dw.catalog.Product) : String {
+    var currentProduct = getCurrentProduct(product);
+    if (currentProduct != null) {
+        var variationModel : dw.catalog.ProductVariationModel = currentProduct.variationModel;
+        return variationModel.getSelectedValue(variationModel.getProductVariationAttribute('color')).getID();
+    }
+    return '';
+}
+
+
+
+/**
+ * Returns the current product or its default variation if it is a variation master
+ */
+function getCurrentProduct(product : dw.catalog.Product) : dw.catalog.Product {
+
+    var currentProduct = product;
+    if(!empty(product.master)) {
+        if(!empty(product.variationModel.defaultVariant)) {
+            currentProduct = product.variationModel.defaultVariant;
+        } else if(product.variationModel.variants.length > 0) {
+            currentProduct = product.variationModel.variants[0];
+        }
+    }
+    return currentProduct;
+}
+
+
+
+/**
+ * Returns the ID of this product or it's master if it is a variant
+ */
+function getMasterProductId(product : dw.catalog.Product) : String {
+    if(product.isVariant()) {
+    	var productVariant : dw.catalog.Variant = product;
+		return productVariant.getMasterProduct().ID;
+    }
+    return product.ID;
+}
+
+function ViewHelpers() {};
+ViewHelpers.isMobile = function() {
+	var mobileAgentHash = ["mobile","tablet","phone","ipad","ipod","android","blackberry","windows ce","opera mini","palm"],
+		idx = 0,
+		item = null,
+		isMobile = false,
+		userAgent = request.httpUserAgent.toLowerCase();
+			
+	while (item = mobileAgentHash[idx++] && !isMobile) {
+		isMobile = (userAgent.indexOf(mobileAgentHash[idx]) >= 0);
+	}
+	return isMobile;	
+};
+
+
+ViewHelpers.getFieldOptions = function(formField : dw.web.FormField, resourceFile : String) {	
+	if (empty(formField.options)) {
+		return {};
+	}
+	var fields = {};
+	
+	var opts = formField.options;
+	for (o in opts) {
+		try {
+			if (opts[o] && opts[o].value && opts[o].value.length > 0) { 
+				var option = opts[o];
+				fields[option.value] = dw.web.Resource.msg(option.label, resourceFile, option.label);
+			}
+		}
+		catch (error) {
+			if (!fields.error) {
+				fields.error = [];
+			}
+			fields.error.push("Error: "+error);
+		} 
+	}	
+	
+	return fields;
+};
+
+ViewHelpers.getCountriesAndRegions = function(countryField : dw.web.FormField,  stateForm : dw.web.FormGroup, resourceName : String) {
+	
+	var list = {};	
+	if (empty(countryField.options)) {
+		return list;
+	}
+	
+	var countryOptions = countryField.options;
+	for (o in countryOptions) {
+		try {
+			if (countryOptions[o] && countryOptions[o].value && countryOptions[o].value.length > 0) { 
+				var option = countryOptions[o];									
+				var formField = stateForm["state"+option.value]
+				list[option.value] = {					
+					label:dw.web.Resource.msg(formField.label, resourceName, formField.label),
+					regions: ViewHelpers.getFieldOptions(formField, resourceName)
+				};			
+			}
+		}
+		catch (error) {
+			if (!list.error) {
+				list.error = [];
+			}
+			list.error.push("Error: "+error);
+		} 
+	}
+	return list;	
+};
+
+ViewHelpers.PhoneNumberFormatter = function (phoneNumber : String) {
+	var formattedNumber = phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+	return formattedNumber;
+	
+};
+
+ViewHelpers.checkPOBOXGeneral = function (basket : dw.order.Basket) 
+{
+	if(basket != null){	
+		var shipments = basket.getShipments();
+		var regExp : RegExp = new RegExp('^[af][ .]?p[ .]?(o\s*$)|((post [O|o])[.]?(ffice)?[ ]?(box)?(bin)?)|(\bp[ .]?\s?o[ .]?\s?box)|(P[.]?[O]?[.]?B[.]?\b)|((post [B|b]ox))|(\b(P[.]?O[.]?[ ]?\b)([a-zA-Z0-9]+)?)','i');
+		var isValidShippingAddress :Boolean = true;
+		var shipAddr;
+		
+		if(!empty(shipments)) {
+			for each(var shipment in shipments)	{
+				shipAddr = shipment.getShippingAddress();
+				if(!empty(shipAddr)) {
+					if(regExp.test(shipAddr.address1) || regExp.test(shipAddr.address2) || regExp.test(shipAddr.city)) {
+						isValidShippingAddress = false;
+						return isValidShippingAddress;
+					}
+				}
+			}
+		}
+		return isValidShippingAddress;
+	}
+};
+
+ViewHelpers.checkIfBannerPortalExcluded = function(cat) : Boolean {
+	
+	try
+	{ 
+		var a = customer;
+		var cCode  = customer.authenticated && !empty(customer.profile) &&  'chainCode' in customer.profile.custom ? customer.profile.custom.chainCode : '';
+		if (empty(cCode)) {
+			cCode = '00' + dw.system.Site.current.preferences.custom.defaultChainCode;
+		}
+		var isExcluded  = false;
+		var customAttrs = cat.getCustom();
+		var excludedPortals = 'ExlcudePortalPLPSlot' in customAttrs ? customAttrs.ExlcudePortalPLPSlot : [];
+		
+		for(var k=0;k<excludedPortals.length;k++)
+		{
+			if(excludedPortals[k].value == cCode)
+			{
+				isExcluded = true;
+				break;
+			}
+		}
+		return isExcluded;
+		
+	}
+	catch(e)
+	{
+		Logger.error("ViewHelper.ds method checkIfBannerPortalExcluded has failed with the following error: " + e);
+		return false;	
+	}	
+}
+
+ViewHelpers.checkIfEligibleForPLPBanner = function(psr, cat) : Boolean {
+	
+	try
+	{
+		var eligible  = true;
+		
+		//If category itself is NA.
+		if (empty(cat) || empty(psr)) {
+			return false;
+		}
+		//Check Site Pref if Site Pref enablePLPBanner is set.
+		let isEnabledPLPSlot = 'enablePLPBanner' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.enablePLPBanner : false;
+		
+		if(!isEnabledPLPSlot) {
+			return false;
+		}
+		
+		//Check If this Category Allow Banner Slot.
+		let isCatEnabledForSlot = 'displayBanner' in cat.custom && cat.custom.displayBanner ? cat.custom.displayBanner : false;
+		if(!isCatEnabledForSlot) {
+			return false;
+		}
+		
+		var cCode = '';
+		if(customer.authenticated && !empty(customer.profile)) {
+			cCode = 'chainCode' in customer.profile.custom && !empty(customer.profile.custom.chainCode) ? customer.profile.custom.chainCode : ''
+		} else if('tempChainCode' in session.custom && !empty(session.custom.tempChainCode)) {
+			cCode = session.custom.tempChainCode;
+		} else {
+			var cCode  = '00' + dw.system.Site.current.preferences.custom.defaultChainCode;
+		}
+		
+		
+		var customAttrs = cat.getCustom();
+		var excludedPortals = 'ExlcudePortalPLPSlot' in customAttrs ? customAttrs.ExlcudePortalPLPSlot : [];
+		
+		if(!empty(cCode)) {
+			for(var k=0;k<excludedPortals.length;k++){
+				if(excludedPortals[k].value == cCode)
+				{
+					return false;
+				}
+			}
+		}
+		
+		if (psr.refinedByAttribute) {
+			var isAllowedRefineAttr = 'allowBannerWithRefinement' in customAttrs && customAttrs.allowBannerWithRefinement ? customAttrs.allowBannerWithRefinement : false;
+			if(!isAllowedRefineAttr) {
+				return false;
+			}
+		}
+		
+		return eligible;
+		
+	}
+	catch(e)
+	{
+		Logger.error("ViewHelper.ds method checkIfEligibleForPLPBanner has failed with the following error: " + e);
+		return false;	
+	}	
+}
+
+ViewHelpers.checkIfEligibleForSearchPLPBanner = function(psr, phrase) : Boolean {
+	
+	try
+	{
+		var eligible  = true;
+		
+		//Check Site Pref if Site Pref enablePLPBanner is set.
+		let isEnabledPLPSlot = 'enableSearchPLPBanner' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.enableSearchPLPBanner : false;
+		
+		if(!isEnabledPLPSlot) {
+			return false;
+		}
+		
+		//If category itself is NA.
+		if (empty(psr) || empty(phrase)) {
+			return false;
+		}
+		var newPhrase = phrase;
+		if (phrase.indexOf('-') > -1) {
+			newPhrase = phrase.substring(0, (phrase.indexOf('-'))-1);
+		}
+		 
+		if(empty(newPhrase)) {
+			return false;
+		}
+		
+		
+		
+		var cCode = '';
+		if(customer.authenticated && !empty(customer.profile)) {
+			cCode = 'chainCode' in customer.profile.custom && !empty(customer.profile.custom.chainCode) ? customer.profile.custom.chainCode : ''
+		} else if('tempChainCode' in session.custom && !empty(session.custom.tempChainCode)) {
+			cCode = session.custom.tempChainCode;
+		} else {
+			var cCode  = '00' + dw.system.Site.current.preferences.custom.defaultChainCode;
+		}
+		
+		
+		//Get the Configuration assets and config.
+		/*
+		*@Asset ID - searchPagePLPBannerConfigAssets
+		*/
+		
+		var assetContent  = dw.content.ContentMgr.getContent("searchPagePLPBannerConfigAssets");
+		if(empty(assetContent)) {
+			return false;
+		}
+		
+		var assetConfig = assetContent.custom.plpBannerContentConfig;
+		if(empty(assetConfig)) {
+			return false;
+		}
+		var config = JSON.parse(assetConfig);
+		
+		if( empty(config[newPhrase]) ) {
+			return false;
+		}
+		
+		//Get Included Portals
+		var portals = !empty(config[newPhrase].portals) ? config[newPhrase].portals.split('|') : '';
+		
+		if(!empty(portals)) {
+			for(var k=0;k<portals.length;k++) {
+				if(portals[k] == cCode) {
+					return true;
+				}
+			}
+		} else {
+			return false;
+		}
+		
+		return eligible;
+		
+	}
+	catch(e)
+	{
+		var error = e;
+		Logger.error("ViewHelper.ds method checkIfEligibleForSearchPLPBanner has failed with the following error: " + e);
+		return false;	
+	}	
+}
+
+//CP-1647 - All blog articles are date driven and arranged manually by the time a new post is added.
+ViewHelpers.getBlogContent = function (contentarraylist : ArrayList) {
+	var blogContentarray : ArrayList = new ArrayList();
+	if(contentarraylist != null) {
+		for(var i=0;i<contentarraylist.length;i++){
+			blogContentarray.push(contentarraylist[i]);
+		}
+		blogContentarray.sort(new PropertyComparator("creationDate", false));
+	}
+	return blogContentarray;
+}

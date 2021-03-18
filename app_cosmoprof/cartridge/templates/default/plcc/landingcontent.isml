@@ -1,0 +1,4 @@
+<!--- TEMPLATENAME: landingcontent.isml --->
+<isinclude template="util/modules"/>
+<iscache type="relative" hour="24"/>
+<isslot id="plcc-lading" description="Banner for PLCC landing Page" context="global" />

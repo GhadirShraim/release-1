@@ -1,0 +1,83 @@
+<isinclude template="util/modules"/>
+<isset name="isCosmoUser" value="${!pdict.CurrentSession.custom.isPortalUser}" scope="page" />
+<isset name="AllowingState" value="${'shoppingListAllowingState' in dw.system.Site.current.preferences.custom && dw.system.Site.current.preferences.custom.shoppingListAllowingState.toString().indexOf(pdict.CurrentCustomer.addressBook.preferredAddress.stateCode) > -1}" scope="page" />
+<isset name="SLUUID" value="${''}" scope="PAGE" />
+<isif condition="${pdict.CurrentCustomer.authenticated && isCosmoUser && !empty(pdict.CurrentCustomer.profile.custom.shoppingListUUID)}">
+	<isset name="SLUUID" value="${pdict.CurrentCustomer.profile.custom.shoppingListUUID}" scope="PAGE" />
+</isif>
+
+<div class="duplicateerrormsg"></div>
+<div id="registry-wrapper">
+	<h2><isprint value="${Resource.msg('giftregistry.header','product',null)}" /></h2>
+	<div id="registry-primary">
+		<iscomment>Cloned Primary Image will get appended to this section via Javascript</iscomment>
+	</div>
+	<div id="registry-secondary">
+		<isif condition="${!empty(pdict.CurrentForms.productlists.items)}">
+			<iscomment>
+			<isset name="listName" value="${new dw.util.ArrayList()}" scope="Page" />
+			<isscript>
+				var fablist = {
+					name : 'FAVORITES'
+				}
+				listName.add(fablist);
+			 </isscript>
+			<isloop items="${pdict.CurrentForms.productlists.items}" var="item" >
+				<isscript>
+					var mylist = {
+						UUID : item.object.UUID,
+						name : item.object.name
+					}
+					listName.add(mylist);
+				 </isscript>
+			 </isloop>
+			<isset name="listvoid" value="${listName.sort(new dw.util.PropertyComparator('name'))}" scope="Page" />
+			 </iscomment>
+			<label>${Resource.msg('giftregistry.chooselist','product',null)}</label>
+			<select id="MyLists" name="MyLists" class="input-select">
+				<isif condition="${isCosmoUser && AllowingState && 'chainCodeAllowShoppingList' in dw.system.Site.current.preferences.custom && (new dw.util.ArrayList(dw.system.Site.current.preferences.custom.chainCodeAllowShoppingList)).contains(pdict.CurrentCustomer.profile.custom.chainCode)}">
+					<option value="${Resource.msg('product.storeshoppinglist','product',null)}" selected="selected" data-listid="${!empty(SLUUID) ? SLUUID : ''}" data-listname='SRORELIST' ><isprint value="${Resource.msg('product.storeshoppinglist','product',null)}" /></option>
+				</isif>
+					<option value="${Resource.msg('product.favorites','product',null)}" ${!isCosmoUser ? selected="selected" : ''}><isprint value="${Resource.msg('product.favorites','product',null)}" /></option>
+					<isif condition="${isCosmoUser && pdict.CurrentCustomer.authenticated}">
+					
+						<isloop items="${pdict.CurrentForms.productlists.items}" var="item" status="loopstate">
+							<isif condition="${empty(SLUUID) || item.object.UUID != SLUUID}"> 
+								<option value="${item.object.name}"  data-listid="${item.object.UUID}"  >
+									<isprint value="${item.object.name}"/>
+								</option>
+							</isif>
+						</isloop>
+					<iselse>
+						<isloop items="${pdict.CurrentForms.productlists.items}" var="item" status="loopstate">
+							<option value="${item.object.name}"  data-listid="${item.object.UUID}"  >
+								<isprint value="${item.object.name}"/>
+							</option>
+						</isloop>
+					</isif>
+					<option value="${Resource.msg('product.newlist','product',null)}" class="newlist-option" data-listname='NEWLIST' ><isprint value="${Resource.msg('registrylist.nameyournewlist','account',null)}" /></option>
+			</select>
+		<iselse>
+			<select id="MyLists" name="MyLists" class="input-select">
+				<option value="${Resource.msg('product.favorites','product',null)}" selected="selected"><isprint value="${Resource.msg('product.favorites','product',null)}" /></option>
+				<option value="${Resource.msg('product.newlist','product',null)}" class="newlist-option" data-listname='NEWLIST' ><isprint value="${Resource.msg('registrylist.nameyournewlist','account',null)}" /></option>
+			</select>
+		</isif>
+			
+		<div class="createmylist hide">		
+			<isinputfield formfield="${pdict.CurrentForms.giftregistry.event.name}" type="input" label="${false}" attribute1="placeholder" value1="${Resource.msg('registrylist.nameyournewlist','account',null)}" />
+		</div>
+	</div>
+	
+	<div class="submitsection">
+	 	<iscomment>Store the Product ID in hidden to delegate the value to javascript </iscomment>
+	 	<input type="hidden" value="${pdict.ProductID}" id="giftregistry-pid"/>	
+	 	<input type="hidden" value="${!empty(pdict.ProductQty) ? pdict.ProductQty : 1}" id="giftregistry-pid-qty">
+		<button type="submit" id="addProductToGR" name="${Resource.msg('giftregistry.send', 'product', 'Send')}" title="${Resource.msg('giftregistry.send', 'product', 'Send')}" value="${Resource.msg('giftregistry.send', 'product', 'Send')}" class="button-fancy-small add-to-cart" >
+			<isprint value="${Resource.msg('giftregistry.add', 'product', 'Send')}" />
+		</button>
+		<button type="submit" id="canceladdProductToGR" name="${Resource.msg('giftregistry.cancel', 'product', 'Send')}" title="${Resource.msg('giftregistry.cancel', 'product', 'Send')}" value="${Resource.msg('giftregistry.cancel', 'product', 'Cancel')}" class="button-fancy-small add-to-cart" >
+			<isprint value="${Resource.msg('giftregistry.cancel', 'product', 'Cancel')}" />
+		</button>
+   </div>
+</div>

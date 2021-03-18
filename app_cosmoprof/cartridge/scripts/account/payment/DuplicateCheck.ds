@@ -1,0 +1,47 @@
+/**
+ * SetDefaultAddress.ds
+ *
+ * This script checks for a duplicate card number against the list 
+ * of payment instruments for the customer.  If there is a duplicate,
+ * return the payment instrument that already exist.
+ *
+ * @input NoIn : String 
+ * @input Month : String
+ * @input Year :  String
+ * @input CCEdit : Boolean
+ * @input CCNo	 : String
+ * @input PIList : dw.util.Collection 
+ * @output Duplicate : Boolean
+ * @output OldCard : dw.order.PaymentInstrument
+ *
+ */
+importPackage( dw.system );
+
+function execute( args : PipelineDictionary ) : Number
+{
+	args.Duplicate = false;
+	var month : Number = new Number(args.Month);
+	var year : Number = new Number(args.Year);
+	if(args.CCEdit) {
+		if(args.CCNo == args.NoIn) {
+				return PIPELET_NEXT;
+		}
+	}
+
+   for each(var card in args.PIList) {
+
+		if(card.creditCardExpirationYear == year && card.creditCardExpirationMonth == month) {
+			if (card.creditCardNumber.substring(card.creditCardNumber.length-4) == args.NoIn.substring(args.NoIn.length-4)) {
+				args.Duplicate = true;
+   				return PIPELET_ERROR;
+			}
+		}
+		//if (card.creditCardNumber == args.NoIn) {
+			//args.Duplicate = true;
+			//return PIPELET_ERROR;
+		//}
+ 
+   			
+   }  
+    return PIPELET_NEXT;
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19">
+
+	<group formid="event">
+
+		<field formid="name" label="forms.giftregistry.eventName" type="string" mandatory="true" binding="name" max-length="20"
+			missing-error="forms.giftregistry.eventName.missing-error" />
+			
+		<action formid="confirm" valid-form="true"/>
+		
+		<list formid="listitems">
+			<!-- products -->
+			
+				<field formid="quantity" type="number" binding="quantityValue" format="0.#"/>
+				<action formid="removelineitems" valid-form="false"/>
+		
+			<!-- gift certificates -->
+			<list formid="giftcerts" binding="giftCertificateLineItems">
+				<action formid="deleteGiftCertificate" valid-form="false"/>
+			</list>
+		</list>
+			
+	</group>
+	
+	<group formid="store">
+		<field formid="ziporcity" label="forms.giftregistry.store.ziporcity" type="string" mandatory="false"  />
+		<field formid="radius" type="string" mandatory="false"  default-value="50"  missing-error="forms.customeraddress.country.missing-error">
+			<options>
+				<option optionid="100" 	label="store.100.mile"	value="100"/>
+				<option optionid="50" 	label="store.50.mile"	value="50"/>
+				<option optionid="40" 	label="store.40.mile"	value="40"/>
+				<option optionid="30" 	label="store.30.mile"	value="30"/>
+				<option optionid="20" 	label="store.20.mile"	value="20"/>
+				<option optionid="10" 	label="store.10.mile"	value="10"/>
+			</options>
+		</field>
+		<field formid="selectedstore" label="forms.giftregistry.store.selectedstore" type="string" mandatory="false"  />
+		<field formid="firstname" label="forms.giftregistry.store.firstname" type="string" mandatory="true" max-length="50" />
+		<field formid="lastname" label="forms.giftregistry.store.lastname" type="string" mandatory="true" max-length="50" />
+		<field formid="phone" label="forms.giftregistry.store.phone" type="string" mandatory="true"  />
+		<field formid="mobile" label="forms.giftregistry.store.mobile" type="string" mandatory="false"  />
+		<field formid="mobiletextupdate" label="forms.giftregistry.store.mobiletextupdate" type="boolean" mandatory="false" />
+		<field formid="email" label="forms.giftregistry.store.email" type="string" mandatory="true" max-length="50" />
+		<field formid="note" label="forms.giftregistry.store.note" type="string" mandatory="false" max-length="256" />
+		<field formid="savedstore" label="forms.giftregistry.store.saved" type="boolean" mandatory="false" />
+		<field formid="selectstore" label="forms.giftregistry.store.selectedstore.label" type="boolean" mandatory="false"/>
+		<field formid="productprice" label="forms.giftregistry.store.productPrice" type="string" mandatory="false"  />
+		<field formid="makethismystore" label="forms.giftregistry.store.makethismystore.label" type="boolean" mandatory="false"/>
+	</group>
+
+	<group formid="eventaddress">
+
+		<!-- Define the action here so that only the parent form group is validated -->
+		<action formid="confirm" valid-form="true"/>
+		<action formid="back" valid-form="false"/>
+		
+	</group>
+	
+	<!-- generic actions  -->
+	<action formid="update" valid-form="true"/>
+	<action formid="remove" valid-form="false"/>
+	<action formid="create" valid-form="false"/>
+	<action formid="sendtostore" valid-form="false"/>
+	<action formid="findstore" valid-form="false"/>
+	<action formid="usecurrentlocation" valid-form="false"/>
+	<action formid="sendtofinalstep" valid-form="false"/>
+	<action formid="send" valid-form="false"/>
+	<action formid="changemystore" valid-form="false"/>
+	<action formid="continuemysavedstore" valid-form="false"/>
+	
+</form>

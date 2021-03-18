@@ -1,0 +1,73 @@
+<isdecorate template="account/pt_account">
+<isinclude template="util/modules"/>
+<isslot id="account-banner" description="Banner for My Account pages" context="global" />
+<div id="managerUsers">
+<h1 class="title h1 ">${Resource.msg('subaccounts.header','account',null)}</h1>
+	<isif condition="${!empty(pdict.CurrentCustomer.profile.custom.isAccountOwner) && pdict.CurrentCustomer.profile.custom.isAccountOwner}">
+		<iscomment>Go through list of sub account ids for account owner and product list</iscomment>
+		<div class="backlink">
+ 
+			<a href="${URLUtils.url("Account-ManageAccounts","module","accountmanagement")}"><isprint value="${Resource.msg('account.backtoaccountsetting','account',null)}" /></a>
+ 
+		</div>
+		<div class="manage-user-info">
+			<iscontentasset aid="manage-users-page"/>	
+		</div>	
+		<isif condition="${!empty(pdict.SubAccountCustomerList)}">
+			<isloop items="${pdict.SubAccountCustomerList}" var="SubAccountProfile" status="loopstate" >
+				<isif condition="${!empty(SubAccountProfile) && !empty(SubAccountProfile.email)}">
+					<div class="manageUsers">
+					<div class="manageuser-info">
+						<div class="user-info">
+							<div><isprint value="${SubAccountProfile.firstName}"/>&nbsp;<isprint value="${SubAccountProfile.lastName}"/></div>
+							<div><isprint value="${SubAccountProfile.email}"/></div>												
+							<isif condition="${!empty(SubAccountProfile.custom.activeShipAddressID)}">
+								<isset name="addr" value="${SubAccountProfile.addressBook.getAddress(SubAccountProfile.custom.activeShipAddressID)}" scope="page"/>
+								<div>
+									<isprint value="${addr.address1}"/></br>
+									<isif condition="${!empty(addr.address2)}"> 
+										<isprint value="${addr.address2}"/></br>
+									</isif>
+									<isprint value="${addr.city}"/>, <isprint value="${addr.stateCode}"/> <isprint value="${addr.postalCode}"/>
+								</div> 
+							</isif>
+						</div>
+							<div class="btns">
+							<form action="${URLUtils.url('ManageUsers-EditUser')}" name="user-edit" method="post" id="users_${loopstate.count}">
+								<fieldset>
+								<div class="editbtn">
+									<button type="submit" class="edit primaryButtn" value="${Resource.msg('subaccounts.edituser','account',null)}"  title="Edit User" name="subaccounts.edit.htmlName">
+										<isprint value="${Resource.msg('subaccounts.edituser','account',null)}" />
+									</button>
+								</div>		
+									<input type="hidden" name="profileNumber" value="${SubAccountProfile.customerNo}"/>
+								</fieldset>
+							</form>					
+							<form action="${URLUtils.url('ManageUsers-Remove')}" name="user-remove" method="post" id="users_${loopstate.count}">
+								<fieldset>
+									<div class="delete">
+									<a type="submit" class="dialogify cancel secondarybtn" value="${Resource.msg('subaccounts.removeuser','account',null)}"  data-dlg-options='{"width":450,"height":250}' title="${Resource.msg('subaccounts.removeuser','account',null)}" name="subaccounts.remove.htmlName">
+										<isprint value="${Resource.msg('subaccounts.removeuser','account',null)}" />
+									</a>
+									</div>
+									
+								</fieldset>
+							</form>							
+							</div>
+						</div>
+						<div class="delete-box">
+							<isinclude template="account/user/removeuserdialog"/>
+						</div>							
+					</div>
+				</isif>
+				
+			</isloop>
+		</isif>
+		<div class="add-user-btn add-mang-user"> 
+				<a class="link-button-small primaryButtn" href="${URLUtils.url('ManageUsers-Add')}" title="${Resource.msg('subaccounts.addUser','account',null)}">
+					<isprint value="${Resource.msg('subaccounts.addUser','account',null)}" />
+				</a>
+			</div>
+	</isif>
+</div>
+</isdecorate>

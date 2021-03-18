@@ -1,0 +1,170 @@
+/**
+* Script file for use in the Script pipelet node.
+* To define input and output parameters, create entries of the form:
+*
+* @<paramUsageType> <paramName> : <paramDataType> [<paramComment>]
+*
+* where
+*   <paramUsageType> can be either 'input' or 'output'
+*   <paramName> can be any valid parameter name
+*   <paramDataType> identifies the type of the parameter
+*   <paramComment> is an optional comment
+*
+* For example:
+*
+*   @input PAGE : String 
+*   @input Pid : String 
+*   @input Category : String 
+*   @input Basket : dw.order.Basket
+*   @output Recommendation : Object
+*
+*/
+importPackage( dw.system );
+importPackage( dw.catalog );
+importPackage( dw.util );
+importPackage( dw.object );
+importPackage( dw.customer );
+importPackage( dw.net );
+importPackage( dw.order );
+
+function execute( args : PipelineDictionary ) : Number
+{
+
+   try {
+   	
+   	var site = Site.getCurrent().ID == 'CosmoProf-CA' ? 'CAN' : 'USA';
+   	var page = args.PAGE;
+   	var pageTOJSON = 'PIPageToJSONUrlMapping' in dw.system.Site.current.preferences.custom ? dw.system.Site.current.preferences.custom.PIPageToJSONUrlMapping : "";
+   	var url = JSON.parse(pageTOJSON)[page];
+   	
+   	//Get the Ware House and StateInclude Code from Customer Preferred Address
+   	var activeShippingAddress : CustomerAddress = customer.profile.addressBook.preferredAddress;
+   	var wareHouseCode = activeShippingAddress.custom.warehouseCode;
+   	var stateIncludeCode  = activeShippingAddress.stateCode;
+   	
+   	//var brandsArr : ArrayList = new ArrayList();
+   	
+   	// BUILD PI Call URL
+   	
+   	switch( args.PAGE )
+		{
+			case "PDP":
+				/*Sample URL
+					https://7288959.recs.igodigital.com/a/v2/7288959/product/recommend.json?item=USA-244036&inclusion=warehouseCode|005|stateInclude|IN|site|USA
+				*/
+				//Get Product
+				var product : Product = ProductMgr.getProduct(args.Pid);
+				
+				//Get the Product ID based on its types.
+				var pid = args.Pid;
+				
+				if(product.bundle || product.bundled) {
+					pid = args.Pid;
+				}
+				if(product.productSet || product.productSetProduct) {
+					pid = args.Pid;
+				} 
+				if(product.isMaster()) {
+					//Get the default Varient
+					pid = product.getVariationModel().defaultVariant.ID;
+				}
+				else if(product.isVariant()) {
+					pid = args.Pid;
+				}
+				//Get Product Locale
+				var productLocale = "";
+				if(pid.indexOf("-") > -1) {
+					productLocale = pid.substring(0, pid.indexOf("-"));
+				}
+				/* Commented this code as we need the statecode from the Customer shipping address.
+					var brand =  product.brand;
+					brandsArr.add(brand);
+					var stateCode = getStateInclude(brandsArr,productLocale);
+				*/
+				url = url + "?item=" + pid + "&inclusion=warehouseCode|" + wareHouseCode + "|stateInclude|" + stateIncludeCode + "|site|" + site;
+				
+				break;
+
+			case "CATEGORY":
+				//Form category URL
+				//https://7288959.recs.igodigital.com/a/v2/7288959/category/recommend.json?category=Hair Care&inclusion=warehouseCode|005|stateInclude|IN|site|USA
+				url = url + "?category=" + args.Category + "&inclusion=warehouseCode|" + wareHouseCode + "|stateInclude|" + stateIncludeCode + "|site|" + site;
+				
+				break;
+
+			case "CART":
+				//Form this URL
+				//https://7288959.recs.igodigital.com/a/v2/7288959/cart/recommend.json?cart=USA-001176|USA-244036&inclusion=warehouseCode|005|stateInclude|IN|site|USA
+				
+				var plis : Collection = args.Basket.getAllProductLineItems();
+				var skuIDList : ArrayList = new ArrayList();
+				for each(var pli : ProductLineItem in plis) {
+					skuIDList.add(pli.product.ID);
+				}
+				url = url + "?cart=" + skuIDList.join('|') + "&inclusion=warehouseCode|" + wareHouseCode + "|stateInclude|" + stateIncludeCode + "|site|" + site;
+			break
+		}
+		
+		if (!empty(url)) {
+			//Call The HTTP Client and get Repsoosne in JSON
+			var encodedURL = encodeURI(url);
+			var request : HTTPClient = new HTTPClient();
+			request.open("GET", encodedURL);
+			request.send();
+			
+			var JOSNRes = JSON.parse(request.getText());
+			if (!empty(JOSNRes)) {
+				args.Recommendation = JOSNRes;
+				return PIPELET_NEXT;
+			}
+		}
+		args.Recommendation = {};
+   } catch(e) {
+       var error = e;
+       Logger.error("[PIRecommendation.ds] Error happend when rendering Recommendation JSON: " + error);
+       return PIPELET_ERROR;
+   }
+
+   return PIPELET_NEXT;
+}
+
+function getStateInclude(brandsArray, productLocale) {
+	//State Include 
+   	var stateCode = "";
+	var defaultStateCode = "";
+	var brandStateRule = "";
+	
+	if(productLocale == 'CAN') {
+		defaultStateCode = 'defaultBrandInclusiveState_CAN' in dw.system.Site.getCurrent().preferences.custom ? dw.system.Site.getCurrent().preferences.custom.defaultBrandInclusiveState_CAN :"";
+	} else {
+		defaultStateCode = 'defaultBrandInclusiveState_USA' in dw.system.Site.getCurrent().preferences.custom ? dw.system.Site.getCurrent().preferences.custom.defaultBrandInclusiveState_USA :"";	
+	}
+	
+	for each(var brandName in brandsArray) {
+		var brand = brandName.replace(/ /g,'');
+		brand = productLocale + "_" + brand;
+		brandStateRule = PAVBrandStateRule(brand);
+		
+	}
+	if (!empty(brandStateRule)) {
+		stateCode += "|" + brandStateRule;
+		
+	} else {
+		stateCode = "|" + defaultStateCode.replace(/[~]/g, '|');
+	}
+	
+	return stateCode;
+}
+
+function PAVBrandStateRule(brand) {
+	var CO = CustomObjectMgr.getCustomObject("PAVOrgBrandStateRule", brand);
+	var states = "";
+	if(!empty(CO) && CO != null) {
+		if(!empty(CO.custom.InclusiveState)) {
+			states = CO.custom.InclusiveState.toString();
+		}
+	}
+	return states;
+}
+
+
